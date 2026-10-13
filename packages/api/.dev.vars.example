@@ -1,0 +1,11 @@
+# Copy to .dev.vars (git-ignored) and fill in. Production values are set by
+# the owner with `wrangler secret put`.
+
+# Signs session JWTs for /api
+TOKEN_SIGNING_KEY=
+
+# Fine-grained GitHub token: Contents read, study-materials repo only
+GITHUB_TOKEN=
+
+# Signs upload URLs issued by core_create_upload
+UPLOAD_SIGNING_KEY=

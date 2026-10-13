@@ -8,7 +8,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 
 | Phase | Done | Total | Status |
 |---|---|---|---|
-| 0 Foundation | 0 | 22 | Not started |
+| 0 Foundation | 1 | 22 | In progress |
 | Spikes | 0 | 3 | Blocked by F-20 |
 | 1 Design system | 0 | 12 | Blocked by D-00 (Claude Design) |
 | 2 Study Lab | — | — | Detailed after PRD `10`–`13` |
@@ -28,7 +28,7 @@ Create the `projects-lab` repo and the `developer` branch · `npx wrangler d1 cr
 
 | ID | Task | Size | Model | Load | Done when |
 |---|---|---|---|---|---|
-| F-01 | Workspace: pnpm workspaces `shared`/`api`/`web`, `tsconfig` build mode, Biome, `.nvmrc`, `engines`, `packageManager`, pnpm build-script allow-list, `.gitignore`, `.dev.vars.example`, root scripts, stub `src/index.ts` per package | M | Sonnet | `CLAUDE.md`, `docs/architecture.md` §4 | `pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint` pass on a fresh clone; no `*.tsbuildinfo`, `dist/` or `.dev.vars` is tracked |
+| F-01 | Workspace: pnpm workspaces `shared`/`api`/`web`, `tsconfig` build mode, Biome, `.nvmrc`, `engines`, `packageManager`, pnpm build-script allow-list, `.gitignore`, `.dev.vars.example`, root scripts, stub `src/index.ts` per package | M | Sonnet | `CLAUDE.md`, `docs/architecture.md` §4 | ✅ Passes on a clean export of the tree. pnpm 12 replaced `onlyBuiltDependencies` with `allowBuilds`; local pnpm must be ≥ 12 (Homebrew had 8.5.1). Untracked `.DS_Store` and `.wrangler/`. Lab boundary rules (`noRestrictedImports`) added here; `api/src/mcp/` is not restricted |
 | F-02 | Worker + `/api/health` + `wrangler.jsonc`: D1 `DB`, R2 `FILES`, KV `OAUTH_KV`, assets with `run_worker_first` = `["/api/*","/mcp","/oauth/*","/.well-known/*"]`, observability, `preview` env; `pnpm types` | S | Sonnet | `docs/architecture.md` §3 | `npx wrangler deploy --dry-run` passes; a request to `/` is served without invoking the Worker; `run_worker_first` is not `true` |
 | F-03 | Dependency baseline: resolve every dependency `@latest`, TS on 5.x, report anything >1 minor behind | S | Haiku | `package.json` files | No version was typed from memory; report lists each package with its resolved version |
 | F-04 | Core schema `0000_init` via `drizzle-kit generate`: `user` (incl. `last_exported_at`), `mutation`, `auth_attempt`, `skill`, `mcp_call` | M | Opus | `docs/prd/99-data-model.md` (core), `docs/architecture.md` §5 | Migration applies locally from scratch; every CHECK-referenced column is `NOT NULL`; the generated file is not hand-edited |

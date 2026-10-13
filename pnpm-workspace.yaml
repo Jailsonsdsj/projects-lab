@@ -1,0 +1,8 @@
+packages:
+  - packages/*
+
+# Build-script allow-list. Anything unlisted fails the install (strictDepBuilds).
+allowBuilds:
+  esbuild: true
+  workerd: true
+  sharp: false
