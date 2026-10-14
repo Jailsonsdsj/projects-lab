@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Review a diff against the spec and architecture before opening a PR.
+description: Review a diff against the spec and architecture before committing it.
 tools: Read, Bash, Grep
 model: sonnet
 ---
