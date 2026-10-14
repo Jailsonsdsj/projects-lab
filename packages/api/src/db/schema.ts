@@ -19,6 +19,11 @@ export const user = sqliteTable("user", {
   timezone: text("timezone").notNull(),
   createdAt: text("created_at").notNull(),
   lastExportedAt: text("last_exported_at"),
+  // Every session JWT carries it as `sv`; bumping it ends every session.
+  // C-9 (never negative) is a trigger, not check(): a table-level check() on an
+  // existing table makes drizzle-kit rebuild it, and its rebuild copies a new
+  // column as the quoted name, which SQLite stores as a text literal.
+  sessionVersion: integer("session_version").notNull().default(0),
 });
 
 export const mutation = sqliteTable("mutation", {

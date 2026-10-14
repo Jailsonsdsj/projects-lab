@@ -5,7 +5,7 @@ One owner. Two credentials that are never interchangeable: a **session JWT** for
 ## Passphrase and KDF
 
 - The passphrase **never leaves the device.** The browser stretches it with PBKDF2-SHA256 into a 32-byte `authKey`; the Worker only SHA-256s the `authKey` and compares. The free plan's 10 ms CPU budget can't run the KDF server-side, and the server never holding the passphrase is the stronger design anyway.
-- KDF constants live in `packages/shared/src/core` and nowhere else: `KDF_ITERATIONS = 600_000`, `SALT_BYTES = 16`, plus `generateSalt()` (base64) and `deriveAuthKey(passphrase, salt, iterations)`. Seeds, scripts and tests import them; no other file spells the number.
+- KDF constants live in `packages/shared/src/core` and nowhere else: `KDF_ITERATIONS` (PBKDF2's cost; its value appears in `kdf.ts` only, enforced by `pnpm lint`), `SALT_BYTES` (16), `PASSPHRASE_MIN_LENGTH` (12), plus `generateSalt()` (base64), `deriveAuthKey(passphrase, salt, iterations)` and `hashAuthKey(authKey)`. Seeds, scripts and tests import them; no other file spells the number.
 - `user` stores `auth_key_hash` (base64 SHA-256 of the `authKey`), `kdf_salt` and `kdf_iterations`. Login uses the **stored** iterations, so the cost can be raised later without locking the owner out.
 - Minimum passphrase length: 12 characters, checked wherever a passphrase is chosen (provisioning, change passphrase).
 
@@ -65,7 +65,7 @@ Lists active OAuth grants: client name, when it was granted, last use, and **Rev
 
 ## Invariants (merged into `99-data-model.md`)
 
-- `user.session_version` is `NOT NULL`, default 0, `CHECK (session_version >= 0)`.
+- C-9: `user.session_version` is `NOT NULL`, default 0, and an integer >= 0 (triggers in `0003_session_version_trigger`; see `99-data-model.md` for why not a CHECK).
 
 ## Open questions (owner to confirm)
 

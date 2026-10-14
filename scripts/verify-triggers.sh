@@ -50,7 +50,7 @@ CI=true "$WRANGLER" d1 migrations apply "$DB" --local --persist-to "$PERSIST" >"
   || { cat "$OUT"; exit 1; }
 
 echo "Permitted writes"
-accept "user" "INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at) VALUES ('u1', 'h', 's', 600000, 'Europe/Lisbon', 't')"
+accept "user" "INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at) VALUES ('u1', 'h', 's', 1, 'Europe/Lisbon', 't')"
 accept "mutation" "INSERT INTO mutation (key, scope, response_json, created_at) VALUES ('k1', 'POST /api/x', '{}', 't')"
 accept "auth_attempt" "INSERT INTO auth_attempt (ip_hash, window_start, count) VALUES ('ip1', 1, 1)"
 accept "skill with aliases" "INSERT INTO skill (id, name, aliases_json, created_at) VALUES ('s1', 'PostgreSQL', '[\"Postgres\"]', 't')"
@@ -62,6 +62,8 @@ accept "C-7 fixture, live" "INSERT INTO skill (id, name, created_at) VALUES ('d1
 accept "C-7 fixture, soft-deleted" "INSERT INTO skill (id, name, created_at, deleted_at) VALUES ('d2', 'Erlang', 't', 't')"
 accept "mcp_call ok" "INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES ('m1', 'core_create_upload', 'claude', 1, 't')"
 accept "mcp_call failed write" "INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES ('m2', 'career_add_job', 'claude', 0, 't')"
+accept "C-9 fixture" "INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at) VALUES ('v1', 'h', 's', 1, 'UTC', 't')"
+accept "session_version bump" "UPDATE user SET session_version = session_version + 1 WHERE id = 'v1'"
 
 echo "C-1 to C-6 (CHECK and unique index)"
 reject "C-1 name differing only in case" "UNIQUE constraint failed" "INSERT INTO skill (id, name, created_at) VALUES ('x1', 'postgresql', 't')"
@@ -86,6 +88,11 @@ reject "C-8 name = other alias" "skill_alias_conflict" "INSERT INTO skill (id, n
 reject "C-8 update to a taken alias" "skill_alias_conflict" "UPDATE skill SET aliases_json = '[\"Go\", \"POSTGRES\"]' WHERE id = 's3'"
 reject "C-8 restore into a conflict" "skill_alias_conflict" "UPDATE skill SET deleted_at = NULL WHERE id = 's2'"
 
+echo "C-9 (session_version is an integer >= 0)"
+reject "C-9 negative session_version on insert" "user_session_version_min" "INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at, session_version) VALUES ('v2', 'h', 's', 1, 'UTC', 't', -1)"
+reject "C-9 text session_version on insert" "user_session_version_min" "INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at, session_version) VALUES ('v3', 'h', 's', 1, 'UTC', 't', 'session_version')"
+reject "C-9 negative session_version on update" "user_session_version_min" "UPDATE user SET session_version = -1 WHERE id = 'v1'"
+
 echo "NULL in every NOT NULL column"
 # null_each <table> <column list> <values list, same order>
 null_each() {
@@ -102,7 +109,7 @@ null_each() {
       "INSERT INTO $table ($2) VALUES ($(IFS=','; echo "${row[*]}"))"
   done
 }
-null_each user "id,auth_key_hash,kdf_salt,kdf_iterations,timezone,created_at" "'n1','h','s',1,'UTC','t'"
+null_each user "id,auth_key_hash,kdf_salt,kdf_iterations,timezone,created_at,session_version" "'n1','h','s',1,'UTC','t',0"
 null_each mutation "key,scope,response_json,created_at" "'n1','POST /api/x','{}','t'"
 null_each auth_attempt "ip_hash,window_start,count" "'n1',9,1"
 null_each skill "id,name,aliases_json,created_at" "'n1','Kotlin','[]','t'"

@@ -15,6 +15,7 @@ beforeAll(async () => {
       // Only the C-7 tests touch these, so a missing C-7 can't disturb the others.
       `INSERT INTO skill (id, name, created_at) VALUES ('d1', 'Elixir', 't')`,
       `INSERT INTO skill (id, name, created_at, deleted_at) VALUES ('d2', 'Erlang', 't', 't')`,
+      `INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at) VALUES ('v1', 'h', 's', 1, 'UTC', 't')`,
     ].map((sql) => db().prepare(sql)),
   );
 });
@@ -49,6 +50,10 @@ describe("permitted writes succeed", () => {
     [
       "mcp_call failed write",
       `INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES ('m2', 'career_add_job', 'claude', 0, 't')`,
+    ],
+    [
+      "session_version bump",
+      `UPDATE user SET session_version = session_version + 1 WHERE id = 'v1'`,
     ],
   ])("%s", async (_, sql) => {
     await expect(run(sql)).resolves.toBeDefined();
@@ -134,6 +139,21 @@ const forbidden: [string, string, string][] = [
     "skill_alias_conflict",
     `UPDATE skill SET deleted_at = NULL WHERE id = 's2'`,
   ],
+  [
+    "C-9 negative session_version on insert",
+    "user_session_version_min",
+    `INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at, session_version) VALUES ('v2', 'h', 's', 1, 'UTC', 't', -1)`,
+  ],
+  [
+    "C-9 text session_version on insert",
+    "user_session_version_min",
+    `INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at, session_version) VALUES ('v3', 'h', 's', 1, 'UTC', 't', 'session_version')`,
+  ],
+  [
+    "C-9 negative session_version on update",
+    "user_session_version_min",
+    `UPDATE user SET session_version = -1 WHERE id = 'v1'`,
+  ],
 ];
 
 // One NULL per NOT NULL column: [table, columns, a valid row in the same order]
@@ -147,8 +167,9 @@ const notNull: [string, string[], string[]][] = [
       "kdf_iterations",
       "timezone",
       "created_at",
+      "session_version",
     ],
-    ["'n1'", "'h'", "'s'", "1", "'UTC'", "'t'"],
+    ["'n1'", "'h'", "'s'", "1", "'UTC'", "'t'", "0"],
   ],
   [
     "mutation",

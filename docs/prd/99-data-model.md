@@ -17,7 +17,8 @@ user(
   kdf_iterations,                        -- integer; the value lives in packages/shared
   timezone,                              -- IANA name; resolves the owner's local day
   created_at,
-  last_exported_at?                      -- last full export (backup); null = never
+  last_exported_at?,                     -- last full export (backup); null = never
+  session_version                        -- integer >= 0, default 0; JWTs carry it as `sv` (01-identity)
 )
 
 -- Idempotency store shared by /api routes and MCP write tools. A response is
@@ -73,12 +74,14 @@ Every column above without `?` is `NOT NULL`.
 | C-6 | `auth_attempt.count` is at least 1 | `CHECK (count >= 1)` | `0000_init` (F-04) |
 | C-7 | A `skill` is never hard-deleted, so no lab row can lose its skill. Removal is `deleted_at` | `BEFORE DELETE` trigger `skill_no_hard_delete` rejects every delete. Lab tables also get FKs to `skill` | `0001_triggers` (F-05) |
 | C-8 | Among live skills, no alias equals another skill's name or alias, and no name equals another skill's alias (ignoring case). Restoring a soft-deleted skill is checked again | `BEFORE INSERT` and `BEFORE UPDATE OF name, aliases_json, deleted_at` triggers using `json_each` | `0001_triggers` (F-05) |
+| C-9 | `user.session_version` is an integer >= 0 | `BEFORE INSERT` and `BEFORE UPDATE OF session_version` triggers (`typeof` check, so text can't slip past `>= 0`) | `0003_session_version_trigger` (F-08a) |
 
-Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check. Two checks prove C-1 to C-8 and every NULL case, and their probe lists must stay in sync: `packages/api/test/invariants.test.ts` (`pnpm test`) attempts each write through the D1 binding, and `scripts/verify-triggers.sh` (`pnpm verify:triggers`) runs the same probes after `wrangler d1 migrations apply` on a fresh local D1.
+Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check. Two checks prove C-1 to C-9 and every NULL case, and their probe lists must stay in sync: `packages/api/test/invariants.test.ts` (`pnpm test`) attempts each write through the D1 binding, and `scripts/verify-triggers.sh` (`pnpm verify:triggers`) runs the same probes after `wrangler d1 migrations apply` on a fresh local D1.
 
 ## Notes for the build
 
 - **Schema source:** Drizzle `sqliteTable` definitions with `check()` for C-2 to C-6; `drizzle-kit generate` produces `0000_init`, which is never hand-edited. Triggers go in their own `--custom` migration.
+- **Never add `check()` to an existing table.** drizzle-kit then rebuilds the table, and its copy step selects the new column by its quoted name, which SQLite reads as a text literal: every existing row gets the column's *name* as its value. Add the column plain (drizzle emits `ALTER TABLE … ADD`) and enforce the rule with a trigger, as C-9 does. Read every generated migration that contains `__new_`.
 - **Skill lookup** is by `name` or any alias, case-insensitively, ignoring soft-deleted rows; C-8 makes it return at most one live skill. "Deduplicate" means look up before insert. A soft-deleted skill's name stays taken (C-1): restore it instead of re-creating it.
 - **`mcp_call` records writes only**, and records failed ones too (`ok = 0`); reads are not audited.
 - **`last_exported_at`** is written by the export flow (90-services) and read by the home screen to nudge a backup.
@@ -90,7 +93,7 @@ Settled by the owner on 2026-10-14.
 1. **`mutation.scope` stays.** The same key with a different scope is rejected with 422, never replayed. Implemented by the idempotency middleware (F-12).
 2. **Aliases are unique among live skills.** Enforced by C-8.
 3. **Skills are never hard-deleted.** C-7 rejects every delete, so core triggers never name a lab table.
-4. **Session revocation** (logout everywhere, passphrase change) is decided in `01-identity-and-access.md`. If it needs `user.session_version`, that arrives in its own migration.
+4. **Session revocation** uses `user.session_version` (C-9): every session JWT carries it, and bumping it ends every session (`01-identity-and-access.md`). Added by `0002_session_version` in F-08a.
 
 ---
 

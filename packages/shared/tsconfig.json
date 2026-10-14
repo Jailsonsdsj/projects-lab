@@ -1,3 +1,8 @@
 {
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Web Crypto, TextEncoder and btoa/atob. They exist in the browser, Workers
+    // and Node alike; DOM is just the lib that declares them.
+    "lib": ["ES2022", "DOM"]
+  }
 }

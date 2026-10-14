@@ -10,7 +10,7 @@
     "dev": "pnpm -r --parallel --if-present dev",
     "test": "pnpm -r --if-present test",
     "typecheck": "tsc -b",
-    "lint": "biome check .",
+    "lint": "biome check . && bash scripts/check-kdf-constant.sh",
     "format": "biome check --write .",
     "types": "pnpm --filter @projects-lab/api types",
     "db:generate": "pnpm --filter @projects-lab/api db:generate",
@@ -20,6 +20,7 @@
   "packageManager": "pnpm@12.11.2+sha512.25a51652a196785af5f28bda6dfe8dc582ebefa4ac1d180221ce1390231c5fb76637822ea4b6e4633ce74acdcb0a77f725af11bad38177fdeddaee818a955cb9",
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
 }
