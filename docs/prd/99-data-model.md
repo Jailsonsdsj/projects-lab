@@ -45,7 +45,7 @@ skill(
   name,                                  -- canonical ("PostgreSQL"), unique ignoring case
   aliases_json,                          -- JSON array of strings ("Postgres"); default '[]'
   created_at,
-  deleted_at?                            -- soft delete; referenced rows keep working
+  deleted_at?                            -- the only way to remove a skill (C-7)
 )
 
 -- Audit of every MCP write, so the owner can see what Claude changed.
@@ -71,23 +71,26 @@ Every column above without `?` is `NOT NULL`.
 | C-4 | `mcp_call.tool` matches `^(core\|study\|career)_[a-z_]+$` | `CHECK` with `GLOB` (D1 has no `REGEXP`): one of `core_?*`, `study_?*`, `career_?*`, and `NOT GLOB '*[^a-z_]*'` | `0000_init` (F-04) |
 | C-5 | `mcp_call.ok` is 0 or 1 | `CHECK (ok IN (0, 1))` | `0000_init` (F-04) |
 | C-6 | `auth_attempt.count` is at least 1 | `CHECK (count >= 1)` | `0000_init` (F-04) |
-| C-7 | A `skill` referenced by any lab row can't be hard-deleted | `BEFORE DELETE` trigger on `skill` | custom `triggers` migration (F-05) |
+| C-7 | A `skill` is never hard-deleted, so no lab row can lose its skill. Removal is `deleted_at` | `BEFORE DELETE` trigger `skill_no_hard_delete` rejects every delete. Lab tables also get FKs to `skill` | `0001_triggers` (F-05) |
+| C-8 | Among live skills, no alias equals another skill's name or alias, and no name equals another skill's alias (ignoring case). Restoring a soft-deleted skill is checked again | `BEFORE INSERT` and `BEFORE UPDATE OF name, aliases_json, deleted_at` triggers using `json_each` | `0001_triggers` (F-05) |
 
-Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check.
+Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check. `scripts/verify-triggers.sh` (`pnpm verify:triggers`) proves C-1 to C-8 and every NULL case against a fresh local D1.
 
 ## Notes for the build
 
 - **Schema source:** Drizzle `sqliteTable` definitions with `check()` for C-2 to C-6; `drizzle-kit generate` produces `0000_init`, which is never hand-edited. Triggers go in their own `--custom` migration.
-- **Skill lookup** is by `name` or any alias, case-insensitively, ignoring soft-deleted rows. "Deduplicate" means look up before insert.
+- **Skill lookup** is by `name` or any alias, case-insensitively, ignoring soft-deleted rows; C-8 makes it return at most one live skill. "Deduplicate" means look up before insert. A soft-deleted skill's name stays taken (C-1): restore it instead of re-creating it.
 - **`mcp_call` records writes only**, and records failed ones too (`ok = 0`); reads are not audited.
 - **`last_exported_at`** is written by the export flow (90-services) and read by the home screen to nudge a backup.
 
-## Open questions (owner to confirm)
+## Decisions
 
-1. **`mutation.scope`** is new compared with the playbook. Without it, a key reused across two routes or tools would replay the wrong response. Proposed rule: same key + different scope → 422.
-2. **Alias collisions:** may two skills share an alias? If not, that's a trigger (C-8) checking every alias against other skills' names and aliases.
-3. **C-7 before any lab table exists:** F-05 must prove C-7, but no lab table references `skill` yet. Either F-05 tests it with a throwaway fixture table, or C-7 moves to the first lab migration that references `skill`.
-4. **Session revocation** (logout everywhere, passphrase change) may need a `user.session_version`. Decided in `01-identity-and-access.md`; added by migration if so.
+Settled by the owner on 2026-10-14.
+
+1. **`mutation.scope` stays.** The same key with a different scope is rejected with 422, never replayed. Implemented by the idempotency middleware (F-12).
+2. **Aliases are unique among live skills.** Enforced by C-8.
+3. **Skills are never hard-deleted.** C-7 rejects every delete, so core triggers never name a lab table.
+4. **Session revocation** (logout everywhere, passphrase change) is decided in `01-identity-and-access.md`. If it needs `user.session_version`, that arrives in its own migration.
 
 ---
 
