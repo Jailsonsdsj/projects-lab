@@ -1,10 +1,10 @@
 # Projects Lab — Backlog
 
-One task per Claude Code session: `/task <ID>`. A task reads **only** its Load files. After merging, rewrite its Done-when cell as ✅ plus what was found.
+One task per Claude Code session: `/task <ID>`. A task reads **only** its Load files. When it is committed to `developer`, rewrite its Done-when cell as ✅ plus what was found.
 
 Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2 h). **Human** = you do it by hand; an agent must not.
 
-## Progress (counts merged to `main`)
+## Progress (counts committed to `developer`)
 
 | Phase | Done | Total | Status |
 |---|---|---|---|

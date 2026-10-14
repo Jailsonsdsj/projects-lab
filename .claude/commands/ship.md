@@ -1,9 +1,9 @@
 ---
-description: Verify and commit the current backlog task directly on main
+description: Verify, commit and push the current backlog task to developer
 ---
 
-Pre-launch flow: commit straight to `main`, no branch and no PR. The PR flow
-returns after the app launches.
+Feature work is committed and pushed to `developer`. Never commit to `main`;
+the owner decides when `developer` goes to `main`. No PRs until after launch.
 
 1. Run `pnpm typecheck && pnpm lint && pnpm test`. Fix anything that fails.
 2. Run `pnpm --filter web build` and `npx wrangler deploy --dry-run`, once the
@@ -12,7 +12,8 @@ returns after the app launches.
    each criterion is actually met. Say which, one line each.
 4. Update the progress table at the top of docs/backlog.md, and rewrite this
    task's "Done when" cell as ✅ plus what was found.
-5. Make sure you are on `main`, then commit everything, backlog included, with
-   a conventional-commit message derived from the diff that names the task ID.
-   No `Co-Authored-By` trailer and no Claude signature of any kind.
-6. Do not push. Report the commit hash and leave pushing to the owner.
+5. Make sure you are on `developer` (stop and say so if you are on `main`),
+   then commit everything, backlog included, with a conventional-commit message
+   derived from the diff that names the task ID. No `Co-Authored-By` trailer
+   and no Claude signature of any kind.
+6. Push with `git push origin developer` and report the commit hash.
