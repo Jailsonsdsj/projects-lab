@@ -58,6 +58,8 @@ accept "skill with default aliases" "INSERT INTO skill (id, name, created_at) VA
 accept "skill alias added" "UPDATE skill SET aliases_json = '[\"Postgres\", \"PG\"]' WHERE id = 's1'"
 accept "skill soft delete" "UPDATE skill SET deleted_at = 't' WHERE id = 's2'"
 accept "C-8 ignores soft-deleted skills" "INSERT INTO skill (id, name, aliases_json, created_at) VALUES ('s3', 'Golang', '[\"Go\"]', 't')"
+accept "C-7 fixture, live" "INSERT INTO skill (id, name, created_at) VALUES ('d1', 'Elixir', 't')"
+accept "C-7 fixture, soft-deleted" "INSERT INTO skill (id, name, created_at, deleted_at) VALUES ('d2', 'Erlang', 't', 't')"
 accept "mcp_call ok" "INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES ('m1', 'core_create_upload', 'claude', 1, 't')"
 accept "mcp_call failed write" "INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES ('m2', 'career_add_job', 'claude', 0, 't')"
 
@@ -74,8 +76,8 @@ reject "C-5 ok = 2" "mcp_call_ok_bool" "INSERT INTO mcp_call (id, tool, client_n
 reject "C-6 count = 0" "auth_attempt_count_min" "INSERT INTO auth_attempt (ip_hash, window_start, count) VALUES ('ip2', 1, 0)"
 
 echo "C-7 (no hard delete)"
-reject "C-7 delete live skill" "skill_no_hard_delete" "DELETE FROM skill WHERE id = 's1'"
-reject "C-7 delete soft-deleted skill" "skill_no_hard_delete" "DELETE FROM skill WHERE id = 's2'"
+reject "C-7 delete live skill" "skill_no_hard_delete" "DELETE FROM skill WHERE id = 'd1'"
+reject "C-7 delete soft-deleted skill" "skill_no_hard_delete" "DELETE FROM skill WHERE id = 'd2'"
 
 echo "C-8 (aliases unique among live skills)"
 reject "C-8 alias = other alias, other case" "skill_alias_conflict" "INSERT INTO skill (id, name, aliases_json, created_at) VALUES ('x6', 'MySQL', '[\"postgres\"]', 't')"

@@ -7,7 +7,8 @@
     "types": "wrangler types",
     "deploy:dry": "wrangler deploy --dry-run --env=\"\"",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply projects-lab --local"
+    "db:migrate:local": "wrangler d1 migrations apply projects-lab --local",
+    "test": "vitest run"
   },
   "dependencies": {
     "@projects-lab/shared": "workspace:*",
@@ -15,7 +16,9 @@
     "hono": "^4.13.13"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.4.1",
     "drizzle-kit": "^0.31.11",
+    "vitest": "^5.0.4",
     "wrangler": "^4.150.0"
   }
 }
