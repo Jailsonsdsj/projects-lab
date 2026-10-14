@@ -8,7 +8,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 
 | Phase | Done | Total | Status |
 |---|---|---|---|
-| 0 Foundation | 2 | 22 | In progress |
+| 0 Foundation | 3 | 22 | In progress |
 | Spikes | 0 | 3 | Blocked by F-20 |
 | 1 Design system | 0 | 12 | Blocked by D-00 (Claude Design) |
 | 2 Study Lab | — | — | Detailed after PRD `10`–`13` |
@@ -30,7 +30,7 @@ Create the `projects-lab` repo and the `developer` branch · `npx wrangler d1 cr
 |---|---|---|---|---|---|
 | F-01 | Workspace: pnpm workspaces `shared`/`api`/`web`, `tsconfig` build mode, Biome, `.nvmrc`, `engines`, `packageManager`, pnpm build-script allow-list, `.gitignore`, `.dev.vars.example`, root scripts, stub `src/index.ts` per package | M | Sonnet | `CLAUDE.md`, `docs/architecture.md` §4 | ✅ Passes on a clean export of the tree. pnpm 12 replaced `onlyBuiltDependencies` with `allowBuilds`; local pnpm must be ≥ 12 (Homebrew had 8.5.1). Untracked `.DS_Store` and `.wrangler/`. Lab boundary rules (`noRestrictedImports`) added here; `api/src/mcp/` is not restricted |
 | F-02 | Worker + `/api/health` + `wrangler.jsonc`: D1 `DB`, R2 `FILES`, KV `OAUTH_KV`, assets with `run_worker_first` = `["/api/*","/mcp","/oauth/*","/.well-known/*"]`, observability, `preview` env; `pnpm types` | S | Sonnet | `docs/architecture.md` §3 | ✅ Dry-run passes. Local `wrangler dev`: `/` and SPA routes are served by assets with no Worker trace; `/api/*`, `/mcp`, `/oauth/*`, `/.well-known/*` reach Hono. Assets point at the `packages/web/static` placeholder until Vite lands (then `../web/dist`). R2 is `projects-lab-images` (arch §3 updated). `env.preview` has no bindings yet (G-03), so generated `Env` bindings are optional until then. Compat date 2026-10-13: Wrangler 4.150's workerd tops out there |
-| F-03 | Dependency baseline: resolve every dependency `@latest`, TS on 5.x, report anything >1 minor behind | S | Haiku | `package.json` files | No version was typed from memory; report lists each package with its resolved version |
+| F-03 | Dependency baseline: resolve every dependency `@latest`, TS on 5.x, report anything >1 minor behind | S | Haiku | `package.json` files | ✅ 2026-10-14, all from `pnpm -r up --latest` / `pnpm outdated -r`: typescript 5.9.3 (newest 5.x; latest 7.0.2, held by the Drizzle rule) · @biomejs/biome 2.5.15 · hono 4.13.13 · wrangler 4.150.0 (4.151.0 is <1 day old, held by pnpm's minimum release age) · pnpm 12.11.2. Nothing >1 minor behind. Node stays on 22 (`.nvmrc`); LTS is 24. Compat date stays 2026-10-13 until Wrangler moves |
 | F-04 | Core schema `0000_init` via `drizzle-kit generate`: `user` (incl. `last_exported_at`), `mutation`, `auth_attempt`, `skill`, `mcp_call` | M | Opus | `docs/prd/99-data-model.md` (core), `docs/architecture.md` §5 | Migration applies locally from scratch; every CHECK-referenced column is `NOT NULL`; the generated file is not hand-edited |
 | F-05 | Trigger migration (`--custom --name triggers`) for the core invariants + `scripts/verify-triggers.sh` | M | Opus | `docs/prd/99-data-model.md` (core) | A duplicate skill name differing only in case is rejected; a referenced skill can't be hard-deleted; a bad `mcp_call.tool` is rejected; each NULL case is rejected; permitted writes succeed |
 | F-06 | Trigger tests in `@cloudflare/vitest-pool-workers` | M | Sonnet | F-05 migration, `vitest.config.ts` | Each forbidden write is **attempted through the binding** and fails; removing one trigger makes its test fail |
