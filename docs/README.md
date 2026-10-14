@@ -27,7 +27,7 @@ The PRD is split one file per feature area, so a task loads one ~80-line file in
 | `23-career-job-search.md` | Search criteria edited in the app; scheduled task; openings and their statuses; digest | R2-8, R2-9 | To write |
 | `24-career-interviews.md` | Interview answers in text and Drive video | R2-13 | To write |
 | `90-services.md` | Hosting, backup and restore, pruning windows, external services (GitHub, Drive, Gmail), what leaves the app | Playbook + architecture §2 | To write (before F-19) |
-| `99-data-model.md` | Core tables, then a section per lab; **every invariant** listed, each becoming a trigger or CHECK | Architecture §5 + lab PRDs | To write (core part before F-04) |
+| `99-data-model.md` | Core tables, then a section per lab; **every invariant** listed, each becoming a trigger or CHECK | Architecture §5 + lab PRDs | Core part drafted; lab sections to write |
 
 ## Writing order
 
