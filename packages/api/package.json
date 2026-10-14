@@ -2,7 +2,16 @@
   "name": "@projects-lab/api",
   "private": true,
   "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "types": "wrangler types",
+    "deploy:dry": "wrangler deploy --dry-run --env=\"\""
+  },
   "dependencies": {
-    "@projects-lab/shared": "workspace:*"
+    "@projects-lab/shared": "workspace:*",
+    "hono": "^4.13.13"
+  },
+  "devDependencies": {
+    "wrangler": "^4.150.0"
   }
 }

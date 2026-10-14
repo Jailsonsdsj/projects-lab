@@ -70,7 +70,7 @@ flowchart LR
 | `run_worker_first` | `["/api/*"]` | `["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]`. Still an array, never `true` |
 | Content | Lives in D1/R2 | Study content lives in **git** (`study-materials`). D1 stores only paths and metadata. See §7 |
 | Caching | Not specified | **Don't rely on the Workers Cache API**: on a `workers.dev` hostname it can't be counted on. Content is addressed by git blob SHA and cached **in the client** as immutable. See §7 |
-| R2 | Images | One bucket, `projects-lab-files`, small files only: profile photo, generated documents. **Never video** |
+| R2 | Images | One bucket, `projects-lab-images` (`projects-lab-images-preview` for preview), small files only: profile photo, generated documents. **Never video** |
 | Video | — | Google Drive. You upload; the app stores the link and embeds Drive's player |
 | Cron | Prune job | One Cron Trigger, daily prune. The job search is **not** a Worker cron; it's a Claude scheduled task (§8) |
 | Email | — | None sent by the app. The job digest goes out from the scheduled task through your Gmail connector |
