@@ -42,7 +42,7 @@ auth_attempt(
 -- profile skills and job requirements all reference it.
 skill(
   id,
-  name,                                  -- canonical ("PostgreSQL"), COLLATE NOCASE UNIQUE
+  name,                                  -- canonical ("PostgreSQL"), unique ignoring case
   aliases_json,                          -- JSON array of strings ("Postgres"); default '[]'
   created_at,
   deleted_at?                            -- soft delete; referenced rows keep working
@@ -65,7 +65,7 @@ Every column above without `?` is `NOT NULL`.
 
 | # | Invariant | Mechanism | Lands in |
 |---|---|---|---|
-| C-1 | `skill.name` is unique ignoring case | `COLLATE NOCASE UNIQUE` | `0000_init` (F-04) |
+| C-1 | `skill.name` is unique ignoring case | Unique index `skill_name_nocase` on `name COLLATE NOCASE` (Drizzle has no column collation); lookups must say `COLLATE NOCASE` to use it | `0000_init` (F-04) |
 | C-2 | `skill.name` is never empty or blank | `CHECK (length(trim(name)) > 0)` | `0000_init` (F-04) |
 | C-3 | `skill.aliases_json` is a JSON array | `CHECK (json_valid(aliases_json) AND json_type(aliases_json) = 'array')` | `0000_init` (F-04) |
 | C-4 | `mcp_call.tool` matches `^(core\|study\|career)_[a-z_]+$` | `CHECK` with `GLOB` (D1 has no `REGEXP`): one of `core_?*`, `study_?*`, `career_?*`, and `NOT GLOB '*[^a-z_]*'` | `0000_init` (F-04) |

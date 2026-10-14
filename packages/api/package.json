@@ -5,13 +5,17 @@
   "scripts": {
     "dev": "wrangler dev",
     "types": "wrangler types",
-    "deploy:dry": "wrangler deploy --dry-run --env=\"\""
+    "deploy:dry": "wrangler deploy --dry-run --env=\"\"",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply projects-lab --local"
   },
   "dependencies": {
     "@projects-lab/shared": "workspace:*",
+    "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.31.11",
     "wrangler": "^4.150.0"
   }
 }
