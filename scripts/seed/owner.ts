@@ -7,7 +7,7 @@ import {
   hashAuthKey,
   KDF_ITERATIONS,
   SALT_BYTES,
-} from "../../packages/shared/src/index.ts";
+} from "@projects-lab/shared";
 
 /** Local development only. Never used for a deployed owner (that's `pnpm provision`). */
 export const DEV_PASSPHRASE = "projects-lab-dev";
