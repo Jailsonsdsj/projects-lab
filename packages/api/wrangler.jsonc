@@ -6,6 +6,10 @@
   "observability": {
     "enabled": true
   },
+  // Set with `wrangler secret put` (owner only); locally in .dev.vars.
+  "secrets": {
+    "required": ["TOKEN_SIGNING_KEY", "GITHUB_TOKEN", "UPLOAD_SIGNING_KEY"]
+  },
   "assets": {
     // Placeholder until the Vite app exists; then this becomes "../web/dist".
     "directory": "../web/static",
