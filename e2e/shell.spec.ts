@@ -46,7 +46,11 @@ test("switching lab repaints the accent without a page reload", async ({
     .getByRole("button", { name: "Home", exact: false })
     .first()
     .click();
-  await page.getByRole("link", { name: /Study Lab/ }).click();
+  // Home also has a "Study Lab" card: pick the switcher's option.
+  await page
+    .getByRole("navigation", { name: "Labs" })
+    .getByRole("link", { name: /Study Lab/ })
+    .click();
 
   await expect(page).toHaveURL(/\/study$/);
   await expect(page.locator("html")).toHaveAttribute("data-lab", "study");

@@ -13,6 +13,21 @@ export interface LabTab {
   screen: ReactNode;
 }
 
+/** What a lab's Home card shows: up to three figures and an optional footer. */
+export interface LabSummary {
+  stats: readonly { value: string; label: string }[];
+  /** e.g. "Continue" + "FE-01 Next.js". */
+  foot?: { label: string; value: string };
+}
+
+export interface LabHome {
+  /** Reads the lab's summary (`GET /api/<lab>/summary`). Resolves to null when
+   *  the lab has no data yet; rejects only when the read itself failed. */
+  load: (signal: AbortSignal) => Promise<LabSummary | null>;
+  /** The card's line when the lab has no data: what to do next, never an error. */
+  emptyText: string;
+}
+
 export interface LabDefinition {
   id: LabId;
   /** "Study Lab". */
@@ -24,6 +39,8 @@ export interface LabDefinition {
   icon: IconName;
   /** In order; the first is where switching to this lab lands. */
   tabs: readonly LabTab[];
+  /** Its Home card; labs only (not the platform). */
+  home?: LabHome;
 }
 
 export const SETTINGS_PATH = "/settings";

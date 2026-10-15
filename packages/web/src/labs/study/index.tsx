@@ -1,6 +1,13 @@
 import type { LabDefinition } from "../../core/lab-registry";
 import { ComingScreen } from "../../core/screens";
 
+// Until the lab's API exists its summary is honestly "no data yet": null.
+const home = {
+  load: async () => null,
+  emptyText:
+    "No courses yet. Ask Claude to plan a topic and it lands in your backlog.",
+};
+
 const later = "Study Lab's screens arrive in its own phase.";
 
 export const studyLab: LabDefinition = {
@@ -9,6 +16,7 @@ export const studyLab: LabDefinition = {
   shortName: "Study",
   description: "Backlog, courses, grades",
   icon: "book",
+  home,
   tabs: [
     {
       label: "Backlog",

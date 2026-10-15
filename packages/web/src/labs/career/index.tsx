@@ -1,6 +1,12 @@
 import type { LabDefinition } from "../../core/lab-registry";
 import { ComingScreen } from "../../core/screens";
 
+// Until the lab's API exists its summary is honestly "no data yet": null.
+const home = {
+  load: async () => null,
+  emptyText: "No jobs tracked yet. Ask Claude to map a posting you like.",
+};
+
 const later = "Career Lab's screens arrive in its own phase.";
 
 export const careerLab: LabDefinition = {
@@ -9,6 +15,7 @@ export const careerLab: LabDefinition = {
   shortName: "Career",
   description: "Profile, skills, job readiness",
   icon: "briefcase",
+  home,
   tabs: [
     {
       label: "Jobs",

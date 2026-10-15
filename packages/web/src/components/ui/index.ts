@@ -24,6 +24,12 @@ export { ImageTile, type ImageTileProps, initialsOf } from "./ImageTile";
 export { Input, type InputProps } from "./Input";
 export { ICONS, type IconName } from "./icons";
 export {
+  LabCard,
+  type LabCardData,
+  type LabCardProps,
+  type LabCardState,
+} from "./LabCard";
+export {
   type LabOption,
   LabSwitcher,
   type LabSwitcherProps,

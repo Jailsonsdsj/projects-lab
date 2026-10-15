@@ -15,17 +15,23 @@ export const LABS: readonly LabDefinition[] = [
   careerLab,
 ];
 
-export const routes: RouteObject[] = [
-  {
-    element: (
-      <ToastProvider>
-        <LabsProvider labs={LABS}>
-          <Shell />
-        </LabsProvider>
-      </ToastProvider>
-    ),
-    children: LABS.flatMap((lab) =>
-      lab.tabs.map((tab) => ({ path: tab.path, element: tab.screen })),
-    ),
-  },
-];
+export function createRoutes(
+  labs: readonly LabDefinition[] = LABS,
+): RouteObject[] {
+  return [
+    {
+      element: (
+        <ToastProvider>
+          <LabsProvider labs={labs}>
+            <Shell />
+          </LabsProvider>
+        </ToastProvider>
+      ),
+      children: labs.flatMap((lab) =>
+        lab.tabs.map((tab) => ({ path: tab.path, element: tab.screen })),
+      ),
+    },
+  ];
+}
+
+export const routes = createRoutes();
