@@ -1,0 +1,85 @@
+/* ============================================================================
+   App-only component rules: what the bundle's canvas could not draw.
+   components.css is generated from the bundle and never edited; anything the
+   app adds goes here, with the same rule: tokens only, no literals.
+   ========================================================================= */
+
+/* ── Native states for canvas-only rules that had no native selector ──── */
+/* The bundle drew these with .is-pressed / .is-focus alone (D-02a removed them). */
+.check:active > input {
+  background-image: var(--gradient-pressed);
+}
+.quiz__opt:has(> input:focus-visible) {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+
+/* ── <dialog> hosts .sheet and .dialog ─────────────────────────────────
+   The canvas drew a .scrim div; in the app the top layer's ::backdrop is the
+   scrim, and the UA's dialog chrome (border, padding, canvas colours) goes. */
+dialog.sheet,
+dialog.dialog {
+  overflow: auto;
+}
+dialog.sheet {
+  margin: auto auto 0;
+  padding: 0 0 env(safe-area-inset-bottom);
+  border: 0;
+  max-height: calc(100dvh - var(--space-12));
+}
+dialog.dialog {
+  margin: auto;
+  width: calc(100% - var(--space-8));
+  max-height: calc(100dvh - var(--space-8));
+}
+dialog.sheet::backdrop,
+dialog.dialog::backdrop {
+  background-color: var(--color-scrim);
+  animation: var(--animate-scrim-in);
+}
+
+/* Leaving: the component keeps the dialog open for --duration-*-out, then closes it. */
+.sheet.is-closing {
+  animation: var(--animate-sheet-out);
+}
+.dialog.is-closing {
+  animation: var(--animate-dialog-out);
+}
+dialog.is-closing::backdrop {
+  animation: var(--animate-scrim-out);
+}
+
+/* ── OptionsMenu as a popover, anchored to its trigger ────────────────── */
+.menu[popover] {
+  inset: auto;
+  margin: var(--space-1) 0 0;
+  position-area: block-end span-inline-start;
+  position-try-fallbacks: flip-block, flip-inline;
+}
+
+/* ── Toast region: above BottomTabs on phone, bottom-centre on tablet ─── */
+.toast-region {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(
+    var(--size-bottomtabs) +
+    var(--space-3) +
+    env(safe-area-inset-bottom)
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+  pointer-events: none;
+
+  @variant tablet {
+    bottom: var(--space-6);
+  }
+}
+.toast-region > .toast {
+  pointer-events: auto;
+}
+.toast.is-leaving {
+  animation: var(--animate-toast-out);
+}
