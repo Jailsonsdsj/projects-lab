@@ -13,5 +13,8 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./test/setup.ts"],
     testTimeout: TEST_TIMEOUT_MS,
+    // CSS imports are stubbed in tests; the style files a test reads with ?raw
+    // (to check tokens it can't evaluate in jsdom) are let through.
+    css: { include: [/styles\/(tokens|components)\.css/] },
   },
 });
