@@ -1,4 +1,5 @@
 export { BADGE_ICON, Badge, type BadgeProps, type BadgeTone } from "./Badge";
+export { BottomTabs, type BottomTabsProps } from "./BottomTabs";
 export {
   Button,
   type ButtonProps,
@@ -23,14 +24,27 @@ export { ImageTile, type ImageTileProps, initialsOf } from "./ImageTile";
 export { Input, type InputProps } from "./Input";
 export { ICONS, type IconName } from "./icons";
 export {
+  type LabOption,
+  LabSwitcher,
+  type LabSwitcherProps,
+} from "./LabSwitcher";
+export { linkClick, type NavItem, type Navigate } from "./nav";
+export {
   OptionsMenu,
   type OptionsMenuEntry,
   type OptionsMenuItem,
   type OptionsMenuProps,
 } from "./OptionsMenu";
+export {
+  PageHeader,
+  type PageHeaderProps,
+  PageTitle,
+  type PageTitleProps,
+} from "./PageHeader";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { Prose, type ProseProps } from "./Prose";
 export { Sheet, type SheetProps } from "./Sheet";
+export { SideRail, type SideRailProps } from "./SideRail";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { type TabItem, Tabs, type TabsProps } from "./Tabs";
 export { Textarea, type TextareaProps } from "./Textarea";
@@ -40,3 +54,4 @@ export {
   type ToastTone,
   useToast,
 } from "./Toast";
+export { useMinWidth } from "./useMinWidth";

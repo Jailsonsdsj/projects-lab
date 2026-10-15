@@ -21,6 +21,13 @@ dialog.sheet,
 dialog.dialog {
   overflow: auto;
 }
+/* The bundle's .sheet / .dialog set display: flex, which (as author CSS) beats
+   the UA's dialog:not([open]) { display: none }: restore it, or a closed
+   dialog stays on screen and swallows taps. */
+dialog.sheet:not([open]),
+dialog.dialog:not([open]) {
+  display: none;
+}
 dialog.sheet {
   margin: auto auto 0;
   padding: 0 0 env(safe-area-inset-bottom);
@@ -50,6 +57,10 @@ dialog.is-closing::backdrop {
 }
 
 /* ── OptionsMenu as a popover, anchored to its trigger ────────────────── */
+/* Same for popovers: .menu's display: flex beats the UA's closed-popover rule. */
+.menu[popover]:not(:popover-open) {
+  display: none;
+}
 .menu[popover] {
   inset: auto;
   margin: var(--space-1) 0 0;
@@ -92,4 +103,64 @@ dialog.is-closing::backdrop {
 }
 .tile.is-loading > img.tile__photo {
   visibility: hidden;
+}
+
+/* ── Shell layout (the canvas drew it inside device frames) ───────────────
+   Phone: header + content, BottomTabs fixed at the bottom; the rail is hidden.
+   Tablet: the SideRail beside the content; no phone header, no BottomTabs.
+   Wide: the tablet layout, centred at --size-app-max. */
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+
+  @variant tablet {
+    flex-direction: row;
+  }
+  @variant wide {
+    max-width: var(--size-app-max);
+    margin-inline: auto;
+    border-inline: var(--border-thin) solid var(--color-border);
+  }
+}
+.shell > .rail {
+  display: none;
+
+  @variant tablet {
+    display: flex;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+}
+.shell__main {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: calc(var(--size-bottomtabs) + env(safe-area-inset-bottom));
+
+  @variant tablet {
+    padding-bottom: 0;
+  }
+}
+.shell__header {
+  position: sticky;
+  top: 0;
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--color-chrome);
+  backdrop-filter: blur(var(--blur-chrome));
+
+  @variant tablet {
+    display: none;
+  }
+}
+.shell > .btabs {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+
+  @variant tablet {
+    display: none;
+  }
 }

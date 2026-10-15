@@ -92,3 +92,19 @@ if (!HTMLElement.prototype.showPopover) {
     popover?.togglePopover();
   });
 }
+
+// jsdom has no matchMedia: report "no match", i.e. phone width. A test that
+// needs tablet overrides it (vi.spyOn(window, "matchMedia")).
+if (typeof window.matchMedia !== "function") {
+  window.matchMedia = (media: string) =>
+    ({
+      matches: false,
+      media,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}
