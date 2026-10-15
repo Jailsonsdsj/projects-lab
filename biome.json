@@ -102,6 +102,19 @@
       "formatter": {
         "enabled": false
       }
+    },
+    {
+      "includes": ["packages/web/src/styles/components.css"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "style": {
+            "noDescendingSpecificity": "off"
+          }
+        }
+      }
     }
   ]
 }
