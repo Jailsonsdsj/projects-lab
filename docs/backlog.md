@@ -10,7 +10,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 |---|---|---|---|
 | 0 Foundation | 10 | 23 | In progress |
 | Spikes | 0 | 3 | Blocked by F-20 |
-| 1 Design system | 0 | 12 | Blocked by D-00 (Claude Design) |
+| 1 Design system | 2 | 13 | In progress |
 | 2 Study Lab | — | — | Detailed after PRD `10`–`13` |
 | 3 Career Lab | — | — | Detailed after PRD `20`–`24` and the spikes |
 | Hardening | 0 | 5 | — |
@@ -67,9 +67,10 @@ Record each result in the Done-when cell; they change PRD `02`, `22` and `23`.
 | ID | Task | Size | Model | Load | Done when |
 |---|---|---|---|---|---|
 | D-00 | **(Human, Claude Design)** New calm theme on sticker-collector's structure: neutral surfaces, one accent per lab, phone and tablet frames, every component incl. toasts, empty, error and offline states, skeletons, `Prose`; motion as ms + cubic-bezier. Export the bundle to `docs/design/` and prune foreign themes | L | — | `docs/architecture.md` §9 | Bundle committed; no screen in it uses a component missing from the bundle |
+| D-00b | Web scaffold: Vite, React 19, Tailwind v4 (`@tailwindcss/vite`), Fontsource IBM Plex Sans/Mono, `index.html` + placeholder `main.tsx`, web `tsconfig`; assets dir → `../web/dist` (drop `web/static`); `vite dev` proxies `/api`, `/mcp`, `/oauth`, `/.well-known` to `wrangler dev`; `scripts/design-extract.py` writes the bundle's `tokens.css` and `components.css` to `docs/design/` | M | Opus | `docs/design/design-brief.md` | ✅ Vite 8.3.4, React 19.3.1, Tailwind 4.3.3, plugin-react 6.1.2, Fontsource 5.3.0. Build writes `dist/` (JS 68.6 KiB gzip); dry-run reads 40 files from `web/dist`. `wrangler dev`: `/` and `/study/x` serve the built page with 0 Worker traces; `vite dev` proxies `/api` (salt returned from the seeded owner). `pnpm design:extract`: one version of each stylesheet across all 33 bundle pages; `docs/design/` is Biome-ignored. Deploys must build web first (F-20) |
 | D-01 | Tokens only: colours incl. `--color-lab-accent` per `data-lab`, type, spacing, radii, **border widths**, **breakpoints**, motion | M | Sonnet | `docs/design/` (explore agent inventory first) | Every value traceable to the bundle; no component in the diff |
-| D-02 | Primitives batch 1, ported from sticker-collector: Button, Input, Textarea, `Field` (with `useId()` fallback), Chip, Checkbox, Badge, Tabs | M | Sonnet | `docs/design-system.md`, sticker-collector `components/ui` | An `Input` with no `id` is still labelled; gaining an error doesn't drop focus |
-| D-03 | Primitives batch 2: Sheet, Dialog, OptionsMenu, Toast, ProgressBar, EmptyState, Skeleton, ImageTile, **Prose** | M | Sonnet | `docs/design-system.md` | Prose renders headings, tables, code blocks and callouts from the course template with tokens only |
+| D-02 | Primitives batch 1, ported from sticker-collector: Button, Input, Textarea, `Field` (with `useId()` fallback), Chip, Checkbox, Badge, Tabs | M | Sonnet | `docs/design/components.css` (bundle reference), sticker-collector `components/ui` | An `Input` with no `id` is still labelled; gaining an error doesn't drop focus |
+| D-03 | Primitives batch 2: Sheet, Dialog, OptionsMenu, Toast, ProgressBar, EmptyState, Skeleton, ImageTile, **Prose** | M | Sonnet | `docs/design/components.css` (bundle reference) | Prose renders headings, tables, code blocks and callouts from the course template with tokens only |
 | D-04 | App shell: lab switcher, bottom tabs on phone, side rail on tablet, `data-lab` accent, home route | M | Sonnet | `docs/prd/00-platform.md`, `docs/design-system.md` | Switching lab changes the accent without a page reload; no horizontal scroll at phone width |
 | D-05 | Home screen with a cross-lab summary (placeholder cards until labs exist) | S | Sonnet | `docs/prd/00-platform.md` | A lab with no data shows its empty state, not an error |
 | D-06 | `/dev/ui` kitchen sink + `docs/design-system.md` inventory | M | Sonnet | `components/ui` | Every primitive appears in every variant × state, at phone and tablet widths |

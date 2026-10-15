@@ -11,8 +11,8 @@
     "required": ["TOKEN_SIGNING_KEY", "GITHUB_TOKEN", "UPLOAD_SIGNING_KEY"]
   },
   "assets": {
-    // Placeholder until the Vite app exists; then this becomes "../web/dist".
-    "directory": "../web/static",
+    // The Vite build (`pnpm --filter @projects-lab/web build`); build it before deploying.
+    "directory": "../web/dist",
     "not_found_handling": "single-page-application",
     // Never `true`: everything else is served by the assets layer without invoking the Worker.
     "run_worker_first": ["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]

@@ -10,7 +10,8 @@
     "includes": [
       "**",
       "!**/worker-configuration.d.ts",
-      "!packages/api/migrations"
+      "!packages/api/migrations",
+      "!docs/design"
     ]
   },
   "formatter": {
