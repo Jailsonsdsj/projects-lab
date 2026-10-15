@@ -29,6 +29,7 @@ export {
   type OptionsMenuProps,
 } from "./OptionsMenu";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
+export { Prose, type ProseProps } from "./Prose";
 export { Sheet, type SheetProps } from "./Sheet";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { type TabItem, Tabs, type TabsProps } from "./Tabs";
