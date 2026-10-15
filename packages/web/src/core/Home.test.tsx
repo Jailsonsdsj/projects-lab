@@ -4,10 +4,17 @@ import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRoutes, LABS } from "../app";
-import { careerLab } from "../labs/career";
-import { studyLab } from "../labs/study";
 import type { LabDefinition, LabSummary } from "./lab-registry";
 import { platformLab } from "./screens";
+
+// Core never imports a lab, tests included: take the labs from the registry.
+function registered(id: LabDefinition["id"]): LabDefinition {
+  const lab = LABS.find((l) => l.id === id);
+  if (!lab) throw new Error(`no lab ${id} in the registry`);
+  return lab;
+}
+const studyLab = registered("study");
+const careerLab = registered("career");
 
 function renderHome(labs: readonly LabDefinition[] = LABS) {
   const router = createMemoryRouter(createRoutes(labs), {
