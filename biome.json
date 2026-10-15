@@ -17,6 +17,11 @@
   "formatter": {
     "indentStyle": "space"
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "overrides": [
     {
       "includes": ["packages/*/src/core/**"],
@@ -90,6 +95,12 @@
             }
           }
         }
+      }
+    },
+    {
+      "includes": ["packages/web/src/styles/tokens.css"],
+      "formatter": {
+        "enabled": false
       }
     }
   ]

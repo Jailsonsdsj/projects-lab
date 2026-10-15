@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
 /* Self-hosted fonts (docs/design/tokens.css §1): one sans, one mono. */
 @import "@fontsource-variable/ibm-plex-sans";
