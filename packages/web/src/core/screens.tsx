@@ -8,6 +8,7 @@ import {
   type LabCardState,
   PageTitle,
 } from "../components/ui";
+import { ConnectionsScreen } from "./ConnectionsScreen";
 import {
   type LabDefinition,
   type LabHome,
@@ -111,13 +112,7 @@ export const platformLab: LabDefinition = {
       label: "Connections",
       icon: "link",
       path: "/connections",
-      screen: (
-        <ComingScreen
-          title="Connections"
-          icon="link"
-          arrives="The list of Claude connections arrives with the OAuth work."
-        />
-      ),
+      screen: <ConnectionsScreen />,
     },
     {
       label: "Settings",

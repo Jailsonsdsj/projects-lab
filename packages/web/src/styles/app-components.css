@@ -241,3 +241,33 @@ dialog.is-closing::backdrop {
     box-shadow: var(--shadow-md);
   }
 }
+
+/* ── Connections: client rows ───────────────────────────────────────────
+   The bundle's Connections screens, rebuilt from tokens: the small client
+   mark takes --space-10 and --radius-md, the row --size-row as its minimum
+   height (the nearest tokens to what the canvas drew). On tablet, "last used"
+   moves out of the meta line into its own column. */
+.client--sm {
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
+  font-size: var(--text-base);
+}
+.crow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  min-height: var(--size-row);
+
+  @variant tablet {
+    grid-template-columns: auto minmax(0, 2fr) minmax(0, 1fr) auto;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
+  }
+}
+.crow + .crow {
+  border-top: var(--border-thin) solid var(--color-border);
+}

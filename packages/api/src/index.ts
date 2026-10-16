@@ -6,6 +6,7 @@ import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
 import { OAUTH_SCOPE } from "@projects-lab/shared";
 import { Hono } from "hono";
 import { authRoutes } from "./core/auth/routes";
+import { connectionsRoutes } from "./core/connections-routes";
 import { type LabEnv, mountLabs } from "./core/lab";
 import { authorizeRoutes } from "./core/oauth/authorize";
 import { publicOrigin } from "./core/oauth/origin";
@@ -19,6 +20,7 @@ export const app = new Hono<LabEnv>();
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 app.route("/api/auth", authRoutes());
+app.route("/api/connections", connectionsRoutes());
 app.route("/oauth", authorizeRoutes());
 
 const study = studyLab();

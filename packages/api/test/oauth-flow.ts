@@ -60,12 +60,13 @@ export async function openConsent(
   clientId: string,
   challenge: string,
   state = "s1",
+  redirect = REDIRECT,
 ) {
   const url = new URL(`${ORIGIN}/oauth/authorize`);
   for (const [k, v] of Object.entries({
     response_type: "code",
     client_id: clientId,
-    redirect_uri: REDIRECT,
+    redirect_uri: redirect,
     state,
     scope: OAUTH_SCOPE,
     resource: RESOURCE,
@@ -127,8 +128,16 @@ export async function signInClaude(
   metadata: Record<string, unknown> = {},
 ) {
   const client = await register(metadata);
+  // The client's first registered redirect, as a real client would use.
+  const redirect =
+    (metadata.redirect_uris as string[] | undefined)?.[0] ?? REDIRECT;
   const { verifier, challenge } = await pkce();
-  const consent = await openConsent(client.client_id, challenge);
+  const consent = await openConsent(
+    client.client_id,
+    challenge,
+    "s1",
+    redirect,
+  );
   const decided = await decide(
     { decision: "allow", handle: consent.page?.handle, authKey },
     consent.cookie,
@@ -143,7 +152,7 @@ export async function signInClaude(
     {
       grant_type: "authorization_code",
       code,
-      redirect_uri: REDIRECT,
+      redirect_uri: redirect,
       code_verifier: verifier,
       resource: RESOURCE,
       ...(basic ? {} : { client_id: client.client_id }),

@@ -5,6 +5,7 @@
 export * from "./contracts/study";
 export * from "./core/auth";
 export * from "./core/bytes";
+export * from "./core/connections";
 export * from "./core/idempotency";
 export * from "./core/kdf";
 export * from "./core/lab";
