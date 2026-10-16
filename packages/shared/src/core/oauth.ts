@@ -24,9 +24,15 @@ export interface AuthorizePage {
   redirectIsLoopback: boolean;
 }
 
-/** POST /oauth/authorize. `authKey` (the passphrase's KDF output) is needed to
- *  allow, not to deny. Answered with `{ redirectTo }`. */
+/** POST /oauth/authorize. `verify` checks the passphrase (the sign-in step,
+ *  answered 204) without using the handle; `allow` checks it again and
+ *  completes; `deny` needs no passphrase. Allow and deny answer `{ redirectTo }`. */
 export const authorizeDecisionSchema = z.discriminatedUnion("decision", [
+  z.object({
+    decision: z.literal("verify"),
+    handle: z.string().min(1),
+    authKey: z.string().min(1),
+  }),
   z.object({
     decision: z.literal("allow"),
     handle: z.string().min(1),

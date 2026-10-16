@@ -199,3 +199,45 @@ dialog.is-closing::backdrop {
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
 }
+
+/* ── Claude's sign-in: client mark, scope rows, consent card ──────────────
+   Drawn in the bundle's Allow Claude screens with literal sizes, two of them
+   between tokens: the scope text and padding take the nearest (--text-base,
+   --space-3). */
+.client {
+  display: grid;
+  place-items: center;
+  width: var(--size-control-lg);
+  height: var(--size-control-lg);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-1);
+  border: var(--border-thin) solid var(--color-border);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink);
+}
+.scope {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+.scope + .scope {
+  border-top: var(--border-thin) solid var(--color-border);
+}
+.scope .icon {
+  color: var(--color-ink-muted);
+}
+/* The consent sits on the page on phone and in a card on tablet (the bundle's
+   .spec-card frame). */
+.consent-card {
+  @variant tablet {
+    background-color: var(--color-surface-1);
+    border: var(--border-thin) solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+  }
+}

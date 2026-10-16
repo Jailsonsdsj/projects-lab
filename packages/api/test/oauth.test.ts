@@ -278,6 +278,34 @@ describe("POST /oauth/authorize", () => {
     expect(retried.status).toBe(200);
   });
 
+  it("verifies the passphrase for the sign-in step without using the handle", async () => {
+    const client = await register();
+    const consent = await openConsent(
+      client.client_id,
+      (await pkce()).challenge,
+    );
+    const wrong = await deriveAuthKey("not it", generateSalt(), 1);
+    const handle = consent.page?.handle;
+
+    const refused = await decide(
+      { decision: "verify", handle, authKey: wrong },
+      consent.cookie,
+    );
+    expect(refused.status).toBe(401);
+    expect(await refused.json()).toEqual({ error: "invalid_passphrase" });
+
+    const verified = await decide(
+      { decision: "verify", handle, authKey },
+      consent.cookie,
+    );
+    expect(verified.status).toBe(204);
+    const allowed = await decide(
+      { decision: "allow", handle, authKey },
+      consent.cookie,
+    );
+    expect(allowed.status).toBe(200); // the handle was still unused
+  });
+
   it("sends Deny back to the client as access_denied, with its state", async () => {
     const client = await register();
     const consent = await openConsent(

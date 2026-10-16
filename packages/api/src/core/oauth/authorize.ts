@@ -108,9 +108,9 @@ export function authorizeRoutes(clock: () => number = Date.now) {
         );
       }
 
-      // Same bucket and order as the login: count first, then verify. The
-      // handle isn't consumed until the passphrase is right, so a typo can
-      // be retried on the same page.
+      // verify and allow: same bucket and order as the login, count first,
+      // then check. The handle isn't consumed until allow with the right
+      // passphrase, so a typo can be retried on the same page.
       const nowSeconds = Math.floor(clock() / 1000);
       const limited = await overRateLimit(c, db, key, nowSeconds);
       if (limited) return limited;
@@ -121,6 +121,8 @@ export function authorizeRoutes(clock: () => number = Date.now) {
       );
       if (!owner || !ok)
         return c.json<AuthError>({ error: "invalid_passphrase" }, 401);
+      // The sign-in step: the passphrase is right; consent comes next.
+      if (decision.decision === "verify") return c.body(null, 204);
 
       const approved = await oauth.approveConsent(c.req.raw, decision.handle, {
         scope: [OAUTH_SCOPE],

@@ -2,6 +2,7 @@
 // list through LabsProvider and never imports a lab itself.
 import type { RouteObject } from "react-router";
 import { ToastProvider } from "./components/ui";
+import { AuthorizeScreen } from "./core/AuthorizeScreen";
 import { LoginScreen } from "./core/LoginScreen";
 import { type LabDefinition, LabsProvider } from "./core/lab-registry";
 import { RequireSession } from "./core/RequireSession";
@@ -27,6 +28,12 @@ export function createRoutes(
     {
       path: "/login",
       element: <LoginScreen />,
+      errorElement: <RouteError bare />,
+    },
+    // Claude's sign-in: the Worker serves this URL with the consent details.
+    {
+      path: "/oauth/authorize",
+      element: <AuthorizeScreen />,
       errorElement: <RouteError bare />,
     },
     {
