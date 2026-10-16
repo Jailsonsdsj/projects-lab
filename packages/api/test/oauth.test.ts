@@ -3,198 +3,38 @@
 // code → tokens → /mcp. docs/prd/01-identity-and-access.md, architecture §6.2.
 
 import { SELF } from "cloudflare:test";
-import { env } from "cloudflare:workers";
-import {
-  type AuthorizePage,
-  deriveAuthKey,
-  generateSalt,
-  hashAuthKey,
-  OAUTH_CONSENT_ELEMENT_ID,
-  OAUTH_SCOPE,
-} from "@projects-lab/shared";
-import { sign } from "hono/jwt";
+import { deriveAuthKey, generateSalt } from "@projects-lab/shared";
 import { beforeAll, describe, expect, it } from "vitest";
 import { AUTH_ATTEMPT_LIMIT } from "../src/core/auth/rate-limit";
-import { signingKey } from "../src/core/auth/session";
 import { publicOrigin } from "../src/core/oauth/origin";
-import { db } from "./db";
+import {
+  bearer,
+  decide,
+  freshIp,
+  kvDump,
+  mcp,
+  ORIGIN,
+  openConsent,
+  pkce,
+  REDIRECT,
+  register,
+  seedOwner,
+  sessionJwt,
+  signInClaude,
+  token,
+} from "./oauth-flow";
 
-const ORIGIN = "https://lab.example"; // PUBLIC_ORIGIN in vitest.config.ts
-const RESOURCE = `${ORIGIN}/mcp`;
-const REDIRECT = "https://client.example/callback";
 let authKey: string;
 
 beforeAll(async () => {
-  const salt = generateSalt();
-  authKey = await deriveAuthKey("the owner's passphrase", salt, 1);
-  await db()
-    .prepare(
-      `INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at)
-       VALUES ('owner', ?, ?, 1, 'UTC', '2026-01-01T00:00:00.000Z')`,
-    )
-    .bind(await hashAuthKey(authKey), salt)
-    .run();
+  authKey = await seedOwner();
 });
-
-let ipCounter = 0;
-const freshIp = () => `10.2.0.${++ipCounter}`;
-
-const base64url = (bytes: ArrayBuffer | Uint8Array) =>
-  btoa(String.fromCharCode(...new Uint8Array(bytes)))
-    .replace(/=+$/, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-
-async function pkce() {
-  const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
-  const challenge = base64url(
-    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)),
-  );
-  return { verifier, challenge };
-}
-
-async function register(
-  metadata: Record<string, unknown> = {},
-): Promise<{ client_id: string; client_secret?: string }> {
-  const res = await SELF.fetch(`${ORIGIN}/oauth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      client_name: "Claude Test",
-      redirect_uris: [REDIRECT],
-      token_endpoint_auth_method: "none",
-      ...metadata,
-    }),
-  });
-  expect(res.status).toBe(201);
-  return res.json();
-}
-
-/** Opens the consent page as a browser would: its page data and cookies. */
-async function openConsent(clientId: string, challenge: string, state = "s1") {
-  const url = new URL(`${ORIGIN}/oauth/authorize`);
-  for (const [k, v] of Object.entries({
-    response_type: "code",
-    client_id: clientId,
-    redirect_uri: REDIRECT,
-    state,
-    scope: OAUTH_SCOPE,
-    resource: RESOURCE,
-    code_challenge: challenge,
-    code_challenge_method: "S256",
-  }))
-    url.searchParams.set(k, v);
-  const res = await SELF.fetch(url, { redirect: "manual" });
-  const html = await res.text();
-  const json = html.match(
-    new RegExp(
-      `<script type="application/json" id="${OAUTH_CONSENT_ELEMENT_ID}">(.*?)</script>`,
-    ),
-  )?.[1];
-  const cookie = res.headers
-    .getSetCookie()
-    .map((c) => c.split(";")[0])
-    .join("; ");
-  return {
-    res,
-    html,
-    page: json ? (JSON.parse(json) as AuthorizePage) : null,
-    cookie,
-  };
-}
-
-function decide(body: Record<string, unknown>, cookie: string, ip = freshIp()) {
-  return SELF.fetch(`${ORIGIN}/oauth/authorize`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: cookie,
-      Origin: ORIGIN,
-      "CF-Connecting-IP": ip,
-    },
-    body: JSON.stringify(body),
-  });
-}
-
-async function token(params: Record<string, string>, basic?: string) {
-  const res = await SELF.fetch(`${ORIGIN}/oauth/token`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      ...(basic ? { Authorization: `Basic ${basic}` } : {}),
-    },
-    body: new URLSearchParams(params),
-  });
-  return { res, body: (await res.json()) as Record<string, string> };
-}
-
-/** Register, consent with the right passphrase, exchange the code. */
-async function signInClaude(metadata: Record<string, unknown> = {}) {
-  const client = await register(metadata);
-  const { verifier, challenge } = await pkce();
-  const consent = await openConsent(client.client_id, challenge);
-  const decided = await decide(
-    { decision: "allow", handle: consent.page?.handle, authKey },
-    consent.cookie,
-  );
-  expect(decided.status).toBe(200);
-  const { redirectTo } = (await decided.json()) as { redirectTo: string };
-  const code = new URL(redirectTo).searchParams.get("code") ?? "";
-  const basic = client.client_secret
-    ? btoa(`${client.client_id}:${client.client_secret}`)
-    : undefined;
-  const { res, body } = await token(
-    {
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: REDIRECT,
-      code_verifier: verifier,
-      resource: RESOURCE,
-      ...(basic ? {} : { client_id: client.client_id }),
-    },
-    basic,
-  );
-  expect(res.status).toBe(200);
-  return { client, code, basic, tokens: body };
-}
-
-const bearer = (path: string, value: string, method = "GET") =>
-  SELF.fetch(`${ORIGIN}${path}`, {
-    method,
-    headers: { Authorization: `Bearer ${value}` },
-  });
-
-async function sessionJwt() {
-  const now = Math.floor(Date.now() / 1000);
-  return sign(
-    { sub: "owner", sv: 0, iat: now, exp: now + 60 },
-    signingKey(env),
-    "HS256",
-  );
-}
-
-async function kvDump(): Promise<string> {
-  const kv = env.OAUTH_KV;
-  if (!kv) throw new Error("OAUTH_KV is not bound");
-  const parts: string[] = [];
-  let cursor: string | undefined;
-  do {
-    const page = await kv.list({ cursor });
-    for (const key of page.keys) {
-      parts.push(key.name, JSON.stringify(key.metadata ?? null));
-      parts.push((await kv.get(key.name)) ?? "");
-    }
-    cursor = page.list_complete ? undefined : page.cursor;
-  } while (cursor);
-  return parts.join("\n");
-}
 
 describe("two credentials, never interchangeable", () => {
   it("an OAuth access token reaches /mcp, and is refused on /api", async () => {
-    const { tokens } = await signInClaude();
-    const mcp = await bearer("/mcp", tokens.access_token ?? "", "POST");
-    expect(mcp.status).toBe(501); // past the token check; the server is F-15
-    expect(await mcp.json()).toEqual({ error: "mcp_not_ready" });
+    const { tokens } = await signInClaude(authKey);
+    const listed = await mcp(tokens.access_token ?? "", "tools/list");
+    expect(listed.res.status).toBe(200); // past the token check (F-15)
 
     const api = await bearer("/api/study/summary", tokens.access_token ?? "");
     expect(api.status).toBe(401);
@@ -203,9 +43,9 @@ describe("two credentials, never interchangeable", () => {
 
   it("a session JWT is refused on /mcp, and accepted on /api", async () => {
     const jwt = await sessionJwt();
-    const mcp = await bearer("/mcp", jwt, "POST");
-    expect(mcp.status).toBe(401);
-    expect(mcp.headers.get("WWW-Authenticate")).toMatch(/^Bearer /);
+    const refused = await mcp(jwt, "tools/list");
+    expect(refused.res.status).toBe(401);
+    expect(refused.res.headers.get("WWW-Authenticate")).toMatch(/^Bearer /);
     expect((await bearer("/api/study/summary", jwt)).status).toBe(200);
   });
 });
@@ -364,7 +204,7 @@ describe("POST /oauth/authorize", () => {
 
 describe("tokens", () => {
   it("rotates refresh tokens: the old one dies once its replacement is used", async () => {
-    const { client, tokens } = await signInClaude();
+    const { client, tokens } = await signInClaude(authKey);
     const first = await token({
       grant_type: "refresh_token",
       refresh_token: tokens.refresh_token ?? "",
@@ -387,7 +227,7 @@ describe("tokens", () => {
   });
 
   it("leaves no plaintext token, code or client secret in KV", async () => {
-    const confidential = await signInClaude({
+    const confidential = await signInClaude(authKey, {
       token_endpoint_auth_method: "client_secret_basic",
     });
     expect(confidential.client.client_secret).toBeTruthy();

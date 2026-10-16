@@ -128,15 +128,15 @@ export function authorizeRoutes(clock: () => number = Date.now) {
         scope: [OAUTH_SCOPE],
       });
       const client = await oauth.lookupClient(approved.request.clientId);
+      const clientName = client?.clientName ?? approved.request.clientId;
       const { redirectTo } = await oauth.completeAuthorization({
         request: approved.request,
         userId: owner.id,
-        // Read by the Connections screen (F-16) and the MCP audit (F-15).
-        metadata: {
-          clientName: client?.clientName ?? approved.request.clientId,
-        },
+        // metadata: the Connections screen (F-16) lists grants by it.
+        metadata: { clientName },
         scope: [OAUTH_SCOPE],
-        props: { userId: owner.id },
+        // props: what every MCP call sees (mcp/server.ts, the mcp_call audit).
+        props: { userId: owner.id, clientName },
       });
       return c.json({ redirectTo }, { headers: cookiesOnly(approved.headers) });
     } catch (error) {

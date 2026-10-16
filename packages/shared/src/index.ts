@@ -10,3 +10,4 @@ export * from "./core/kdf";
 export * from "./core/lab";
 export * from "./core/oauth";
 export * from "./core/pwa";
+export * from "./core/skill";

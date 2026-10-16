@@ -177,6 +177,8 @@ One remote MCP server on the same Worker lets **every** Claude surface read your
 
 Platform phase ships only `core_whoami` (proves the connection) and `core_find_skill` (canonical-name lookup with aliases). Lab tools arrive with each lab.
 
+**As built (F-15):** `api/src/mcp/server.ts` builds a fresh `McpServer` per request (`createMcpHandler` from `agents/mcp/server`, SDK v2) with every tool from `coreTools` and the labs' `tools`; the registry, not the tool, adds `idempotencyKey`, the `mutation` claim and the `mcp_call` row to write tools. A tool is a `LabTool` (`core/lab.ts`) whose `run` calls a service; a test fails on SQL in any tool file.
+
 ### 6.4 Files from Claude (R2-10)
 
 Resumes and cover letters are **Word or PDF files made by Claude** and stored in R2.

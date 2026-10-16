@@ -20,11 +20,11 @@ How Claude reaches Projects Lab: one remote MCP server on the same Worker, the t
 
 ### Errors
 
-A failed call returns an MCP tool result with `isError: true` and a JSON body `{ error, message }`. `message` tells Claude what to fix; never a stack trace.
+A failed call returns an MCP tool result with `isError: true` and a JSON body `{ error, message }`. `message` tells Claude what to fix; never a stack trace. Input that fails the tool's schema never reaches the tool: the MCP SDK answers it with `isError: true` and its own plain-text message naming the field ("Input validation error: … query: …").
 
 | `error` | When |
 |---|---|
-| `bad_request` | Input fails the tool's schema |
+| `bad_request` | Input the schema allows but a service refuses (the schema itself is checked by the SDK, above) |
 | `not_found` | The record named doesn't exist |
 | `conflict` | A rule refused the write (a duplicate, a trigger's `RAISE(ABORT)` that the service maps) |
 | `idempotency_key_reused`, `idempotency_key_in_progress` | As above |

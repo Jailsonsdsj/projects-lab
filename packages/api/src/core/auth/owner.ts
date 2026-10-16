@@ -28,3 +28,14 @@ export async function getSessionVersion(
     .first<{ sv: number }>();
   return row?.sv ?? null;
 }
+
+/** What core_whoami tells Claude about the owner. */
+export async function getOwnerProfile(
+  db: D1Database,
+  userId: string,
+): Promise<{ id: string; timezone: string } | null> {
+  return db
+    .prepare("SELECT id, timezone FROM user WHERE id = ?")
+    .bind(userId)
+    .first<{ id: string; timezone: string }>();
+}

@@ -12,9 +12,12 @@
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^1.2.3",
+    "@modelcontextprotocol/server": "2.3.1",
     "@projects-lab/shared": "workspace:*",
+    "agents": "0.28.1",
     "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.13"
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "^1.4.1",

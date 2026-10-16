@@ -11,7 +11,8 @@ import { authorizeRoutes } from "./core/oauth/authorize";
 import { publicOrigin } from "./core/oauth/origin";
 import { careerLab } from "./labs/career";
 import { studyLab } from "./labs/study";
-import { mcpHandler } from "./mcp";
+import { mcpApiHandler } from "./mcp/server";
+import { coreTools } from "./mcp/tools/core";
 
 /** /api (session JWT) and the OAuth pages: everything but /mcp. */
 export const app = new Hono<LabEnv>();
@@ -44,7 +45,7 @@ function oauthProvider(env: Env): OAuthProvider<Env> {
   const origin = publicOrigin(env);
   return new OAuthProvider<Env>({
     apiRoute: "/mcp",
-    apiHandler: mcpHandler,
+    apiHandler: mcpApiHandler([...coreTools, ...labTools]),
     defaultHandler: app,
     authorizeEndpoint: "/oauth/authorize",
     tokenEndpoint: "/oauth/token",

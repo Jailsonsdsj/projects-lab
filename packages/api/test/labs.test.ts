@@ -5,6 +5,7 @@ import { env } from "cloudflare:workers";
 import { Hono } from "hono";
 import { sign } from "hono/jwt";
 import { beforeAll, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { signingKey } from "../src/core/auth/session";
 import { type ApiLab, type LabEnv, mountLabs } from "../src/core/lab";
 import { app } from "../src/index";
@@ -58,6 +59,15 @@ describe("labs in the Worker", () => {
   });
 });
 
+/** A tool with only a name: what mountLabs checks. */
+const named = (name: string): ApiLab["tools"][number] => ({
+  name,
+  description: "x",
+  kind: "read",
+  input: z.object({}),
+  run: async () => null,
+});
+
 describe("mountLabs", () => {
   const lab = (tools: ApiLab["tools"]): ApiLab => ({
     id: "study",
@@ -67,7 +77,7 @@ describe("mountLabs", () => {
 
   it("returns every lab's tools when each carries its lab's prefix", () => {
     const tools = mountLabs(new Hono<LabEnv>(), [
-      lab([{ name: "study_list_backlog", description: "List the backlog" }]),
+      lab([named("study_list_backlog")]),
     ]);
     expect(tools.map((t) => t.name)).toEqual(["study_list_backlog"]);
   });
@@ -78,8 +88,8 @@ describe("mountLabs", () => {
     "study_ListBacklog", // not lowercase
     "study_", // nothing after the prefix
   ])("refuses a study tool named %s", (name) => {
-    expect(() =>
-      mountLabs(new Hono<LabEnv>(), [lab([{ name, description: "x" }])]),
-    ).toThrow(name);
+    expect(() => mountLabs(new Hono<LabEnv>(), [lab([named(name)])])).toThrow(
+      name,
+    );
   });
 });
