@@ -74,7 +74,7 @@ self_test() {
 
   expect_fail "a secret in ci.yml" ci 's|      - run: pnpm test\n|      - run: pnpm test\n        env:\n          T: \$\{\{ secrets.X \}\}\n|' "no secret, no Cloudflare credential"
   expect_fail "--remote in ci.yml" ci 's|wrangler deploy --dry-run|wrangler d1 migrations apply projects-lab --remote --env="" && wrangler deploy --dry-run|' "no secret, no Cloudflare credential"
-  expect_fail "a job-wide Cloudflare secret" deploy 's|    runs-on: ubuntu-latest\n|    runs-on: ubuntu-latest\n    env:\n      CLOUDFLARE_API_TOKEN: x\n|' "not job-wide"
+  expect_fail "a job-wide Cloudflare secret" deploy 's|(    runs-on: [^\n]*\n)|\1    env:\n      CLOUDFLARE_API_TOKEN: x\n|' "not job-wide"
   expect_fail "a wrangler deploy without --env" deploy 's|wrangler deploy --env=""|wrangler deploy|' 'names --env'
   expect_fail "a health check on another origin" wrangler 's|"PUBLIC_ORIGIN": *"[^"]*"|"PUBLIC_ORIGIN": "https://elsewhere.example"|' "health check must hit"
 

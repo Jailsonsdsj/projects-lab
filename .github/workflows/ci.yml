@@ -1,11 +1,9 @@
-# Every push to developer and every PR to main (playbook §9). Zero production
-# credentials: no secret and no --remote. scripts/check-workflows.sh (in
-# `pnpm lint`) fails if either ever appears here.
+# Every PR to main (playbook §9). Zero production credentials: no secret and
+# no --remote. scripts/check-workflows.sh (in `pnpm lint`) fails if either
+# ever appears here.
 name: ci
 
 on:
-  push:
-    branches: [developer]
   pull_request:
     branches: [main]
 
@@ -18,7 +16,7 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       # Before setup-node, so its pnpm cache works. Version from packageManager.
@@ -39,7 +37,7 @@ jobs:
       - run: pnpm --filter @projects-lab/api exec wrangler deploy --dry-run --env=""
 
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

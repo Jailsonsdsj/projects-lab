@@ -36,9 +36,9 @@ function renderAt(path: string, screenAt?: { path: string; node: ReactNode }) {
   return router;
 }
 
-const signedOut = () => {
+const signedOut = async () => {
   localStorage.clear();
-  endSession("invalid");
+  await endSession("invalid");
 };
 
 let deleteCache: ReturnType<typeof vi.fn>;
@@ -132,7 +132,7 @@ describe("login", () => {
   }
 
   it("signs in and returns to the screen the owner was going to", async () => {
-    signedOut();
+    await signedOut();
     const token = fakeToken();
     const fetchMock = api({
       "GET /api/auth/salt": () => json(SALT),
@@ -153,7 +153,7 @@ describe("login", () => {
   });
 
   it("says a wrong passphrase is wrong, keeps what was typed and stays", async () => {
-    signedOut();
+    await signedOut();
     api({
       "GET /api/auth/salt": () => json(SALT),
       "POST /api/auth/login": () =>
@@ -169,7 +169,7 @@ describe("login", () => {
   });
 
   it("locks the form for the server's window after too many attempts", async () => {
-    signedOut();
+    await signedOut();
     api({
       "GET /api/auth/salt": () => json(SALT),
       "POST /api/auth/login": () =>
@@ -188,7 +188,7 @@ describe("login", () => {
   });
 
   it("shows signing in while the key is derived and sent", async () => {
-    signedOut();
+    await signedOut();
     let answer: (response: Response) => void = () => {};
     api({
       "GET /api/auth/salt": () => json(SALT),
@@ -205,7 +205,7 @@ describe("login", () => {
   });
 
   it("names the fix when no owner exists, and says offline when offline", async () => {
-    signedOut();
+    await signedOut();
     api({
       "GET /api/auth/salt": () =>
         json({ error: "not_provisioned" }, { status: 404 }),

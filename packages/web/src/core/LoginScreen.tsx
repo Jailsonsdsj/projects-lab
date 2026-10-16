@@ -25,7 +25,7 @@ export function LoginScreen() {
 
   // A token that expired while the app was closed: drop it (and its cache).
   useEffect(() => {
-    if (token && isExpired(token)) endSession("expired");
+    if (token && isExpired(token)) void endSession("expired");
   }, [token]);
 
   if (token && !isExpired(token)) return <Navigate to={from ?? "/"} replace />;
