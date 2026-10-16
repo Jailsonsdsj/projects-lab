@@ -10,7 +10,7 @@ import { cx } from "./cx";
 
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
-  /** The label; the whole row (44px tall) is the hit area. */
+  /** The label; the whole row (--size-touch tall) is the hit area. */
   children: ReactNode;
   /** Neither checked nor unchecked, e.g. "some selected". */
   mixed?: boolean;

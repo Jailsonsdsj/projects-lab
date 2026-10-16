@@ -5,7 +5,7 @@ type BreakpointToken =
   | "--breakpoint-landscape"
   | "--breakpoint-wide";
 
-/** The token's value, e.g. "768px", or null when tokens.css isn't loaded. */
+/** The token's value as written in tokens.css, or null when tokens.css isn't loaded. */
 function breakpoint(token: BreakpointToken): string | null {
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(token)

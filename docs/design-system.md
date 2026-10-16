@@ -17,7 +17,7 @@ The UI is the Claude Design bundle (`docs/design/`) turned into code. See every 
 
 ## Rules
 
-- **Tokens only.** No literal colour, px size, duration or curve outside `tokens.css`. Components use the bundle's classes; layout uses Tailwind utilities generated from the tokens (`p-3`, `gap-2`, `text-ink-muted`).
+- **Tokens only.** No literal colour, px size, duration or curve outside `tokens.css`; `scripts/check-tokens.sh` (in `pnpm lint` and `pnpm lint:tokens`, self-test first) fails on hex and colour functions, px/rem sizes, React style numbers, CSS durations, easing curves and z-index. Comments count too: name the token instead. Components use the bundle's classes; layout uses Tailwind utilities generated from the tokens (`p-3`, `gap-2`, `text-ink-muted`).
 - **The lab accent** comes from `data-lab` on `<html>` (set by the shell) or on an element (LabCard, LabSwitcher options). Components read `--color-lab-*` only and never branch on the lab. In Tailwind: `bg-(--color-lab-accent)`.
 - **No z-index.** Sheet and Dialog are native `<dialog>` (top layer, `::backdrop` scrim); menus are `popover`.
 - **Timings in JS** come from tokens through `cssDurationMs("--duration-…")`, never a number in code.
@@ -36,7 +36,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `Input` | `.input` | Text input in a Field | `icon`, `search`, `action` (trailing button) + input props | default, filled, required, invalid, disabled, *hover, focus* |
 | `Textarea` | `.input--multiline` | Multi-line input in a Field | textarea props | default, invalid, disabled |
 | `Chip` | `.chip` | Filter toggle | `pressed` (aria-pressed), `count` | off, on, disabled, *hover, pressed* |
-| `Checkbox` | `.check` | 44px row around a 22px box | `mixed`, `invalid` + input props | unchecked, checked, mixed, invalid, disabled, *pressed, focus* |
+| `Checkbox` | `.check` | A `--size-touch` row around a `--size-checkbox` box | `mixed`, `invalid` + input props | unchecked, checked, mixed, invalid, disabled, *pressed, focus* |
 | `Badge` | `.badge` | Status label; semantic tones carry an icon | `tone` neutral · accent · success · warning · danger · info · verified · declared · gap · todo · doing · done · p1 · p2 · p3; `size` sm · md; `mono` | per tone |
 | `Tabs` | `.tabs` / `.tab` | ARIA tabs, one tab stop | `items` (label, count, disabled), `value`, `onChange` | selected, disabled, *hover, focus*; arrows, Home, End |
 | `Sheet` | `.sheet` | Bottom sheet on `<dialog>` | `open`, `onClose`, `title`, `footer` | closed, open, closing (exit animation), Escape closes |

@@ -471,7 +471,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   {
     name: "Checkbox",
     inline: true,
-    summary: "44px row around a 22px box.",
+    summary: "A --size-touch row around a --size-checkbox box.",
     examples: [
       { label: "unchecked", node: <Checkbox>Keep me signed in</Checkbox> },
       {
