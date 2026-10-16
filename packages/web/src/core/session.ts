@@ -8,7 +8,7 @@ import { useSyncExternalStore } from "react";
 const TOKEN_KEY = "pl_session";
 
 /** Why the last session ended: shown on the login screen when it's "expired". */
-export type SessionEnd = "expired" | "invalid";
+export type SessionEnd = "expired" | "invalid" | "signed-out";
 
 let ended: SessionEnd | null = null;
 const listeners = new Set<() => void>();
@@ -42,6 +42,22 @@ export function endSession(reason: SessionEnd): void {
   ended = reason;
   emit();
   if (typeof caches !== "undefined") void caches.delete(API_CACHE);
+}
+
+/**
+ * Log out on this device: the Worker clears its cookie, the app drops its
+ * token and cached reads. Signed out locally even if the request fails
+ * (offline): the cookie then lapses on its own, and the app never uses it.
+ */
+export async function signOut(): Promise<void> {
+  const token = stored();
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch {}
+  endSession("signed-out");
 }
 
 export function sessionEnded(): SessionEnd | null {

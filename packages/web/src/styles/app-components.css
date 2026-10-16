@@ -181,3 +181,21 @@ dialog.is-closing::backdrop {
     padding-inline: var(--space-6);
   }
 }
+
+/* ── Card ────────────────────────────────────────────────────────────────
+   A titled panel on Settings (and Connections, later). The bundle drew it in
+   its screens' own styles with literal sizes; these are its tokens. */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background-color: var(--color-surface-1);
+  border: var(--border-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.card h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}

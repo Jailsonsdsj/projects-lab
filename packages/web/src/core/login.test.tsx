@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mockApi as api, json } from "../../test/api";
 import { fakeToken } from "../../test/session";
 import { createRoutes, LABS } from "../app";
 import { apiFetch } from "./api";
@@ -15,28 +16,6 @@ import { endSession, sessionToken, startSession } from "./session";
 // Core never imports a lab, tests included: take paths from the registry.
 const studyLab = LABS.find((lab) => lab.id === "study") as LabDefinition;
 const studyRoot = studyLab.tabs[0]?.path ?? "";
-
-type Handler = (init?: RequestInit) => Response | Promise<Response>;
-
-/** Mocks fetch with one handler per "METHOD /path"; anything else fails loudly. */
-function api(routes: Record<string, Handler>) {
-  return vi
-    .spyOn(globalThis, "fetch")
-    .mockImplementation(async (input, init) => {
-      const url = typeof input === "string" ? input : String(input);
-      const key = `${init?.method ?? "GET"} ${url}`;
-      const handler = routes[key];
-      if (!handler) throw new Error(`unexpected request ${key}`);
-      return handler(init);
-    });
-}
-
-const json = (body: unknown, init?: ResponseInit) =>
-  new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-    ...init,
-  });
 
 // A low iteration count keeps the real KDF fast in tests.
 const SALT = { salt: generateSalt(), iterations: 1000 };
@@ -90,7 +69,9 @@ describe("an ended session", () => {
     startSession(fakeToken({ expiresInSeconds: -60 }));
     const router = renderAt(studyRoot);
     expect(router.state.location.pathname).toBe("/login");
-    expect(screen.getByRole("alert")).toHaveTextContent("Session expired.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Session expired.",
+    );
     await waitFor(() => expect(sessionToken()).toBeNull());
     expect(deleteCache).toHaveBeenCalledWith(API_CACHE);
   });
@@ -109,7 +90,8 @@ describe("an ended session", () => {
     const router = renderAt(studyRoot, { path: studyRoot, node: reader });
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    // The URL changes a moment before the login screen renders: wait for it.
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       "Session expired. Sign in again to pick up where you left off.",
     );
     expect(document.body).not.toHaveTextContent(/401|unauthorized/i);
@@ -124,6 +106,7 @@ describe("an ended session", () => {
     });
     const router = renderAt(studyRoot, { path: studyRoot, node: reader });
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
+    await screen.findByRole("heading", { name: "Projects Lab" });
     expect(screen.queryByRole("alert")).toBeNull();
     expect(document.body).not.toHaveTextContent(/401|unauthorized/i);
   });

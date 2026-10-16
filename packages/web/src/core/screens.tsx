@@ -15,6 +15,7 @@ import {
   useLabs,
 } from "./lab-registry";
 import { useRead } from "./read";
+import { SettingsScreen } from "./SettingsScreen";
 
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five"];
 
@@ -122,13 +123,7 @@ export const platformLab: LabDefinition = {
       label: "Settings",
       icon: "settings",
       path: "/settings",
-      screen: (
-        <ComingScreen
-          title="Settings"
-          icon="settings"
-          arrives="Change passphrase and log out arrive with F-10 and F-11."
-        />
-      ),
+      screen: <SettingsScreen />,
     },
   ],
 };
