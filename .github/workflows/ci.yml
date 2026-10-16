@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       # Before setup-node, so its pnpm cache works. Version from packageManager.
@@ -39,7 +39,7 @@ jobs:
       - run: pnpm --filter @projects-lab/api exec wrangler deploy --dry-run --env=""
 
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
