@@ -6,6 +6,10 @@
   // OAuth client metadata documents (CIMD) are fetched only from public
   // addresses, so a client_id URL can't reach this zone's own origins.
   "compatibility_flags": ["global_fetch_strictly_public"],
+  // Served on its workers.dev URL (PUBLIC_ORIGIN); no per-version preview URLs,
+  // which would be second origins outside the OAuth issuer.
+  "workers_dev": true,
+  "preview_urls": false,
   "observability": {
     "enabled": true
   },

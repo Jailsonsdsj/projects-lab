@@ -1,11 +1,9 @@
-# Every push to developer and every PR to main (playbook §9). Zero production
-# credentials: no secret and no --remote. scripts/check-workflows.sh (in
-# `pnpm lint`) fails if either ever appears here.
+# Every PR to main (playbook §9). Zero production credentials: no secret and
+# no --remote. scripts/check-workflows.sh (in `pnpm lint`) fails if either
+# ever appears here.
 name: ci
 
 on:
-  push:
-    branches: [developer]
   pull_request:
     branches: [main]
 
