@@ -90,7 +90,7 @@ Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the che
 
 Settled by the owner on 2026-10-14.
 
-1. **`mutation.scope` stays.** The same key with a different scope is rejected with 422, never replayed. Implemented by the idempotency middleware (F-12).
+1. **`mutation.scope` stays.** The same key with a different scope is rejected with 422, never replayed. Implemented by the idempotency middleware (F-12, `packages/api/src/core/idempotency.ts`); an in-flight claim is `response_json = ''`.
 2. **Aliases are unique among live skills.** Enforced by C-8.
 3. **Skills are never hard-deleted.** C-7 rejects every delete, so core triggers never name a lab table.
 4. **Session revocation** uses `user.session_version` (C-9): every session JWT carries it, and bumping it ends every session (`01-identity-and-access.md`). Added by `0002_session_version` in F-08a.
