@@ -13,6 +13,9 @@ export const KDF_ITERATIONS = 600_000;
 /** Salt length in bytes. The salt isn't secret, only unique. */
 export const SALT_BYTES = 16;
 
+/** The derived authKey's length in bytes (PBKDF2-SHA256, 256 bits). */
+export const AUTH_KEY_BYTES = 32;
+
 /** Shortest passphrase accepted wherever one is chosen. */
 export const PASSPHRASE_MIN_LENGTH = 12;
 
@@ -42,7 +45,7 @@ export async function deriveAuthKey(
       iterations,
     },
     keyMaterial,
-    256,
+    AUTH_KEY_BYTES * 8,
   );
   return bytesToBase64(new Uint8Array(bits));
 }

@@ -34,12 +34,12 @@ One owner. Two credentials that are never interchangeable: a **session JWT** for
 ## Logout and expiry
 
 - `POST /api/auth/logout` clears the cookie (`Max-Age=0`) and returns `204`; the client drops its token. It ends **this device's** session only. The JWT stays valid until it expires or `sv` changes; there is no server-side session list.
-- Any `401` from `/api/*` makes the client clear its token and go to `/login`. When the token had expired, the login screen says "Your session expired. Sign in again." No screen shows a raw 401.
+- Any `401` from `/api/*` makes the client clear its token and go to `/login`, except `invalid_passphrase` from the passphrase change, which the form shows as a wrong current passphrase while the session stays. When the token had expired, the login screen says "Session expired. Sign in again to pick up where you left off." No screen shows a raw 401.
 
 ## Change passphrase (F-11)
 
 1. Signed-in client fetches the current salt and iterations, derives `currentAuthKey`, generates a new salt with `generateSalt()`, and derives `newAuthKey` with `KDF_ITERATIONS`.
-2. `POST /api/auth/passphrase { currentAuthKey, newAuthKey, newSalt, newIterations }` with an `Idempotency-Key`. Rate-limited in the same `auth_attempt` bucket.
+2. `POST /api/auth/passphrase { currentAuthKey, newAuthKey, newSalt, newIterations }` with an `Idempotency-Key`. Rate-limited in the same `auth_attempt` bucket. `newIterations` can't be below `KDF_ITERATIONS`. Idempotency runs **before** the session check: a success ends the caller's session too, so a retry after a lost response carries a dead JWT and still gets the stored new session.
 3. The Worker verifies `currentAuthKey` (constant-time). Wrong → `401`, **nothing changes**. Right → one `db.batch()` writes the new hash, salt and iterations and increments `session_version`; the response carries a fresh session for this device.
 4. Every other session dies (old `sv`). The old passphrase no longer works.
 

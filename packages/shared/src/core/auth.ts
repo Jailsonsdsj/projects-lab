@@ -1,6 +1,8 @@
 // Auth wire contracts (docs/prd/01-identity-and-access.md). One schema, two
 // consumers: the Worker validates requests, the browser types its fetches.
 import { z } from "zod";
+import { base64ToBytes } from "./bytes";
+import { AUTH_KEY_BYTES, KDF_ITERATIONS, SALT_BYTES } from "./kdf";
 
 /** GET /api/auth/salt */
 export const saltResponseSchema = z.object({
@@ -20,6 +22,32 @@ export const loginResponseSchema = z.object({
   token: z.string().min(1),
 });
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
+
+/** base64 that decodes to exactly `bytes` bytes. */
+const base64Of = (bytes: number) =>
+  z.string().refine((value) => {
+    try {
+      return base64ToBytes(value).length === bytes;
+    } catch {
+      return false;
+    }
+  }, `base64 of ${bytes} bytes`);
+
+/**
+ * POST /api/auth/passphrase, sent with an Idempotency-Key. The browser derives
+ * both keys; `currentAuthKey` is checked like a login key (anything that isn't
+ * the right key is the same 401). The new cost can't be below KDF_ITERATIONS.
+ * Answered with a LoginResponse: the fresh session for this device.
+ */
+export const changePassphraseRequestSchema = z.object({
+  currentAuthKey: z.string().min(1),
+  newAuthKey: base64Of(AUTH_KEY_BYTES),
+  newSalt: base64Of(SALT_BYTES),
+  newIterations: z.number().int().min(KDF_ITERATIONS),
+});
+export type ChangePassphraseRequest = z.infer<
+  typeof changePassphraseRequestSchema
+>;
 
 export const authErrorCodes = [
   "bad_request",
