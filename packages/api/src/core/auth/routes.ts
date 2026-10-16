@@ -23,7 +23,7 @@ const fail = (error: AuthError["error"]): AuthError => ({ error });
  * Counts this attempt against the caller's hashed IP (login and passphrase
  * change share the bucket) and returns the 429 when it's over the limit.
  */
-async function overRateLimit(
+export async function overRateLimit(
   c: Context,
   db: D1Database,
   key: string,

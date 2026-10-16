@@ -19,6 +19,7 @@ export default defineConfig({
             TOKEN_SIGNING_KEY: "test-token-signing-key",
             GITHUB_TOKEN: "test-github-token",
             UPLOAD_SIGNING_KEY: "test-upload-signing-key",
+            PUBLIC_ORIGIN: "https://lab.example",
           },
         },
       };

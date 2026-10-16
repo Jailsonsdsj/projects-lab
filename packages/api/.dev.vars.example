@@ -9,3 +9,6 @@ GITHUB_TOKEN=
 
 # Signs upload URLs issued by core_create_upload
 UPLOAD_SIGNING_KEY=
+
+# The app's origin for OAuth (issuer, and <origin>/mcp as the token audience)
+PUBLIC_ORIGIN=http://localhost:8787

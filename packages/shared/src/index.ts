@@ -8,4 +8,5 @@ export * from "./core/bytes";
 export * from "./core/idempotency";
 export * from "./core/kdf";
 export * from "./core/lab";
+export * from "./core/oauth";
 export * from "./core/pwa";

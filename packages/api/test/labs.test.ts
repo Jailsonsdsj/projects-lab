@@ -7,7 +7,7 @@ import { sign } from "hono/jwt";
 import { beforeAll, describe, expect, it } from "vitest";
 import { signingKey } from "../src/core/auth/session";
 import { type ApiLab, type LabEnv, mountLabs } from "../src/core/lab";
-import app from "../src/index";
+import { app } from "../src/index";
 import { db } from "./db";
 
 let token: string;

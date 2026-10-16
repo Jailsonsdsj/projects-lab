@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^1.2.3",
     "@projects-lab/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13"

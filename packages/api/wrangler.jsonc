@@ -3,6 +3,9 @@
   "name": "projects-lab",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-13",
+  // OAuth client metadata documents (CIMD) are fetched only from public
+  // addresses, so a client_id URL can't reach this zone's own origins.
+  "compatibility_flags": ["global_fetch_strictly_public"],
   "observability": {
     "enabled": true
   },
@@ -10,9 +13,18 @@
   "secrets": {
     "required": ["TOKEN_SIGNING_KEY", "GITHUB_TOKEN", "UPLOAD_SIGNING_KEY"]
   },
+  "vars": {
+    // The app's public https origin, e.g. https://lab.example.com: the OAuth
+    // issuer and the base of the MCP resource (<origin>/mcp) every token is
+    // bound to. The owner sets it at the first deploy (F-20); the Worker
+    // refuses to start without it. Locally it comes from .dev.vars.
+    "PUBLIC_ORIGIN": ""
+  },
   "assets": {
     // The Vite build (`pnpm --filter @projects-lab/web build`); build it before deploying.
     "directory": "../web/dist",
+    // For /oauth/authorize, which serves the app's page from the Worker.
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     // Never `true`: everything else is served by the assets layer without invoking the Worker.
     "run_worker_first": ["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]

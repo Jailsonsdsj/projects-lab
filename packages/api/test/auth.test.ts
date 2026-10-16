@@ -11,7 +11,7 @@ import {
   AUTH_WINDOW_SECONDS,
 } from "../src/core/auth/rate-limit";
 import { readSession, signingKey } from "../src/core/auth/session";
-import app from "../src/index";
+import { app } from "../src/index";
 import { loginRequest, testApp } from "./auth-app";
 import { db } from "./db";
 
