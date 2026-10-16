@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
+  Button,
   EmptyState,
+  ErrorState,
   type IconName,
   LabCard,
   type LabCardState,
@@ -13,6 +14,7 @@ import {
   labsOnly,
   useLabs,
 } from "./lab-registry";
+import { useRead } from "./read";
 
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five"];
 
@@ -32,48 +34,23 @@ export function HomeScreen() {
 }
 
 function HomeCard({ lab }: { lab: LabDefinition }) {
-  // Retry remounts the loader, which starts a fresh read.
-  const [attempt, setAttempt] = useState(0);
   if (!lab.home) return null;
-  return (
-    <HomeCardLoader
-      key={attempt}
-      lab={lab}
-      home={lab.home}
-      onRetry={() => setAttempt((n) => n + 1)}
-    />
-  );
+  return <HomeCardLoader lab={lab} home={lab.home} />;
 }
 
-function HomeCardLoader({
-  lab,
-  home,
-  onRetry,
-}: {
-  lab: LabDefinition;
-  home: LabHome;
-  onRetry: () => void;
-}) {
+function HomeCardLoader({ lab, home }: { lab: LabDefinition; home: LabHome }) {
   const navigate = useNavigate();
-  const [state, setState] = useState<LabCardState>({ status: "loading" });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    home.load(controller.signal).then(
-      (summary) => {
-        if (controller.signal.aborted) return;
-        setState(
-          summary
-            ? { status: "loaded", data: summary }
-            : { status: "empty", text: home.emptyText },
-        );
-      },
-      () => {
-        if (!controller.signal.aborted) setState({ status: "error", onRetry });
-      },
-    );
-    return () => controller.abort();
-  }, [home, onRetry]);
+  const { state: read, retry } = useRead(home.load);
+  // LabCard has no offline variant: offline shows as the error card until the
+  // Banner arrives (D-05).
+  const state: LabCardState =
+    read.status === "loaded"
+      ? { status: "loaded", data: read.data }
+      : read.status === "empty"
+        ? { status: "empty", text: home.emptyText }
+        : read.status === "loading"
+          ? read
+          : { status: "error", onRetry: retry };
 
   return (
     <LabCard
@@ -84,6 +61,20 @@ function HomeCardLoader({
       state={state}
       onNavigate={navigate}
     />
+  );
+}
+
+/** Any path no tab owns: inside the shell, never React Router's default 404. */
+export function NotFoundScreen() {
+  const navigate = useNavigate();
+  return (
+    <ErrorState
+      title="Page not found"
+      code="404"
+      actions={<Button onClick={() => navigate("/")}>Go to Home</Button>}
+    >
+      Nothing lives at this address. The link may be wrong or out of date.
+    </ErrorState>
   );
 }
 

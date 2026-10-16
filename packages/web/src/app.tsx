@@ -3,8 +3,9 @@
 import type { RouteObject } from "react-router";
 import { ToastProvider } from "./components/ui";
 import { type LabDefinition, LabsProvider } from "./core/lab-registry";
+import { RouteError } from "./core/RouteError";
 import { Shell } from "./core/Shell";
-import { platformLab } from "./core/screens";
+import { NotFoundScreen, platformLab } from "./core/screens";
 import { careerLab } from "./labs/career";
 import { studyLab } from "./labs/study";
 
@@ -27,16 +28,26 @@ export function createRoutes(
           </LabsProvider>
         </ToastProvider>
       ),
+      // The shell itself failed: an error page without it.
+      errorElement: <RouteError bare />,
       children: [
-        ...labs.flatMap((lab) =>
-          lab.tabs.map((tab) => ({ path: tab.path, element: tab.screen })),
-        ),
-        // Every component in every state (D-06). Loaded on first visit; not in navigation.
         {
-          path: "/dev/ui",
-          lazy: async () => ({
-            Component: (await import("./dev/KitchenSink")).KitchenSink,
-          }),
+          // A screen failed: the error stands in for it and the shell stays.
+          // One boundary for every screen, so a new tab can't miss it.
+          errorElement: <RouteError />,
+          children: [
+            ...labs.flatMap((lab) =>
+              lab.tabs.map((tab) => ({ path: tab.path, element: tab.screen })),
+            ),
+            // Every component in every state (D-06). Loaded on first visit; not in navigation.
+            {
+              path: "/dev/ui",
+              lazy: async () => ({
+                Component: (await import("./dev/KitchenSink")).KitchenSink,
+              }),
+            },
+            { path: "*", element: <NotFoundScreen /> },
+          ],
         },
       ],
     },

@@ -11,6 +11,8 @@ const ROUTES = [
   "/career/skills",
   "/career/profile",
   "/career/documents",
+  // No tab owns it: Not found inside the shell, never the router's default page.
+  "/no/such/page",
 ];
 
 for (const path of ROUTES) {
@@ -24,6 +26,14 @@ for (const path of ROUTES) {
     expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
   });
 }
+
+test("an unknown address shows Not found inside the shell", async ({
+  page,
+}) => {
+  await page.goto("/no/such/page");
+  await expect(page.getByText("Page not found")).toBeVisible();
+  await expect(page.getByText("Unexpected Application Error")).toHaveCount(0);
+});
 
 /** The painted colour of the visible LabSwitcher's mark: the lab accent. */
 async function accent(page: Page): Promise<string> {
