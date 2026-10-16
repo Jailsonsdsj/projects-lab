@@ -10,7 +10,7 @@
     "dev": "pnpm -r --parallel --if-present dev",
     "test": "pnpm -r --if-present test",
     "typecheck": "tsc -b",
-    "lint": "biome check . && bash scripts/check-kdf-constant.sh && bash scripts/check-tokens.sh --self-test && bash scripts/check-tokens.sh",
+    "lint": "biome check . && bash scripts/check-boundaries.sh --self-test && bash scripts/check-kdf-constant.sh && bash scripts/check-tokens.sh --self-test && bash scripts/check-tokens.sh",
     "format": "biome check --write .",
     "types": "pnpm --filter @projects-lab/api types",
     "db:generate": "pnpm --filter @projects-lab/api db:generate",

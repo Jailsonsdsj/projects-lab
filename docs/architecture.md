@@ -106,6 +106,9 @@ packages/
 1. `core` never imports from a lab.
 2. A lab never imports from another lab. Cross-lab calls go through `shared/contracts/` interfaces, implemented by the owning lab and injected at mount time.
 3. Every lab exposes the same three things: `routes` (Hono sub-app under `/api/<lab>`), `tools` (MCP tools prefixed `<lab>_`), and `screens` (React routes under `/<lab>`).
+4. `@projects-lab/shared`'s root exports only `core` and `contracts`. Lab code in `shared/src/<lab>` is reached by subpath (`@projects-lab/shared/<lab>`, added with the folder), so a re-export can't carry one lab's code past the patterns above.
+
+Enforced by `biome check .`; `scripts/check-boundaries.sh --self-test` (in `pnpm lint`) proves the rules still refuse each forbidden direction and allow contracts and the composition roots (`api/src/index.ts`, `web/src/app.tsx`). On the API, `core/lab.ts` `mountLabs` puts every lab behind `requireAuth` at `/api/<lab>` and refuses a tool not named `<lab>_[a-z_]+`.
 
 The first contract, owned by Study Lab and consumed by Career Lab:
 

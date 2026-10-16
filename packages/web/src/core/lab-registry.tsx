@@ -1,5 +1,7 @@
 // What a lab registers with the shell (docs/prd/00-platform.md). The app's entry
 // assembles the list and provides it; core reads it and never imports a lab.
+
+import type { LabSummary } from "@projects-lab/shared";
 import { createContext, type ReactNode, useContext } from "react";
 import type { IconName } from "../components/ui";
 
@@ -13,12 +15,9 @@ export interface LabTab {
   screen: ReactNode;
 }
 
-/** What a lab's Home card shows: up to three figures and an optional footer. */
-export interface LabSummary {
-  stats: readonly { value: string; label: string }[];
-  /** e.g. "Continue" + "FE-01 Next.js". */
-  foot?: { label: string; value: string };
-}
+/** What a lab's Home card shows: up to three figures and an optional footer
+ *  (e.g. "Continue" + "FE-01 Next.js"). The API's GET /api/<lab>/summary. */
+export type { LabSummary } from "@projects-lab/shared";
 
 export interface LabHome {
   /** Reads the lab's summary (`GET /api/<lab>/summary`). Resolves to null when
