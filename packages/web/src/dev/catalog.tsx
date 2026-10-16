@@ -7,6 +7,8 @@ import {
   BADGE_ICON,
   Badge,
   type BadgeTone,
+  Banner,
+  type BannerTone,
   BottomTabs,
   Button,
   type ButtonTone,
@@ -599,6 +601,47 @@ export const CATALOG: readonly CatalogEntry[] = [
             valueText="8.0"
             caption="Final exam"
           />
+        ),
+      },
+    ],
+  },
+  {
+    name: "Banner",
+    summary:
+      "Inline notice at the top of a screen: info, warning, danger, offline.",
+    examples: [
+      ...(["info", "warning", "danger", "offline"] as BannerTone[]).map(
+        (tone) => ({
+          label: tone,
+          node: (
+            <Banner tone={tone} title="Session expired.">
+              Sign in again to pick up where you left off.
+            </Banner>
+          ),
+        }),
+      ),
+      {
+        label: "text only · action",
+        node: (
+          <Banner
+            tone="offline"
+            action={
+              <Button variant="ghost" tone="neutral" size="sm">
+                Retry
+              </Button>
+            }
+          >
+            You're offline. Showing what this device saved.
+          </Banner>
+        ),
+      },
+      {
+        label: "flush",
+        node: (
+          <Banner tone="danger" flush>
+            Too many attempts, try again in <span className="mono">12</span>{" "}
+            minutes.
+          </Banner>
         ),
       },
     ],

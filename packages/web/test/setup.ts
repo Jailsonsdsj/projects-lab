@@ -1,12 +1,21 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, configure } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, beforeEach } from "vitest";
+import { startSession } from "../src/core/session";
 import { TEST_TIMEOUT_MS } from "../vitest.config";
+import { fakeToken } from "./session";
 
 configure({ asyncUtilTimeout: TEST_TIMEOUT_MS / 2 });
 
+// Every screen sits behind the session gate: tests start signed in, and the
+// gate and login tests sign out explicitly.
+beforeEach(() => {
+  startSession(fakeToken());
+});
+
 afterEach(() => {
   cleanup();
+  localStorage.clear();
 });
 
 // ── Stand-ins for browser APIs jsdom lacks ────────────────────────────────

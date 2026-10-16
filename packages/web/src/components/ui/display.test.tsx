@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import componentsCss from "../../styles/components.css?raw";
 import tokensCss from "../../styles/tokens.css?raw";
+import { Banner } from "./Banner";
 import { Button } from "./Button";
 import { EmptyState, ErrorState } from "./EmptyState";
 import { ImageTile, initialsOf } from "./ImageTile";
@@ -107,5 +108,22 @@ describe("EmptyState and ErrorState", () => {
     expect(error).toHaveTextContent("503 · req 7f3a-19c2");
     expect(offline).toHaveClass("empty--offline");
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+});
+
+describe("Banner", () => {
+  it("interrupts for warning and danger, waits its turn for info and offline", () => {
+    const { rerender } = render(
+      <Banner tone="warning" title="Session expired.">
+        Sign in again.
+      </Banner>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Session expired. Sign in again.",
+    );
+    expect(screen.getByRole("alert")).toHaveClass("banner banner--warning");
+    rerender(<Banner tone="offline">You're offline.</Banner>);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("status")).toHaveClass("banner--offline");
   });
 });

@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "./signed-in";
 
 /** Waits until the service worker controls the page. In prompt mode the first
  *  worker doesn't claim the page that installed it; the next load is controlled. */

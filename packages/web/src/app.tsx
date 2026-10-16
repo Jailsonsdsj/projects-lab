@@ -2,7 +2,9 @@
 // list through LabsProvider and never imports a lab itself.
 import type { RouteObject } from "react-router";
 import { ToastProvider } from "./components/ui";
+import { LoginScreen } from "./core/LoginScreen";
 import { type LabDefinition, LabsProvider } from "./core/lab-registry";
+import { RequireSession } from "./core/RequireSession";
 import { RouteError } from "./core/RouteError";
 import { Shell } from "./core/Shell";
 import { NotFoundScreen, platformLab } from "./core/screens";
@@ -21,11 +23,19 @@ export function createRoutes(
   labs: readonly LabDefinition[] = LABS,
 ): RouteObject[] {
   return [
+    // Outside the shell and the session gate.
+    {
+      path: "/login",
+      element: <LoginScreen />,
+      errorElement: <RouteError bare />,
+    },
     {
       element: (
         <ToastProvider>
           <LabsProvider labs={labs}>
-            <Shell />
+            <RequireSession>
+              <Shell />
+            </RequireSession>
             <UpdatePrompt />
           </LabsProvider>
         </ToastProvider>

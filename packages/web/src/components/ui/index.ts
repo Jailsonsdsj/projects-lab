@@ -1,4 +1,5 @@
 export { BADGE_ICON, Badge, type BadgeProps, type BadgeTone } from "./Badge";
+export { Banner, type BannerProps, type BannerTone } from "./Banner";
 export { BottomTabs, type BottomTabsProps } from "./BottomTabs";
 export {
   Button,
