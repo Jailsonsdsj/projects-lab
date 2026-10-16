@@ -27,9 +27,18 @@ export function createRoutes(
           </LabsProvider>
         </ToastProvider>
       ),
-      children: labs.flatMap((lab) =>
-        lab.tabs.map((tab) => ({ path: tab.path, element: tab.screen })),
-      ),
+      children: [
+        ...labs.flatMap((lab) =>
+          lab.tabs.map((tab) => ({ path: tab.path, element: tab.screen })),
+        ),
+        // Every component in every state (D-06). Loaded on first visit; not in navigation.
+        {
+          path: "/dev/ui",
+          lazy: async () => ({
+            Component: (await import("./dev/KitchenSink")).KitchenSink,
+          }),
+        },
+      ],
     },
   ];
 }
