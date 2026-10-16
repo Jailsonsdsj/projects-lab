@@ -1,0 +1,273 @@
+/* ============================================================================
+   App-only component rules: what the bundle's canvas could not draw.
+   components.css is generated from the bundle and never edited; anything the
+   app adds goes here, with the same rule: tokens only, no literals.
+   ========================================================================= */
+
+/* ── Native states for canvas-only rules that had no native selector ──── */
+/* The bundle drew these with .is-pressed / .is-focus alone (D-02a removed them). */
+.check:active > input {
+  background-image: var(--gradient-pressed);
+}
+.quiz__opt:has(> input:focus-visible) {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+
+/* ── <dialog> hosts .sheet and .dialog ─────────────────────────────────
+   The canvas drew a .scrim div; in the app the top layer's ::backdrop is the
+   scrim, and the UA's dialog chrome (border, padding, canvas colours) goes. */
+dialog.sheet,
+dialog.dialog {
+  overflow: auto;
+}
+/* The bundle's .sheet / .dialog set display: flex, which (as author CSS) beats
+   the UA's dialog:not([open]) { display: none }: restore it, or a closed
+   dialog stays on screen and swallows taps. */
+dialog.sheet:not([open]),
+dialog.dialog:not([open]) {
+  display: none;
+}
+dialog.sheet {
+  margin: auto auto 0;
+  padding: 0 0 env(safe-area-inset-bottom);
+  border: 0;
+  max-height: calc(100dvh - var(--space-12));
+}
+dialog.dialog {
+  margin: auto;
+  width: calc(100% - var(--space-8));
+  max-height: calc(100dvh - var(--space-8));
+}
+dialog.sheet::backdrop,
+dialog.dialog::backdrop {
+  background-color: var(--color-scrim);
+  animation: var(--animate-scrim-in);
+}
+
+/* Leaving: the component keeps the dialog open for --duration-*-out, then closes it. */
+.sheet.is-closing {
+  animation: var(--animate-sheet-out);
+}
+.dialog.is-closing {
+  animation: var(--animate-dialog-out);
+}
+dialog.is-closing::backdrop {
+  animation: var(--animate-scrim-out);
+}
+
+/* ── OptionsMenu as a popover, anchored to its trigger ────────────────── */
+/* Same for popovers: .menu's display: flex beats the UA's closed-popover rule. */
+.menu[popover]:not(:popover-open) {
+  display: none;
+}
+.menu[popover] {
+  inset: auto;
+  margin: var(--space-1) 0 0;
+  position-area: block-end span-inline-start;
+  position-try-fallbacks: flip-block, flip-inline;
+}
+
+/* ── Toast region: above BottomTabs on phone, bottom-centre on tablet ─── */
+.toast-region {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(
+    var(--size-bottomtabs) +
+    var(--space-3) +
+    env(safe-area-inset-bottom)
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+  pointer-events: none;
+
+  @variant tablet {
+    bottom: var(--space-6);
+  }
+}
+.toast-region > .toast {
+  pointer-events: auto;
+}
+.toast.is-leaving {
+  animation: var(--animate-toast-out);
+}
+
+/* ── ImageTile with a real <img> (the bundle drew an <svg> placeholder) ─ */
+.tile > img.tile__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tile.is-loading > img.tile__photo {
+  visibility: hidden;
+}
+
+/* ── Shell layout (the canvas drew it inside device frames) ───────────────
+   Phone: header + content, BottomTabs fixed at the bottom; the rail is hidden.
+   Tablet: the SideRail beside the content; no phone header, no BottomTabs.
+   Wide: the tablet layout, centred at --size-app-max. */
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+
+  @variant tablet {
+    flex-direction: row;
+  }
+  @variant wide {
+    max-width: var(--size-app-max);
+    margin-inline: auto;
+    border-inline: var(--border-thin) solid var(--color-border);
+  }
+}
+.shell > .rail {
+  display: none;
+
+  @variant tablet {
+    display: flex;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+}
+.shell__main {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: calc(var(--size-bottomtabs) + env(safe-area-inset-bottom));
+
+  @variant tablet {
+    padding-bottom: 0;
+  }
+}
+.shell__header {
+  position: sticky;
+  top: 0;
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--color-chrome);
+  backdrop-filter: blur(var(--blur-chrome));
+
+  @variant tablet {
+    display: none;
+  }
+}
+.shell > .btabs {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+
+  @variant tablet {
+    display: none;
+  }
+}
+
+/* ── LabCard ─────────────────────────────────────────────────────────────
+   The bundle drew the error card's Retry with an inline align-self; Home's
+   cards sit in a column, one per lab, with the page's gutter. */
+.labcard__retry {
+  align-self: flex-start;
+}
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) var(--space-6);
+
+  @variant tablet {
+    padding-inline: var(--space-6);
+  }
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────
+   A titled panel on Settings (and Connections, later). The bundle drew it in
+   its screens' own styles with literal sizes; these are its tokens. */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background-color: var(--color-surface-1);
+  border: var(--border-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.card h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+/* ── Claude's sign-in: client mark, scope rows, consent card ──────────────
+   Drawn in the bundle's Allow Claude screens with literal sizes, two of them
+   between tokens: the scope text and padding take the nearest (--text-base,
+   --space-3). */
+.client {
+  display: grid;
+  place-items: center;
+  width: var(--size-control-lg);
+  height: var(--size-control-lg);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-1);
+  border: var(--border-thin) solid var(--color-border);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-ink);
+}
+.scope {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+.scope + .scope {
+  border-top: var(--border-thin) solid var(--color-border);
+}
+.scope .icon {
+  color: var(--color-ink-muted);
+}
+/* The consent sits on the page on phone and in a card on tablet (the bundle's
+   .spec-card frame). */
+.consent-card {
+  @variant tablet {
+    background-color: var(--color-surface-1);
+    border: var(--border-thin) solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* ── Connections: client rows ───────────────────────────────────────────
+   The bundle's Connections screens, rebuilt from tokens: the small client
+   mark takes --space-10 and --radius-md, the row --size-row as its minimum
+   height (the nearest tokens to what the canvas drew). On tablet, "last used"
+   moves out of the meta line into its own column. */
+.client--sm {
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
+  font-size: var(--text-base);
+}
+.crow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  min-height: var(--size-row);
+
+  @variant tablet {
+    grid-template-columns: auto minmax(0, 2fr) minmax(0, 1fr) auto;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
+  }
+}
+.crow + .crow {
+  border-top: var(--border-thin) solid var(--color-border);
+}

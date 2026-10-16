@@ -106,6 +106,9 @@ packages/
 1. `core` never imports from a lab.
 2. A lab never imports from another lab. Cross-lab calls go through `shared/contracts/` interfaces, implemented by the owning lab and injected at mount time.
 3. Every lab exposes the same three things: `routes` (Hono sub-app under `/api/<lab>`), `tools` (MCP tools prefixed `<lab>_`), and `screens` (React routes under `/<lab>`).
+4. `@projects-lab/shared`'s root exports only `core` and `contracts`. Lab code in `shared/src/<lab>` is reached by subpath (`@projects-lab/shared/<lab>`, added with the folder), so a re-export can't carry one lab's code past the patterns above.
+
+Enforced by `biome check .`; `scripts/check-boundaries.sh --self-test` (in `pnpm lint`) proves the rules still refuse each forbidden direction and allow contracts and the composition roots (`api/src/index.ts`, `web/src/app.tsx`). On the API, `core/lab.ts` `mountLabs` puts every lab behind `requireAuth` at `/api/<lab>` and refuses a tool not named `<lab>_[a-z_]+`.
 
 The first contract, owned by Study Lab and consumed by Career Lab:
 
@@ -162,6 +165,7 @@ One remote MCP server on the same Worker lets **every** Claude surface read your
 - **Auth:** `workers-oauth-provider` wraps the Worker's default export. It needs a KV namespace bound as `OAUTH_KV`, and stores tokens, codes and client secrets only as hashes ([library README](https://github.com/cloudflare/workers-oauth-provider)). Refresh tokens rotate.
 - **Sign-in page = your passphrase login.** The OAuth `/oauth/authorize` step renders the same login screen (KDF in the browser), then a one-line consent: "Allow *Claude* to read and write Projects Lab". No third-party identity provider.
 - **Credential separation:** an OAuth access token is rejected on `/api/*`; a session JWT is rejected on `/mcp`. Tested in both directions.
+- **As built (F-14a):** one `OAuthProvider` in `api/src/index.ts`, built from `PUBLIC_ORIGIN` (issuer; resource `<origin>/mcp`), one scope `projects-lab`, CIMD and DCR both enabled until SP-01 shows what each Claude surface uses. `GET /oauth/authorize` serves the app's own `index.html` with the consent details injected; the React page (F-14b) first posts `decision: "verify"` with the passphrase's `authKey` (checked without using the one-time handle), then `allow` (checked again) or `deny` to `POST /oauth/authorize`; each passphrase check counts in the login's rate-limit bucket.
 - **Connections screen:** lists active grants by client name and last use, with Revoke.
 
 ### 6.3 Tool conventions
@@ -172,6 +176,8 @@ One remote MCP server on the same Worker lets **every** Claude surface read your
 - **Reads are compact:** tools return the fields Claude needs, not whole rows, to keep each session's context small.
 
 Platform phase ships only `core_whoami` (proves the connection) and `core_find_skill` (canonical-name lookup with aliases). Lab tools arrive with each lab.
+
+**As built (F-15):** `api/src/mcp/server.ts` builds a fresh `McpServer` per request (`createMcpHandler` from `agents/mcp/server`, SDK v2) with every tool from `coreTools` and the labs' `tools`; the registry, not the tool, adds `idempotencyKey`, the `mutation` claim and the `mcp_call` row to write tools. A tool is a `LabTool` (`core/lab.ts`) whose `run` calls a service; a test fails on SQL in any tool file.
 
 ### 6.4 Files from Claude (R2-10)
 

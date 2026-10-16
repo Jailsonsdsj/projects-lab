@@ -5,7 +5,8 @@ tools: Read, Bash, Grep
 model: sonnet
 ---
 
-Run `git diff main...HEAD`. Review it against:
+Run `git diff HEAD` and `git status --short` (new files stay untracked until
+the commit, so read those too). Review them against:
 - the PRD section named in this task's `Load` column in docs/backlog.md
 - the "Labs" and "Rules not inferable from code" sections of CLAUDE.md
 

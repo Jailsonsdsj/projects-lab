@@ -7,10 +7,20 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/worker-configuration.d.ts"]
+    "includes": [
+      "**",
+      "!**/worker-configuration.d.ts",
+      "!packages/api/migrations",
+      "!docs/design"
+    ]
   },
   "formatter": {
     "indentStyle": "space"
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   },
   "overrides": [
     {
@@ -83,6 +93,25 @@
                 ]
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/web/src/styles/tokens.css"],
+      "formatter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["packages/web/src/styles/components.css"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "style": {
+            "noDescendingSpecificity": "off"
           }
         }
       }

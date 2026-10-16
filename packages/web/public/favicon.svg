@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Projects Lab's icon: the platform accent (light) with the bundle's
+       "home" icon in on-platform. pwa.config.test.ts keeps both colours equal
+       to tokens.css; vite-plugin-pwa renders every PNG size from this file. -->
+  <title>Projects Lab</title>
+  <rect width="512" height="512" rx="112" fill="#2B2D33"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="translate(96 103) scale(13.333)">
+    <path d="M3 10.5 12 3l9 7.5"/>
+    <path d="M5 9.5V20h14V9.5"/>
+  </g>
+</svg>

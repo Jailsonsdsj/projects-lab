@@ -1,0 +1,53 @@
+# Every push to developer and every PR to main (playbook §9). Zero production
+# credentials: no secret and no --remote. scripts/check-workflows.sh (in
+# `pnpm lint`) fails if either ever appears here.
+name: ci
+
+on:
+  push:
+    branches: [developer]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Before setup-node, so its pnpm cache works. Version from packageManager.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Biome, then the boundary, KDF and token guards (each self-tests first).
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # Before the tests: /oauth/authorize serves web/dist through ASSETS.
+      - run: pnpm --filter @projects-lab/web build
+      - run: pnpm test
+      # Every migration on a fresh local D1, then every invariant probe.
+      - run: pnpm verify:triggers
+      - run: pnpm --filter @projects-lab/api exec wrangler deploy --dry-run --env=""
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps webkit
+      # WebKit at phone, tablet and wide, on the built app with a mocked API.
+      - run: pnpm e2e

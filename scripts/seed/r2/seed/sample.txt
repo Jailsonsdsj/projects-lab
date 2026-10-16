@@ -1,0 +1,2 @@
+Sample object loaded by `pnpm seed` into the local R2 bucket. Real samples
+(profile photo, generated documents) arrive with the Career Lab.
