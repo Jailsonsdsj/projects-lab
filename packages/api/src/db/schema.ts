@@ -1,6 +1,11 @@
 // Core tables (docs/prd/99-data-model.md). `drizzle-kit generate` turns this into
 // migrations/; never hand-edit the output. Triggers (C-7) live in their own
 // custom migration. Every column a CHECK references is NOT NULL.
+import {
+  UPLOAD_CONTENT_TYPES,
+  UPLOAD_KINDS,
+  UPLOAD_MAX_BYTES,
+} from "@projects-lab/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -99,3 +104,39 @@ export const githubCache = sqliteTable("github_cache", {
   bodyJson: text("body_json").notNull(),
   fetchedAt: text("fetched_at").notNull(),
 });
+
+/** A SQL list of string literals from a shared constant: IN ('a', 'b'). */
+const sqlList = (values: readonly string[]) =>
+  sql.raw(values.map((value) => `'${value.replace(/'/g, "''")}'`).join(", "));
+
+// One file Claude may upload through a signed URL (F-18, PRD 02 "Uploads").
+// The row exists from core_create_upload; used_at is set once, when its PUT
+// is accepted (C-13). The lists and the cap come from packages/shared.
+export const upload = sqliteTable(
+  "upload",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(),
+    filename: text("filename").notNull(),
+    contentType: text("content_type").notNull(),
+    bytes: integer("bytes").notNull(),
+    r2Key: text("r2_key").notNull(),
+    createdAt: text("created_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    usedAt: text("used_at"),
+  },
+  (t) => [
+    // C-10
+    check(
+      "upload_bytes_range",
+      sql`typeof(${t.bytes}) = 'integer' AND ${t.bytes} BETWEEN 1 AND ${sql.raw(String(UPLOAD_MAX_BYTES))}`,
+    ),
+    // C-11
+    check("upload_kind_allowed", sql`${t.kind} IN (${sqlList(UPLOAD_KINDS)})`),
+    // C-12
+    check(
+      "upload_content_type_allowed",
+      sql`${t.contentType} IN (${sqlList(UPLOAD_CONTENT_TYPES)})`,
+    ),
+  ],
+);

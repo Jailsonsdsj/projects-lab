@@ -49,6 +49,7 @@ describe("/mcp", () => {
       }
     ).tools;
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "core_create_upload",
       "core_find_skill",
       "core_whoami",
     ]);

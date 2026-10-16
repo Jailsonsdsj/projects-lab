@@ -68,6 +68,21 @@ github_cache(
   body_json,                             -- the entry or folder listing the app uses
   fetched_at
 )
+
+-- One file Claude may upload through a signed URL (02-integration "Uploads",
+-- F-18). The row exists from core_create_upload; used_at is set once, by the
+-- accepted PUT. Lists and the cap come from packages/shared.
+upload(
+  id,
+  kind,                                  -- resume | cover_letter (C-11)
+  filename,                              -- letters, digits, . - _ only
+  content_type,                          -- PDF or Word (C-12)
+  bytes,                                 -- integer 1..10 MB (C-10)
+  r2_key,                                -- uploads/<id>/<filename>
+  created_at,
+  expires_at,                            -- 10 minutes after created_at
+  used_at?                               -- set once, never changed (C-13)
+)
 ```
 
 Every column above without `?` is `NOT NULL`.
@@ -85,8 +100,12 @@ Every column above without `?` is `NOT NULL`.
 | C-7 | A `skill` is never hard-deleted, so no lab row can lose its skill. Removal is `deleted_at` | `BEFORE DELETE` trigger `skill_no_hard_delete` rejects every delete. Lab tables also get FKs to `skill` | `0001_triggers` (F-05) |
 | C-8 | Among live skills, no alias equals another skill's name or alias, and no name equals another skill's alias (ignoring case). Restoring a soft-deleted skill is checked again | `BEFORE INSERT` and `BEFORE UPDATE OF name, aliases_json, deleted_at` triggers using `json_each` | `0001_triggers` (F-05) |
 | C-9 | `user.session_version` is an integer >= 0 | `BEFORE INSERT` and `BEFORE UPDATE OF session_version` triggers (`typeof` check, so text can't slip past `>= 0`) | `0003_session_version_trigger` (F-08a) |
+| C-10 | `upload.bytes` is an integer from 1 to `UPLOAD_MAX_BYTES` (10 MB) | `CHECK (typeof(bytes) = 'integer' AND bytes BETWEEN 1 AND 10485760)`, the cap from `packages/shared` | `0005_upload` (F-18) |
+| C-11 | `upload.kind` is one of `UPLOAD_KINDS` | `CHECK (kind IN (…))`, built from the shared list | `0005_upload` (F-18) |
+| C-12 | `upload.content_type` is one of `UPLOAD_CONTENT_TYPES` (PDF, Word) | `CHECK (content_type IN (…))`, built from the shared list | `0005_upload` (F-18) |
+| C-13 | `upload.used_at`, once set, never changes (a used upload's file can't be overwritten) | `BEFORE UPDATE OF used_at` trigger `upload_used_at_once` | `0006_upload_triggers` (F-18) |
 
-Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check. Two checks prove C-1 to C-9 and every NULL case, and their probe lists must stay in sync: `packages/api/test/invariants.test.ts` (`pnpm test`) attempts each write through the D1 binding, and `scripts/verify-triggers.sh` (`pnpm verify:triggers`) runs the same probes after `wrangler d1 migrations apply` on a fresh local D1.
+Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check. Two checks prove C-1 to C-13 and every NULL case, and their probe lists must stay in sync: `packages/api/test/invariants.test.ts` (`pnpm test`) attempts each write through the D1 binding, and `scripts/verify-triggers.sh` (`pnpm verify:triggers`) runs the same probes after `wrangler d1 migrations apply` on a fresh local D1.
 
 ## Notes for the build
 

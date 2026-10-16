@@ -12,3 +12,4 @@ export * from "./core/lab";
 export * from "./core/oauth";
 export * from "./core/pwa";
 export * from "./core/skill";
+export * from "./core/upload";
