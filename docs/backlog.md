@@ -9,7 +9,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 | Phase | Done | Total | Status |
 |---|---|---|---|
 | 0 Foundation | 25 | 25 | Done |
-| Spikes | 0 | 3 | Ready |
+| Spikes | 1 | 3 | In progress |
 | 1 Design system | 16 | 16 | Done |
 | 2 Study Lab | — | — | Detailed after PRD `10`–`13` |
 | 3 Career Lab | — | — | Detailed after PRD `20`–`24` and the spikes |
@@ -60,7 +60,7 @@ Record each result in the Done-when cell; they change PRD `02`, `22` and `23`.
 
 | ID | Task | Size | Model | Load | Done when |
 |---|---|---|---|---|---|
-| SP-01 | Connect each surface and call `core_whoami`: Claude Code in VS Code, Claude Code on the web, claude.ai custom connector, the mobile app **(Human + Sonnet)** | S | Sonnet | `docs/architecture.md` §6.5 | Each surface marked works / works with a setting (named) / doesn't; CPU time per `/mcp` call (Workers Metrics) checked against the free tier's 10 ms (F-15 left it unmeasured). **CPU checked 2026-10-16:** over budget on every `/mcp` call (15–21 ms; `core_whoami` 10 ms) but no request failed; the fix is deferred to **P-05** (post-launch) by the owner, so SP-01 now waits only on the surfaces. **So far:** C (claude.ai custom connector) works, registered by CIMD (`client_id` `https://claude.ai/oauth/mcp-oauth-client-metadata`); A, B, D pending |
+| SP-01 | Connect each surface and call `core_whoami`: Claude Code in VS Code, Claude Code on the web, claude.ai custom connector, the mobile app **(Human + Sonnet)** | S | Sonnet | `docs/architecture.md` §6.5 | ✅ 2026-10-16. Every surface works with no setting, each calling `core_whoami` → owner `3055d4ea…`, America/Recife, labs study and career: **A** Claude Code in VS Code (registered at user scope with `claude mcp add --transport http --scope user projects-lab <origin>/mcp`, then `/mcp` → Authenticate; client "Claude Code", its own registration); **B** Claude Code on the web (client "Claude": it uses the claude.ai connector); **C** claude.ai custom connector (client "Claude", registered by CIMD `https://claude.ai/oauth/mcp-oauth-client-metadata`, seen in the logs); **D** Claude app on iPhone and iPad (the claude.ai connector). Recorded in PRD 02's Surfaces table. Production discovery checked first: 401 with `resource_metadata` and `scope="projects-lab"`, CIMD and DCR advertised, PKCE S256 only. Both registration paths stay on. **CPU** (Observability): over budget on every `/mcp` call (`server/discover` 15–19 ms, `tools/list` 18–21 ms, `core_whoami` 10 ms; `/oauth/authorize` 22 ms), no request failed; fix deferred to **P-05** (post-launch) by the owner. Not checked: the origin Connections shows for Claude Code (would confirm DCR) |
 | SP-02 | Signed upload from Claude Code (`curl`) and from the claude.ai chat sandbox | S | Sonnet | `docs/architecture.md` §6.4 | Upload path per surface recorded; R2 holds the test files, then they're deleted |
 | SP-03 | A Claude Code scheduled task calls `core_whoami` and emails you through the Gmail connector | S | Sonnet | `docs/architecture.md` §8 | Works, or the Gmail-API fallback is chosen and added as a Career task |
 

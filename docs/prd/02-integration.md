@@ -42,15 +42,17 @@ Lab tools are specified in each lab's PRD.
 
 ## Surfaces
 
-Priority A > B > D (R2-7). SP-01 fills in "Works" and SP-02 "Uploads"; this table is where their results are recorded.
+Priority A > B > D (R2-7). SP-01 filled in "Works" (2026-10-16); SP-02 fills in "Uploads".
 
-| Surface | Connects as | Works | Uploads |
-|---|---|---|---|
-| A · Claude Code, VS Code | Remote HTTP MCP server; OAuth in the browser | Expected (SP-01) | `curl --upload-file` (SP-02) |
-| B · Claude Code on the web | Same server; the environment's network settings may need the app's domain | Unverified (SP-01) | `curl` if the sandbox reaches the app (SP-02) |
-| C · Claude chat, web and desktop | Custom connector, Settings → Connectors | Documented | Probably none: the owner drops the file in the app (SP-02) |
-| D · Claude app, phone and tablet | The connectors added on claude.ai | Documented | As C |
-| Scheduled task | A Claude Code scheduled task using the connector (and Gmail, SP-03) | Unverified (SP-03) | As A |
+| Surface | Connects as | Works (SP-01, 2026-10-16) | Client name · registered by | Uploads |
+|---|---|---|---|---|
+| A · Claude Code, VS Code | Remote HTTP MCP server at user scope (`claude mcp add --transport http --scope user projects-lab <origin>/mcp`); `/mcp` → Authenticate signs in through the browser | **Works**, no setting | "Claude Code" · its own client (origin not checked) | `curl --upload-file` (SP-02) |
+| B · Claude Code on the web | The claude.ai connector, not a registration of its own | **Works**, no setting reported | "Claude" · CIMD, via claude.ai | `curl` if the sandbox reaches the app (SP-02) |
+| C · Claude chat, web and desktop | Custom connector, Settings → Connectors | **Works**, no setting | "Claude" · CIMD (`https://claude.ai/oauth/mcp-oauth-client-metadata`, seen in the logs) | Probably none: the owner drops the file in the app (SP-02) |
+| D · Claude app, phone and tablet | The connector added on claude.ai | **Works** on iPhone and iPad, no setting | "Claude" · CIMD, via claude.ai | As C |
+| Scheduled task | A Claude Code scheduled task using the connector (and Gmail, SP-03) | Unverified (SP-03) | | As A |
+
+CPU per `/mcp` call is over the free tier's 10 ms (15–21 ms; `core_whoami` 10 ms), with no failed request; the fix is P-05 (post-launch). Both registration paths stay on: claude.ai uses CIMD, and Claude Code registers its own client.
 
 ## Study content: `study-materials`
 
