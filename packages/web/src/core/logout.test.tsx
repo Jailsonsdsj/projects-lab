@@ -6,7 +6,7 @@ import { RouterProvider } from "react-router/dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mockApi } from "../../test/api";
 import { createRoutes } from "../app";
-import { sessionToken } from "./session";
+import { endSession, sessionToken } from "./session";
 
 let deleteCache: ReturnType<typeof vi.fn>;
 
@@ -80,5 +80,22 @@ describe("Log out", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
     expect(sessionToken()).toBeNull();
     expect(deleteCache).toHaveBeenCalledWith(API_CACHE);
+  });
+});
+
+describe("ending a session", () => {
+  it("deletes the cached reads before the token, so /login never shows over them", async () => {
+    let finish: (value: boolean) => void = () => {};
+    deleteCache.mockImplementation(
+      () => new Promise<boolean>((resolve) => (finish = resolve)),
+    );
+    const ending = endSession("signed-out");
+    // The cache is still being deleted: the token (and so the gate) waits.
+    await Promise.resolve();
+    expect(deleteCache).toHaveBeenCalledWith(API_CACHE);
+    expect(sessionToken()).not.toBeNull();
+    finish(true);
+    await ending;
+    expect(sessionToken()).toBeNull();
   });
 });

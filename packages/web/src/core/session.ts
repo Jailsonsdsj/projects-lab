@@ -34,14 +34,19 @@ export function startSession(token: string): void {
   emit();
 }
 
-/** Drops the token and the cached /api reads, which hold this session's data. */
-export function endSession(reason: SessionEnd): void {
+/**
+ * Drops the cached /api reads (this session's data), then the token. In that
+ * order: the session gate shows /login the moment the token goes, so by then
+ * the cache must already be gone.
+ */
+export async function endSession(reason: SessionEnd): Promise<void> {
+  if (typeof caches !== "undefined")
+    await caches.delete(API_CACHE).catch(() => false);
   try {
     localStorage.removeItem(TOKEN_KEY);
   } catch {}
   ended = reason;
   emit();
-  if (typeof caches !== "undefined") void caches.delete(API_CACHE);
 }
 
 /**
@@ -57,7 +62,7 @@ export async function signOut(): Promise<void> {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   } catch {}
-  endSession("signed-out");
+  await endSession("signed-out");
 }
 
 export function sessionEnded(): SessionEnd | null {

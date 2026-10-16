@@ -20,6 +20,12 @@ function fakeToken(): string {
 
 export const test = base.extend({
   page: async ({ page }, use) => {
+    // No Worker runs behind the preview server: answer any /api request a
+    // test didn't mock, instead of letting Vite proxy it to nothing (and log
+    // ECONNREFUSED). Routes a test adds later take precedence.
+    await page.route("**/api/**", (route) =>
+      route.fulfill({ status: 503, json: { error: "no_api_in_e2e" } }),
+    );
     await page.addInitScript((token) => {
       if (!localStorage.getItem("pl_session"))
         localStorage.setItem("pl_session", token);

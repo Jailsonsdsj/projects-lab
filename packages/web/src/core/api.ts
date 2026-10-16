@@ -33,7 +33,7 @@ export async function apiFetch(
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const response = await fetch(path, { ...init, headers });
   if (response.status === 401 && !(await isWrongPassphrase(response))) {
-    endSession(token && isExpired(token) ? "expired" : "invalid");
+    await endSession(token && isExpired(token) ? "expired" : "invalid");
     throw new SessionEnded();
   }
   return response;
