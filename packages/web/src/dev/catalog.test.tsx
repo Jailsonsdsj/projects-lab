@@ -3,18 +3,11 @@ import { describe, expect, it } from "vitest";
 import * as ui from "../components/ui";
 import { CATALOG } from "./catalog";
 import { KitchenSink } from "./KitchenSink";
-
-/** Visual components: PascalCase function exports (constants like ICONS are all caps). */
-const exported = Object.entries(ui)
-  .filter(
-    ([name, value]) => /^[A-Z][a-z]/.test(name) && typeof value === "function",
-  )
-  .map(([name]) => (name === "ToastProvider" ? "Toast" : name))
-  .sort();
+import { UI_COMPONENTS } from "./ui-exports";
 
 describe("/dev/ui catalog", () => {
   it("has exactly one entry per component exported from components/ui", () => {
-    expect(CATALOG.map((entry) => entry.name).sort()).toEqual(exported);
+    expect(CATALOG.map((entry) => entry.name).sort()).toEqual(UI_COMPONENTS);
   });
 
   it("labels every example uniquely within its component", () => {

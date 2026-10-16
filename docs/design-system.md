@@ -57,7 +57,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `Icon` | `.icon` | One of the bundle's 43 icons | `name`, `size` xs · sm · md · lg, `label` (else decorative) | — |
 | `Prose` | `.prose` | Course Markdown (no raw HTML) | `markdown`, `large` | callouts, code (Copy), tables, figures, quiz selection |
 
-Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`.
+Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`.
 
 **In the bundle, not built yet:** Select (a Field around a native `<select>` works today; see `/dev/ui`), SearchField (use `Input search`), CopyField, ListRow, StatCard, ReadinessMeter, Banner. They arrive with the screens that need them.
 
@@ -65,5 +65,5 @@ Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `linkClick`, `ICONS`, `BA
 
 1. Find it in `docs/design/components.css` and its markup in the bundle (`pnpm design:extract`, then the unpacked pages).
 2. Build it on the bundle's classes; anything the canvas couldn't draw goes in `app-components.css`.
-3. Export it from `components/ui/index.ts`, add it to `src/dev/catalog.tsx` (every variant × state), and add a row above.
+3. Export it from `components/ui/index.ts`, add it to `src/dev/catalog.tsx` (every variant × state), and add a row above (or name it on the Helpers line if it renders nothing). `src/dev/inventory.test.ts` fails on any export missing here, any row or helper no longer exported, and a built component still listed as "not built yet".
 4. Test behaviour, not snapshots.
