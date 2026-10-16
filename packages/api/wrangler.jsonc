@@ -9,6 +9,10 @@
   "observability": {
     "enabled": true
   },
+  // Daily at 03:00 UTC: prune mutation, auth_attempt (7 days), mcp_call (90).
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
   // Set with `wrangler secret put` (owner only); locally in .dev.vars.
   "secrets": {
     "required": ["TOKEN_SIGNING_KEY", "GITHUB_TOKEN", "UPLOAD_SIGNING_KEY"]

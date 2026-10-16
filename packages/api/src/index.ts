@@ -7,9 +7,11 @@ import { OAUTH_SCOPE } from "@projects-lab/shared";
 import { Hono } from "hono";
 import { authRoutes } from "./core/auth/routes";
 import { connectionsRoutes } from "./core/connections-routes";
+import { database } from "./core/db";
 import { type LabEnv, mountLabs } from "./core/lab";
 import { authorizeRoutes } from "./core/oauth/authorize";
 import { publicOrigin } from "./core/oauth/origin";
+import { pruneOldRows } from "./core/prune";
 import { uploadsRoutes } from "./core/uploads-routes";
 import { careerLab } from "./labs/career";
 import { studyLab } from "./labs/study";
@@ -72,5 +74,11 @@ export default {
   fetch(request, env, ctx) {
     provider ??= oauthProvider(env);
     return provider.fetch(request, env, ctx);
+  },
+  /** The daily Cron Trigger (wrangler.jsonc `triggers`): prune old rows. A
+   *  failure throws, so it shows in the Worker's logs. */
+  async scheduled(controller, env) {
+    const pruned = await pruneOldRows(database(env), controller.scheduledTime);
+    console.log("pruned", pruned);
   },
 } satisfies ExportedHandler<Env>;
