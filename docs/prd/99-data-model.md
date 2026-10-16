@@ -58,6 +58,16 @@ mcp_call(
   ok,                                    -- 0/1
   created_at
 )
+
+-- GitHub metadata by path (study-materials), with its ETag, so the next read
+-- sends If-None-Match and takes a free 304 (02-integration, F-17). A copy of
+-- GitHub's answer, replaced whenever it sends a new one. No invariants.
+github_cache(
+  path,                                  -- PK: path in the repository
+  etag,
+  body_json,                             -- the entry or folder listing the app uses
+  fetched_at
+)
 ```
 
 Every column above without `?` is `NOT NULL`.

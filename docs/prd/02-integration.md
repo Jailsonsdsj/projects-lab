@@ -57,8 +57,9 @@ Priority A > B > D (R2-7). SP-01 fills in "Works" and SP-02 "Uploads"; this tabl
 - **Layout (R2-2).** Generated content lives under `study-materials/Study Lab/<area-slug>/<topic-slug>/`, slug paths only: `<topic>__<level>.md` (Specialized: `__<level>_m1.md`, `_m2` …), `<topic>__<level>__exam-<n>.md` and `.pdf`, and images in `_img/`. Other folders are untouched and shown only after launch (P-01).
 - **Read-only to the app.** The Worker reads with `GITHUB_TOKEN`: a fine-grained token, Contents read, on `study-materials` only. No GitHub write call exists in the code; only Claude Code pushes.
 - **Metadata by path** returns the blob SHA. The Worker sends `If-None-Match` with the ETag it has; a `304` costs no body fetch and doesn't count against GitHub's rate limit.
-- **Content by SHA** at `GET /api/study/content/<sha>`, with `Cache-Control: private, max-age=31536000, immutable` (`private`: it needs a session). The service worker caches it (D-11, `CacheFirst`), which is what makes courses readable offline. Don't rely on the Workers Cache API.
-- **Images** under `_img/` are proxied the same way, so the repository never needs to be public. An `<img>` sends the session cookie, which is why `/api` accepts it for reads.
+- **Content by SHA** at `GET /api/study/content/<sha>/<name>` (the SHA chooses the bytes; the name only sets the type and the download name), with `Cache-Control: private, max-age=31536000, immutable` (`private`: it needs a session). The service worker caches it (D-11, `CacheFirst`), which is what makes courses readable offline. Don't rely on the Workers Cache API.
+- **Images** under `_img/` are proxied the same way, so the repository never needs to be public. An `<img>` sends the session cookie, which is why `/api` accepts it for reads. Content responses carry `X-Content-Type-Options: nosniff` and a sandboxing `Content-Security-Policy`, so an SVG opened directly runs no script on the app's origin.
+- **Metadata ETags** live in D1 (`github_cache`), since the Workers Cache API isn't relied on and KV is for OAuth only. The repository is `STUDY_MATERIALS_REPO` in `wrangler.jsonc` `vars`.
 - Every GitHub request sends a `User-Agent` (GitHub refuses requests without one).
 - **Exams (R2-4)** are taken in Claude Code. The app shows the grade and links the Markdown and the PDF.
 

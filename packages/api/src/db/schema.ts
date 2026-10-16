@@ -89,3 +89,13 @@ export const mcpCall = sqliteTable(
     check("mcp_call_ok_bool", sql`${t.ok} IN (0, 1)`),
   ],
 );
+
+// GitHub metadata by path, with its ETag, so the next read can send
+// If-None-Match and take a 304 that costs no rate limit (F-17, PRD 02). A copy
+// of GitHub's answer for that path, replaced whenever GitHub sends a new one.
+export const githubCache = sqliteTable("github_cache", {
+  path: text("path").primaryKey(),
+  etag: text("etag").notNull(),
+  bodyJson: text("body_json").notNull(),
+  fetchedAt: text("fetched_at").notNull(),
+});
