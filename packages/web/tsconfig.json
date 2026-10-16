@@ -3,10 +3,16 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    "types": ["vite/client", "vite-plugin-pwa/react"],
     "rootDir": "."
   },
-  "include": ["src", "test", "vite.config.ts", "vitest.config.ts"],
+  "include": [
+    "src",
+    "test",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "pwa.config.ts"
+  ],
   "references": [
     {
       "path": "../shared"

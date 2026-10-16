@@ -8,6 +8,15 @@ export const TEST_TIMEOUT_MS = 5000;
 
 export default defineConfig({
   plugins: [react()],
+  // vite-plugin-pwa's virtual module exists only in a real build.
+  resolve: {
+    alias: {
+      "virtual:pwa-register/react": new URL(
+        "./test/pwa-register.ts",
+        import.meta.url,
+      ).pathname,
+    },
+  },
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],

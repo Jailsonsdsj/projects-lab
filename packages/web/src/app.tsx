@@ -6,6 +6,7 @@ import { type LabDefinition, LabsProvider } from "./core/lab-registry";
 import { RouteError } from "./core/RouteError";
 import { Shell } from "./core/Shell";
 import { NotFoundScreen, platformLab } from "./core/screens";
+import { UpdatePrompt } from "./core/UpdatePrompt";
 import { careerLab } from "./labs/career";
 import { studyLab } from "./labs/study";
 
@@ -25,6 +26,7 @@ export function createRoutes(
         <ToastProvider>
           <LabsProvider labs={labs}>
             <Shell />
+            <UpdatePrompt />
           </LabsProvider>
         </ToastProvider>
       ),

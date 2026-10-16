@@ -11,23 +11,32 @@ export type ReadState<T> =
   | { status: "empty" }
   | { status: FailureKind; error: unknown };
 
+/** What started a read: the mount or Retry (shows loading), or the app coming
+ *  back (foreground, connection) while something is already on screen. */
+interface Run {
+  n: number;
+  background: boolean;
+}
+
 /**
- * Runs `load` once per mount and on `retry()`. An empty answer and a failed
- * read are different states, so a failure can never render as "nothing here
- * yet". To read again with new inputs, give the component a new `key`.
+ * Runs `load` on mount, on `retry()`, and again whenever the app comes back to
+ * the foreground or back online, so data Claude wrote meanwhile shows up
+ * without navigating. A background read swaps the data in when it arrives and,
+ * if it fails, keeps what's on screen. An empty answer and a failed read are
+ * different states, so a failure never renders as "nothing here yet". To read
+ * new inputs, give the component a new `key`.
  */
 export function useRead<T>(load: Load<T>): {
   state: ReadState<T>;
   retry: () => void;
 } {
   const [state, setState] = useState<ReadState<T>>({ status: "loading" });
-  const [attempt, setAttempt] = useState(0);
+  const [run, setRun] = useState<Run>({ n: 0, background: false });
   const loadRef = useRef(load);
   useEffect(() => {
     loadRef.current = load;
   });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is the trigger for reading again
   useEffect(() => {
     const controller = new AbortController();
     loadRef.current(controller.signal).then(
@@ -39,15 +48,33 @@ export function useRead<T>(load: Load<T>): {
       },
       (error: unknown) => {
         if (controller.signal.aborted) return;
-        setState({ status: failureKind(error), error });
+        setState((shown) =>
+          run.background &&
+          (shown.status === "loaded" || shown.status === "empty")
+            ? shown
+            : { status: failureKind(error), error },
+        );
       },
     );
     return () => controller.abort();
-  }, [attempt]);
+  }, [run]);
+
+  useEffect(() => {
+    const readAgain = () => {
+      if (document.visibilityState === "visible")
+        setRun((r) => ({ n: r.n + 1, background: true }));
+    };
+    document.addEventListener("visibilitychange", readAgain);
+    window.addEventListener("online", readAgain);
+    return () => {
+      document.removeEventListener("visibilitychange", readAgain);
+      window.removeEventListener("online", readAgain);
+    };
+  }, []);
 
   const retry = useCallback(() => {
     setState({ status: "loading" });
-    setAttempt((n) => n + 1);
+    setRun((r) => ({ n: r.n + 1, background: false }));
   }, []);
 
   return { state, retry };
