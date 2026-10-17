@@ -1,6 +1,6 @@
 # Projects Lab — Architecture
 
-_Status: platform architecture, agreed through questionnaires round 1 and 2 (2026-10-13). Lab-specific architecture is added when each lab's PRD is written._
+_Status: platform architecture, agreed through questionnaires round 1 and 2 (2026-10-13). Updated 2026-10-17: career documents are generated on demand by Claude and never stored (R3-1, replaces R2-10). Lab-specific architecture is added when each lab's PRD is written._
 
 This file records only the **deltas** from `PROJECT-STARTER-PLAYBOOK.md`. Everything the playbook decides (stack, auth, CI/CD, migrations, D1 rules, verification discipline) applies unchanged unless a row below says otherwise.
 
@@ -33,7 +33,7 @@ flowchart LR
   subgraph cf[Cloudflare · Workers Free]
     worker[Worker<br/>static assets · /api · /mcp · /oauth]
     d1[(D1<br/>platform data)]
-    r2[(R2<br/>small files)]
+    r2[(R2<br/>profile photo)]
     kv[(KV OAUTH_KV<br/>OAuth grants)]
   end
   gh[(GitHub<br/>study-materials · private)]
@@ -43,6 +43,7 @@ flowchart LR
   you -- passphrase session --> worker
   vsc & ccw & chat & sched -- MCP + OAuth --> worker
   vsc & ccw -- git push courses, exams --> gh
+  vsc & chat -. generated PDF / DOCX, not stored .-> you
   worker -- read-only token --> gh
   worker --- d1 & r2 & kv
   you -. upload, paste link .-> drive
@@ -50,12 +51,13 @@ flowchart LR
   sched -- digest --> gmail
 ```
 
-**Two write paths, never mixed:**
+**Two write paths, never mixed.** Generated career documents take neither: they go straight to you.
 
 | What | Written by | Stored in | The app's access |
 |---|---|---|---|
 | Course and exam **content** (Markdown, exam PDF, images) | Claude Code, by `git push` | `study-materials` repo | Read-only |
-| Everything else: backlog, grades, profile, skills, jobs, documents, openings | You (web UI → `/api`) or Claude (MCP → `/mcp`) | D1, plus R2 for files | Read-write |
+| Everything else: backlog, grades, profile, skills, jobs, openings | You (web UI → `/api`) or Claude (MCP → `/mcp`) | D1, plus R2 for your profile photo | Read-write |
+| Resumes, cover letters, any other career file | Claude, on demand, from the profile | **Not stored**: returned to you (§6.4) | — |
 
 ---
 
@@ -66,11 +68,11 @@ flowchart LR
 | Product shape | One app, one domain | One app hosting **lab modules** compiled in. See §4 |
 | Credentials | Passphrase → session JWT | Two credential types: session JWT for `/api`, **OAuth 2.1 access token** for `/mcp`. See §6 |
 | Bindings | D1, R2 | D1 `DB` · R2 `FILES` · **KV `OAUTH_KV`** (required by `workers-oauth-provider`) |
-| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. + **`UPLOAD_SIGNING_KEY`** for signed upload URLs (§6.4). Both fresh per project, never shared |
+| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. Fresh per project, never shared. (`UPLOAD_SIGNING_KEY`, for the signed uploads built in F-18, is removed by F-23: R3-1 left them without a use) |
 | `run_worker_first` | `["/api/*"]` | `["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]`. Still an array, never `true` |
 | Content | Lives in D1/R2 | Study content lives in **git** (`study-materials`). D1 stores only paths and metadata. See §7 |
 | Caching | Not specified | **Don't rely on the Workers Cache API**: on a `workers.dev` hostname it can't be counted on. Content is addressed by git blob SHA and cached **in the client** as immutable. See §7 |
-| R2 | Images | One bucket, `projects-lab-images` (`projects-lab-images-preview` for preview), small files only: profile photo, generated documents. **Never video** |
+| R2 | Images | One bucket, `projects-lab-images` (`projects-lab-images-preview` for preview), profile photo only; generated documents are never stored (§6.4). **Never video** |
 | Video | — | Google Drive. You upload; the app stores the link and embeds Drive's player |
 | Cron | Prune job | One Cron Trigger, daily prune. The job search is **not** a Worker cron; it's a Claude scheduled task (§8) |
 | Email | — | None sent by the app. The job digest goes out from the scheduled task through your Gmail connector |
@@ -90,7 +92,7 @@ packages/
 │   ├── study/           # Study Lab pure rules and schemas
 │   └── career/          # Career Lab pure rules and schemas
 ├── api/src/
-│   ├── core/            # auth, idempotency, helpers, skill registry, GitHub client, uploads
+│   ├── core/            # auth, idempotency, helpers, skill registry, GitHub client
 │   ├── mcp/             # MCP server: transport, tool registry, audit. No business logic
 │   ├── labs/study/      # routes, services, MCP tools for Study Lab
 │   ├── labs/career/     # routes, services, MCP tools for Career Lab
@@ -179,16 +181,22 @@ Platform phase ships only `core_whoami` (proves the connection) and `core_find_s
 
 **As built (F-15):** `api/src/mcp/server.ts` builds a fresh `McpServer` per request (`createMcpHandler` from `agents/mcp/server`, SDK v2) with every tool from `coreTools` and the labs' `tools`; the registry, not the tool, adds `idempotencyKey`, the `mutation` claim and the `mcp_call` row to write tools. A tool is a `LabTool` (`core/lab.ts`) whose `run` calls a service; a test fails on SQL in any tool file.
 
-### 6.4 Files from Claude (R2-10)
+### 6.4 Documents from Claude (R3-1, replaces R2-10)
 
-Resumes and cover letters are **Word or PDF files made by Claude** and stored in R2.
+Resumes, cover letters and any other career file are **generated on demand by Claude, on your plan, and returned to you. The app never stores them.** Each one is written for one job and used once.
 
-**Never as tool arguments.** A file passed as base64 inside a tool call has to be *generated token by token by the model*: a 150 KB PDF becomes ~200k characters of output. Instead:
+```text
+you:    paste a job posting into a Claude chat (or Claude Code)
+Claude: career_* tools → save the job, map its requirements to skills (gaps → Study backlog)
+Claude: career_document_brief → the profile items that fit this job + writing rules + layout
+Claude: builds the PDF or DOCX in its own sandbox (built-in document skills) → gives you the file
+```
 
-1. Claude calls `core_create_upload { kind, filename, contentType, bytes }`.
-2. The Worker returns a one-time URL, signed with `UPLOAD_SIGNING_KEY`, valid for 10 minutes and capped at the declared size and type.
-3. Claude Code uploads the file with `curl --upload-file`. Then it calls the lab tool that attaches the stored file to its record.
-4. **Where Claude can't run `curl`** (likely the chat and mobile surfaces; spike SP-02 confirms), Claude hands you the file and you drop it on the same record in the app.
+- **The profile is the source of truth.** Skills, education and experiences are structured records in D1. A document may only use what the profile holds: Claude selects, orders and emphasizes, and never invents (the master resume's rule). A new skill or experience is added once, in the app or by telling Claude (a `career_*` write tool), and every later document can use it.
+- **Same result from every surface.** The writing rules and layout come from the app through `career_document_brief`, not from a skill installed separately on each surface, so a resume made on the phone matches one made in Claude Code.
+- **Nothing file-sized crosses MCP.** Tools exchange structured data only, and Claude builds the file itself. "No file content in tool arguments" stays a rule. `core_create_upload` and `PUT /api/uploads/:token` (F-18) lose their only use and are retired by F-23.
+- **What the app keeps per job (A-7):** the posting, its requirement map, which profile items were selected, the self-introduction and the salary range. Never the file.
+- **Getting the file onto your device** depends on the surface, and SP-02 checks it. Expected: claude.ai and the mobile app offer it for download (needs file creation turned on in claude.ai); Claude Code in VS Code writes it to your disk; Claude Code on the web leaves it in the cloud container.
 
 ### 6.5 Surfaces (R2-7: all, with priority A > B > D)
 
@@ -203,7 +211,7 @@ Resumes and cover letters are **Word or PDF files made by Claude** and stored in
 ### 6.6 Where the skills live
 
 - **Study skills** (`study-course-builder`) move to `study-materials/.claude/skills/` (R2-1). Study sessions open only that repo; the skill reads and writes the backlog through `study_*` tools instead of `learning-backlog.md`.
-- **Career skills** (`job-mapper` and the document writers) mostly run from chat and mobile, where repo skills don't load. Where they live (claude.ai custom skills, or MCP prompts served by the app) is decided in the Career Lab PRD.
+- **Career work needs no repo skill.** It mostly runs from chat and mobile, where repo skills don't load. `job-mapper`'s mapping rules become `career_*` tools, and the document rules and layout come from `career_document_brief` (§6.4); Claude's built-in PDF and DOCX skills build the file.
 
 ---
 
@@ -237,7 +245,7 @@ study-materials/
 | Need | Decision | Platform consequence |
 |---|---|---|
 | Job search (R2-8) | Claude **scheduled task** reads your search criteria over MCP, searches the web, scores openings against your profile, saves them via `career_*` tools, emails a digest | No Worker cron for it. Criteria are app data you edit (R2-9) |
-| Documents (R2-10) | Word/PDF by Claude → R2 | Signed upload URL (§6.4) |
+| Documents (R3-1) | Resume, cover letter or other file: generated by Claude on demand from the profile, returned to you, not stored | `career_document_brief` read tool; no storage and no upload (§6.4) |
 | Self-introduction (R2-11) | Spoken "tell me about yourself", text per role | Plain D1 text |
 | Form filling (R2-12) | Copy panel in the app first; Claude in Chrome via MCP later (P-03) | — |
 | Interview videos (R2-13) | You upload to Drive and paste the link | Drive link validation and embed; no Google API |
@@ -261,7 +269,7 @@ Account-wide, with sticker-collector as the only other project (assumption A-5).
 | Resource | sticker-collector | Projects Lab | Account total vs free limit |
 |---|---|---|---|
 | D1 databases | 2 | 1 (+1 preview, created for G-03 and deleted after) | 3–4 of 10 |
-| R2 buckets / storage | 2 / images | 1 / documents and photo only | Well under 10 GB |
+| R2 buckets / storage | 2 / images | 1 / profile photo only | Well under 10 GB |
 | KV namespaces | 0 | 1 (`OAUTH_KV`) | A handful of writes per day for one user |
 | Cron Triggers | 0 | 1 | 1 of 5 |
 | Worker requests | shared | UI + MCP calls; course content is cached in the client | Far under 100k/day for one user |
@@ -274,7 +282,7 @@ Account-wide, with sticker-collector as the only other project (assumption A-5).
 | ID | Question | Decides |
 |---|---|---|
 | SP-01 | Can each surface (VS Code, Claude Code web, claude.ai, mobile) complete OAuth and call `core_whoami`? | Whether study sessions can run on the web; the network allowlist for Claude Code web |
-| SP-02 | Can Claude Code, and the chat sandbox, `curl` a signed upload URL? | The document upload flow per surface |
+| SP-02 | Can each surface turn profile data into a PDF and a DOCX and get them onto your device? (Redefined by R3-1; it was the signed-upload test) | Which surfaces to use for documents, and any setting they need |
 | SP-03 | Can a Claude Code scheduled task use the connector and send Gmail to you? | Job search design; fallback is the app sending through the Gmail API with your OAuth refresh token |
 
 ---
@@ -289,3 +297,5 @@ Account-wide, with sticker-collector as the only other project (assumption A-5).
 | A-4 | Grades | Integer tenths, 0–100 |
 | A-5 | Other Cloudflare projects | sticker-collector is the only one |
 | A-6 | `study-materials` legacy content | Untouched; `_Misc` profile files deleted only after the Career import is verified |
+| A-7 | What a generated document leaves behind | On the tracked job: the posting, its requirement map, the selected profile item IDs, the self-introduction and the salary range. No file |
+| A-8 | Skills proved in Study Lab | A topic Done with grade ≥ 7 is available to documents as a verified skill; Claude offers to add it to the profile rather than adding it silently |
