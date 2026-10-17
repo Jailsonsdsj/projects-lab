@@ -28,7 +28,7 @@ Infra → docs/architecture.md · UI → docs/design-system.md
 - Every mutation accepts Idempotency-Key (per-route middleware, not wildcard). MCP write tools take `idempotencyKey` and use the same table.
 - Two credentials, never interchangeable: session JWT for /api, OAuth access token for /mcp. Each surface rejects the other's token.
 - MCP tool handlers are thin adapters: Zod-validate, then call the same service function as the /api route. No SQL or business logic in a tool.
-- Never accept file content as an MCP tool argument (base64 or otherwise). Files arrive through `core_create_upload` signed URLs or the in-app upload.
+- Never accept file content as an MCP tool argument (base64 or otherwise). Claude's documents go straight to the owner; the app stores none. The only upload is the owner's profile photo, in the app with a session.
 - `study-materials` is read-only to the app (GITHUB_TOKEN, Contents read). Only Claude Code pushes there. Fetch content by blob SHA; don't rely on the Workers Cache API.
 - Video never goes to R2. Interview videos are Google Drive links.
 - assets.run_worker_first is ["/api/*","/mcp","/oauth/*","/.well-known/*"], never true.

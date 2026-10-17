@@ -72,6 +72,7 @@ github_cache(
 -- One file Claude may upload through a signed URL (02-integration "Uploads",
 -- F-18). The row exists from core_create_upload; used_at is set once, by the
 -- accepted PUT. Lists and the cap come from packages/shared.
+-- Unused after F-23 (R3-1: documents are never stored); TD-01 drops it.
 upload(
   id,
   kind,                                  -- resume | cover_letter (C-11)
