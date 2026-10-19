@@ -29,7 +29,7 @@ Final exams: how Claude writes, delivers and grades them, and what the app recor
 
 1. **Deliver.** Claude writes both files, commits `exam(<ID>): final exam #<n>`, pushes, then calls **`study_record_exam`** `{ topicId, attempt, level, mdPath, pdfPath }`. The Worker checks both files exist and that `attempt` is one past the topic's highest **at that level** (S-14); the topic's status doesn't change.
 2. **Answer.** The owner replies in the session.
-3. **Grade.** Claude appends `## Results`, commits `grade(<ID>): <x.x>/10` with the backlog change, pushes, then calls **`study_record_grade`** `{ topicId, attempt, grade }` with the grade in integer tenths (8.5 → 85). The Worker sets the exam's grade and `graded_at` and moves the topic to Done. **A correction** is the same call on a graded attempt: it replaces the grade and keeps `graded_at` (S-16); Claude fixes the file's Results in the same commit, and `mcp_call` records who changed it. Below 70, Claude also sets the topic's note to the lessons to review (`study_update_topic`).
+3. **Grade.** Claude appends `## Results`, commits `grade(<ID>): <x.x>/10` with the backlog change, pushes, then calls **`study_record_grade`** `{ topicId, level, attempt, grade }` with the grade in integer tenths (8.5 → 85). The Worker sets the exam's grade and `graded_at` and moves the topic to Done. **A correction** is the same call on a graded attempt: it replaces the grade and keeps `graded_at` (S-16); Claude fixes the file's Results in the same commit, and `mcp_call` records who changed it. Below 70, Claude also sets the topic's note to the lessons to review (`study_update_topic`).
 4. **Then** Claude suggests up to three next topics in one line each (from the course's "Related" section or the backlog) without adding them, and recommends a new session.
 
 The topic's **grade and Finished date** are those of its most recently graded exam, at any level (`10`, derived). A retake is a new attempt; earlier attempts stay as history.
@@ -45,7 +45,7 @@ The topic's **grade and Finished date** are those of its most recently graded ex
 | Tool | Kind | Input | Returns |
 |---|---|---|---|
 | `study_record_exam` | write | `{ topicId, attempt, level, mdPath, pdfPath }` | `{ examId, attempt }` |
-| `study_record_grade` | write | `{ topicId, attempt, grade }` (tenths, 0–100) | `{ examId, grade, topic: { id, status, grade } }` |
+| `study_record_grade` | write | `{ topicId, level, attempt, grade }` (tenths, 0–100; attempts count per level) | `{ examId, grade, topic: { id, status, grade } }` |
 | `study_list_exams` | read | `{ topicId? }` | `{ exams: [{ examId, topicId, attempt, level, mdPath, pdfPath, grade, gradedAt }] }` |
 
 Errors: unknown topic or attempt → `not_found`; an attempt out of sequence → `conflict`; a grade outside 0–100 → schema error.
