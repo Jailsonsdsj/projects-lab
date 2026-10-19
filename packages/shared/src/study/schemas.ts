@@ -7,6 +7,7 @@ import {
   type CourseLevel,
   isValidPrefix,
   NOTE_MAX_LENGTH,
+  PRIORITIES,
   parseTopicCode,
   SPECIALIZED_MAX_MODULES,
   TOPIC_LEVELS,
@@ -91,7 +92,8 @@ export const areaPrefixSchema = z
 export const skillNameSchema = z.string().trim().min(1).max(200);
 export const areaNameSchema = z.string().trim().min(1).max(60);
 export const noteSchema = z.string().trim().max(NOTE_MAX_LENGTH);
-export const prioritySchema = z.number().int().min(1).max(3);
+/** 1 (next up), 2 (soon), 3 (later), typed as Priority. */
+export const prioritySchema = z.literal(PRIORITIES);
 export const topicLevelSchema = z.enum(TOPIC_LEVELS);
 export const courseLevelSchema = z.enum(COURSE_LEVELS);
 export const topicStatusSchema = z.enum(TOPIC_STATUSES);

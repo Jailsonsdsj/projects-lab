@@ -117,12 +117,14 @@ The first contract, owned by Study Lab and consumed by Career Lab:
 ```ts
 // packages/shared/src/contracts/study.ts
 export interface StudyContract {
-  /** Adds topics the backlog lacks; returns the topic ID for every skill, new or existing. */
-  ensureTopics(input: { skillId: string; priority: 1 | 2 | 3; note: string }[]): Promise<{ skillId: string; topicId: string; created: boolean }[]>;
+  /** Adds topics the backlog lacks (area = a backlog prefix, "FE"); returns the topic ID ("FE-01") for every skill, new or existing. */
+  ensureTopics(input: { skillId: string; area: string; priority: 1 | 2 | 3; note: string }[]): Promise<{ skillId: string; topicId: string; created: boolean }[]>;
   /** Verified = a Done topic with grade ≥ 70 (tenths). */
   skillStatus(skillIds: string[]): Promise<{ skillId: string; verified: boolean; grade: number | null }[]>;
 }
 ```
+
+Career receives it as a factory, `study: (db: D1Database) => StudyContract`, and builds it per request with that request's D1 (ST-03): the interface in `shared` stays free of Workers types.
 
 **Deferred on purpose:** a generic "lab plugin" abstraction. Revisit when a third lab exists and the real common shape is known.
 
