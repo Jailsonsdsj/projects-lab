@@ -41,14 +41,14 @@ Lab tools are specified in each lab's PRD.
 
 ## Surfaces
 
-Priority A > B > D (R2-7). SP-01 filled in "Works" (2026-10-16); SP-02, redefined by R3-1, fills in "Documents": how each surface gets a generated PDF and DOCX onto the owner's device.
+Priority A > B > D (R2-7). SP-01 filled in "Works" (2026-10-16); SP-02 (redefined by R3-1) filled in "Documents" (2026-10-19): every surface turned `core_whoami` data into a one-page PDF and a DOCX and got both onto the owner's device; all opened on the Mac, iPhone and iPad.
 
 | Surface | Connects as | Works (SP-01, 2026-10-16) | Client name · registered by | Documents (SP-02) |
 |---|---|---|---|---|
-| A · Claude Code, VS Code | Remote HTTP MCP server at user scope (`claude mcp add --transport http --scope user projects-lab <origin>/mcp`); `/mcp` → Authenticate signs in through the browser | **Works**, no setting | "Claude Code" · its own client (origin not checked) | Expected: written to the Mac's disk |
-| B · Claude Code on the web | The claude.ai connector, not a registration of its own | **Works**, no setting reported | "Claude" · CIMD, via claude.ai | Expected: stays in the cloud container |
-| C · Claude chat, web and desktop | Custom connector, Settings → Connectors | **Works**, no setting | "Claude" · CIMD (`https://claude.ai/oauth/mcp-oauth-client-metadata`, seen in the logs) | Expected: download, with file creation on in claude.ai |
-| D · Claude app, phone and tablet | The connector added on claude.ai | **Works** on iPhone and iPad, no setting | "Claude" · CIMD, via claude.ai | As C |
+| A · Claude Code, VS Code | Remote HTTP MCP server at user scope (`claude mcp add --transport http --scope user projects-lab <origin>/mcp`); `/mcp` → Authenticate signs in through the browser | **Works**, no setting | "Claude Code" · its own client (origin not checked) | **Works**: written to the Mac's disk. The Mac had no PDF/DOCX libraries; Claude installed reportlab and python-docx in a throwaway virtualenv |
+| B · Claude Code on the web | The claude.ai connector, not a registration of its own | **Works**, no setting reported | "Claude" · CIMD, via claude.ai | **Works**: the web UI offers the files for download |
+| C · Claude chat, web and desktop | Custom connector, Settings → Connectors | **Works**, no setting | "Claude" · CIMD (`https://claude.ai/oauth/mcp-oauth-client-metadata`, seen in the logs) | **Works**, with **Code execution and file creation** on (it already was): download |
+| D · Claude app, phone and tablet | The connector added on claude.ai | **Works** on iPhone and iPad, no setting | "Claude" · CIMD, via claude.ai | **Works** on iPhone and iPad (the claude.ai setting applies): save from the chat |
 | Scheduled task | A Claude Code scheduled task using the connector (and Gmail, SP-03) | Unverified (SP-03) | | — |
 
 CPU per `/mcp` call is over the free tier's 10 ms (15–21 ms; `core_whoami` 10 ms), with no failed request; the fix is P-05 (post-launch). Both registration paths stay on: claude.ai uses CIMD, and Claude Code registers its own client.

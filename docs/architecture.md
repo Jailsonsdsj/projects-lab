@@ -196,7 +196,7 @@ Claude: builds the PDF or DOCX in its own sandbox (built-in document skills) →
 - **Same result from every surface.** The writing rules and layout come from the app through `career_document_brief`, not from a skill installed separately on each surface, so a resume made on the phone matches one made in Claude Code.
 - **Nothing file-sized crosses MCP.** Tools exchange structured data only, and Claude builds the file itself. "No file content in tool arguments" stays a rule. `core_create_upload` and `PUT /api/uploads/:token` (F-18) lost their only use and were retired by F-23.
 - **What the app keeps per job (A-7):** the posting, its requirement map, which profile items were selected, the self-introduction and the salary range. Never the file.
-- **Getting the file onto your device** depends on the surface, and SP-02 checks it. Expected: claude.ai and the mobile app offer it for download (needs file creation turned on in claude.ai); Claude Code in VS Code writes it to your disk; Claude Code on the web leaves it in the cloud container.
+- **Getting the file onto your device** works on every surface (SP-02, 2026-10-19): Claude Code in VS Code writes it to your disk (it may first install a PDF/DOCX library in a throwaway virtualenv); Claude Code on the web, claude.ai and the iPhone and iPad app offer it for download, with **Code execution and file creation** on in claude.ai. Every file opened on the Mac, iPhone and iPad.
 
 ### 6.5 Surfaces (R2-7: all, with priority A > B > D)
 
