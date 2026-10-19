@@ -352,6 +352,13 @@ dialog.is-closing::backdrop {
   font-size: var(--text-sm);
   color: var(--color-ink-muted);
 }
+.reader__answers {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
 .reader__pager {
   display: flex;
   flex-direction: column;

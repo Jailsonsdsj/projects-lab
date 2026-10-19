@@ -30,6 +30,7 @@ test.beforeEach(async ({ page }) => {
           recordedAt: "2026-10-19T12:00:00.000Z",
           sha: SHA,
           name: "big-o-notation__fast-track.md",
+          images: {},
         },
       },
     }),
@@ -93,4 +94,18 @@ test("shows the outline: a Sheet on phone, beside the text on tablet", async ({
   await outline.getByRole("link", { name: /Analyzing your own code/ }).click();
   await expect(page.getByText("📖 Lesson 3 of 3")).toBeVisible();
   await noHorizontalScroll(page);
+});
+
+test("keeps a lesson's answers hidden until asked for", async ({ page }) => {
+  await page.goto("/study/courses/course-bigo?p=2");
+  await expect(page.getByText("📖 Lesson 2 of 3")).toBeVisible();
+  const answer = page.getByText("Binary search halves the search space");
+  await expect(answer).toHaveCount(0);
+  await page.getByRole("button", { name: "Show answer key" }).click();
+  await expect(answer).toBeVisible();
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
 });

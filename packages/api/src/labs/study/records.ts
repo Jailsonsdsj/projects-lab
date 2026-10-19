@@ -335,6 +335,34 @@ export interface CourseToRead extends Course {
   /** The file's blob SHA and name: read it at /api/study/content/<sha>/<name>. */
   sha: string;
   name: string;
+  /** The course folder's `_img/` files by name → blob SHA (PRD 11). */
+  images: Record<string, string>;
+}
+
+/** The `_img/` files beside a course, name → SHA; {} when there's no folder. */
+async function courseImages(
+  env: Env,
+  db: D1Database,
+  coursePath: string,
+): Promise<Record<string, string>> {
+  const folder = `${coursePath.slice(0, coursePath.lastIndexOf("/"))}/_img`;
+  try {
+    const listing = await getMetadata(githubDeps(env, db), folder);
+    if (!Array.isArray(listing)) return {};
+    return Object.fromEntries(
+      listing.filter((e) => e.type === "file").map((e) => [e.name, e.sha]),
+    );
+  } catch (error) {
+    if (error instanceof GitHubError && error.code === "not_found") return {};
+    if (error instanceof GitHubError)
+      throw new ToolError(
+        error.code === "github_rate_limited"
+          ? "github_rate_limited"
+          : "github_token_invalid",
+        error.message,
+      );
+    throw error;
+  }
 }
 
 /**
@@ -369,6 +397,7 @@ export async function courseToRead(
       ...row,
       sha: (entry as GitHubEntry).sha,
       name: (entry as GitHubEntry).name,
+      images: await courseImages(env, db, row.path),
     },
   };
 }

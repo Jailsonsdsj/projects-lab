@@ -50,6 +50,20 @@ describe("splitCourse on the real Big-O course", () => {
     for (const page of course.pages)
       expect(page.markdown).not.toContain("# Answer key");
   });
+
+  it("splits the answer key by lesson; the final-exam hint ends the wrap-up", () => {
+    expect(Object.keys(course.answers)).toEqual(["1", "2", "3"]);
+    expect(course.answers[1]?.startsWith("1. **B.** As n grows large")).toBe(
+      true,
+    );
+    expect(course.answers[2]).toContain("Binary search halves");
+    expect(course.answers[3]).not.toContain("Final exam");
+    expect(course.pages[4]?.markdown).toContain("## 🏁 Final exam");
+    for (const page of course.pages)
+      expect(page.markdown).not.toContain(
+        "Binary search halves the search space",
+      );
+  });
 });
 
 describe("splitCourse rules", () => {

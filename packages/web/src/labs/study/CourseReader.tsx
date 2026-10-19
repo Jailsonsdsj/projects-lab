@@ -12,6 +12,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   Badge,
   Button,
+  ErrorState,
   PageHeader,
   ProgressBar,
   Prose,
@@ -33,6 +34,64 @@ const LEVEL: Record<CourseRead["level"], string> = {
 interface Loaded {
   course: CourseRead;
   parsed: Course;
+}
+/** The course is recorded but its file left study-materials (PRD 11). */
+interface Missing {
+  missing: string;
+}
+
+/** `_img/x.png` or `./_img/x.png` → the content proxy by the file's SHA; any
+ *  other relative path, or an image the folder lacks, has nowhere to load from. */
+function imageResolver(images: CourseRead["images"]) {
+  return (src: string): string | null => {
+    const name = /^(?:\.\/)?_img\/([^/]+)$/.exec(src)?.[1];
+    const sha = name ? images[decodeURIComponent(name)] : undefined;
+    return name && sha
+      ? `/api/study/content/${sha}/${encodeURIComponent(decodeURIComponent(name))}`
+      : null;
+  };
+}
+
+/** A lesson's answers, shown only when asked for (PRD 11): never in the page before. */
+function AnswerKey({ n, markdown }: { n: number; markdown: string }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <section className="reader__answers" aria-label={`Answer key, lesson ${n}`}>
+      <Button
+        variant="soft"
+        tone="neutral"
+        icon={shown ? "eye-off" : "eye"}
+        aria-expanded={shown}
+        onClick={() => setShown((s) => !s)}
+      >
+        {shown ? "Hide answer key" : "Show answer key"}
+      </Button>
+      {shown && <Prose markdown={markdown} />}
+    </section>
+  );
+}
+
+function MissingFile({ message }: { message: string }) {
+  const navigate = useNavigate();
+  return (
+    <main className="p-4">
+      <ErrorState
+        kind="error"
+        title="This course isn't there"
+        actions={
+          <Button
+            variant="outline"
+            tone="neutral"
+            onClick={() => navigate(COURSES_PATH)}
+          >
+            Courses
+          </Button>
+        }
+      >
+        {message}
+      </ErrorState>
+    </main>
+  );
 }
 
 const pageLabel = (page: CoursePage) =>
@@ -243,7 +302,20 @@ function Reader({ course, parsed }: Loaded) {
               </>
             )}
           </div>
-          <Prose key={current} markdown={page.markdown} large={tablet} />
+          <Prose
+            key={current}
+            markdown={page.markdown}
+            large={tablet}
+            resolveImage={imageResolver(course.images)}
+          />
+          {page.kind === "lesson" && parsed.answers[page.n] && (
+            // A new key per page: the answers start hidden on every lesson.
+            <AnswerKey
+              key={current}
+              n={page.n}
+              markdown={parsed.answers[page.n] as string}
+            />
+          )}
           {(previous || next) && (
             <nav className="reader__pager" aria-label="Pages">
               {next && (
@@ -325,11 +397,17 @@ function ReaderSkeleton() {
 export function CourseReader() {
   const { courseId = "" } = useParams();
   const load = useCallback(
-    async (signal: AbortSignal): Promise<Loaded> => {
+    async (signal: AbortSignal): Promise<Loaded | Missing> => {
       const meta = await apiFetch(
         `/api/study/courses/${encodeURIComponent(courseId)}`,
         { signal },
       );
+      if (meta.status === 404) {
+        const { message } = (await meta.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        return { missing: message ?? "No such course." };
+      }
       if (!meta.ok) throw new Error(`GET /api/study/courses/…: ${meta.status}`);
       const { course } = courseReadResponseSchema.parse(await meta.json());
       const content = await apiFetch(
@@ -348,8 +426,20 @@ export function CourseReader() {
       load={load}
       skeleton={<ReaderSkeleton />}
       empty={null}
+      failure={{
+        offline: {
+          title: "You're offline",
+          text: "Open this course once online to read it offline.",
+        },
+      }}
     >
-      {(loaded) => <Reader {...loaded} />}
+      {(loaded) =>
+        "missing" in loaded ? (
+          <MissingFile message={loaded.missing} />
+        ) : (
+          <Reader {...loaded} />
+        )
+      }
     </ReadView>
   );
 }

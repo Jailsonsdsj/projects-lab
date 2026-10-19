@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -18,15 +18,19 @@ const COURSE = {
   recordedAt: "2026-10-19T12:00:00.000Z",
   sha: SHA,
   name: "big-o-notation__fast-track.md",
+  images: { "growth.png": "e".repeat(40) },
 };
 
 /** The two reads the reader makes: the course's SHA, then its content. */
-function api(meta: () => Response = () => json({ course: COURSE })) {
+function api(
+  meta: () => Response = () => json({ course: COURSE }),
+  markdown: string = bigO,
+) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
     const path = String(input);
     if (path === "/api/study/courses/course-bigo") return meta();
     if (path === `/api/study/content/${SHA}/big-o-notation__fast-track.md`)
-      return new Response(bigO, {
+      return new Response(markdown, {
         headers: { "Content-Type": "text/markdown" },
       });
     throw new Error(`unexpected request ${path}`);
@@ -178,10 +182,8 @@ describe("Course reader", () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("shows an error for a missing course and offline when the read never got there", async () => {
-    api(() =>
-      json({ error: "not_found", message: "No such course." }, { status: 404 }),
-    );
+  it("shows an error when the read fails, and the reader's own words offline", async () => {
+    api(() => json({ error: "internal" }, { status: 500 }));
     openReader();
     expect(await screen.findByText("Couldn't load this")).toBeInTheDocument();
     vi.restoreAllMocks();
@@ -189,7 +191,71 @@ describe("Course reader", () => {
       new TypeError("Load failed"),
     );
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByText("You're offline")).toBeInTheDocument();
-    await waitFor(() => expect(document.querySelector(".shell")).toBeNull());
+    expect(
+      await screen.findByText(
+        "Open this course once online to read it offline.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("names the path when the course file left study-materials", async () => {
+    const message =
+      "This course file is no longer in study-materials: Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track.md";
+    api(() => json({ error: "not_found", message }, { status: 404 }));
+    const router = openReader();
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Courses" }));
+    expect(router.state.location.pathname).toBe("/study/courses");
+  });
+
+  it("keeps each lesson's answers out of the page until asked for", async () => {
+    api();
+    const user = userEvent.setup();
+    openReader("/study/courses/course-bigo?p=2");
+    await screen.findByRole("heading", {
+      level: 2,
+      name: "Lesson 2 · The common complexity classes",
+    });
+    const answer = "Binary search halves the search space";
+    expect(screen.queryByText(answer, { exact: false })).toBeNull();
+    const show = screen.getByRole("button", { name: "Show answer key" });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    await user.click(show);
+    expect(screen.getByText(answer, { exact: false })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Hide answer key" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    // Lesson 1's key isn't on lesson 2's page, and the next page starts hidden.
+    expect(screen.queryByText("As n grows large", { exact: false })).toBeNull();
+    await user.click(
+      screen.getByRole("button", {
+        name: "Lesson 3 · Analyzing your own code",
+      }),
+    );
+    expect(
+      await screen.findByRole("button", { name: "Show answer key" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("drops constant multipliers", { exact: false }),
+    ).toBeNull();
+  });
+
+  it("loads _img/ images through the content proxy; an unknown one shows its alt", async () => {
+    api(
+      undefined,
+      "# T\n\n## Lesson 1 · Images\n\n![Growth curves](_img/growth.png)\n\n![Missing chart](./_img/nope.png)\n\n![Remote](https://upload.wikimedia.org/x.png)",
+    );
+    openReader("/study/courses/course-bigo?p=1");
+    const known = await screen.findByRole("img", { name: "Growth curves" });
+    expect(known).toHaveAttribute(
+      "src",
+      `/api/study/content/${"e".repeat(40)}/growth.png`,
+    );
+    expect(screen.queryByRole("img", { name: "Missing chart" })).toBeNull();
+    expect(screen.getByText("[Missing chart]")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Remote" })).toHaveAttribute(
+      "src",
+      "https://upload.wikimedia.org/x.png",
+    );
   });
 });

@@ -30,6 +30,31 @@ export interface Course {
   pages: CoursePage[];
   /** From `# Answer key` to the end; null when the file has none. */
   answerKey: string | null;
+  /** Each lesson's answers (its `## Lesson n` section of the key), by number. */
+  answers: Record<number, string>;
+}
+
+/** The answer key's `## Lesson n` sections by number, and what follows them
+ *  (the template's "🏁 Final exam" hint), which belongs on the wrap-up page. */
+function splitAnswers(key: string): {
+  answers: Record<number, string>;
+  rest: string;
+} {
+  const lines = scan(key);
+  const starts = lines
+    .map((l, i) => ({ ...l, i }))
+    .filter(({ line, code }) => !code && line.startsWith("## "))
+    .map(({ i }) => i);
+  const answers: Record<number, string> = {};
+  const rest: string[] = [];
+  starts.forEach((start, k) => {
+    const end = starts[k + 1] ?? lines.length;
+    const chunk = trimEnd(lines.slice(start + 1, end));
+    const lesson = /^## Lesson (\d+)\s*$/.exec(lines[start]?.line ?? "");
+    if (lesson) answers[Number(lesson[1])] = text(chunk).trim();
+    else rest.push(text(trimEnd(lines.slice(start, end))));
+  });
+  return { answers, rest: rest.join("\n\n").trim() };
 }
 
 const LESSON = /^## Lesson (\d+)\s*[·:—-]\s*(.+?)\s*$/;
@@ -86,6 +111,9 @@ export function splitCourse(markdown: string): Course {
   );
   const body = trimEnd(keyAt === -1 ? lines : lines.slice(0, keyAt));
   const answerKey = keyAt === -1 ? null : text(lines.slice(keyAt)).trim();
+  const { answers, rest } = answerKey
+    ? splitAnswers(text(lines.slice(keyAt + 1)))
+    : { answers: {}, rest: "" };
 
   const h1 = body.find(({ line, code }) => !code && line.startsWith("# "));
   const lessonStarts = body
@@ -106,6 +134,7 @@ export function splitCourse(markdown: string): Course {
         },
       ],
       answerKey,
+      answers,
     };
   }
 
@@ -146,10 +175,16 @@ export function splitCourse(markdown: string): Course {
     pages.push({
       kind: "wrapup",
       title: (wrap[0]?.line ?? "## Wrap-up").slice(3).trim(),
-      markdown: text(wrap),
+      // The key's closing hint ("🏁 Final exam") ends the wrap-up.
+      markdown: rest ? `${text(wrap)}\n\n${rest}` : text(wrap),
       sections: sectionsOf(wrap),
     });
   }
 
-  return { title: h1 ? h1.line.slice(2).trim() : null, pages, answerKey };
+  return {
+    title: h1 ? h1.line.slice(2).trim() : null,
+    pages,
+    answerKey,
+    answers,
+  };
 }

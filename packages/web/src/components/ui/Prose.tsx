@@ -24,21 +24,42 @@ export interface ProseProps {
   markdown: string;
   /** Tablet and wider reading size (`.prose--lg`). */
   large?: boolean;
+  /** Where a relative image (`_img/x.png`) loads from; null when the reader
+   *  has no such file, which then shows as its alt text. Absolute URLs are
+   *  used as they are. */
+  resolveImage?: (src: string) => string | null;
   className?: string;
 }
 
+const ImageContext = createContext<ProseProps["resolveImage"]>(undefined);
+const ABSOLUTE = /^(https?:|data:|\/)/i;
+
+function Image({ src = "", alt = "" }: { src?: string; alt?: string }) {
+  const resolve = useContext(ImageContext);
+  const url = ABSOLUTE.test(src) || !resolve ? src : resolve(src);
+  if (!url) return <span className="text-ink-muted">[{alt || src}]</span>;
+  return <img src={url} alt={alt} loading="lazy" />;
+}
+
 /** Long-form course reading: the bundle's `.prose` with callouts, code, tables and quizzes. */
-export function Prose({ markdown, large, className }: ProseProps) {
+export function Prose({
+  markdown,
+  large,
+  resolveImage,
+  className,
+}: ProseProps) {
   return (
-    <article className={cx("prose", large && "prose--lg", className)}>
-      <Markdown
-        remarkPlugins={[remarkGfm, remarkCourse]}
-        rehypePlugins={[rehypeHeadingIds]}
-        components={COMPONENTS}
-      >
-        {markdown}
-      </Markdown>
-    </article>
+    <ImageContext.Provider value={resolveImage}>
+      <article className={cx("prose", large && "prose--lg", className)}>
+        <Markdown
+          remarkPlugins={[remarkGfm, remarkCourse]}
+          rehypePlugins={[rehypeHeadingIds]}
+          components={COMPONENTS}
+        >
+          {markdown}
+        </Markdown>
+      </article>
+    </ImageContext.Provider>
   );
 }
 
@@ -207,9 +228,7 @@ const COMPONENTS = {
   ),
   th: cell("th"),
   td: cell("td"),
-  img: ({ src, alt }: { src?: string; alt?: string }) => (
-    <img src={src} alt={alt ?? ""} loading="lazy" />
-  ),
+  img: Image,
   "x-callout": Callout,
   "x-quiz": Quiz,
   "x-quiz-stem": QuizStem,

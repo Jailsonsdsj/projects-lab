@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "../components/ui";
-import { Failure } from "./failure";
+import { Failure, type FailureKind } from "./failure";
 import { type Load, useRead } from "./read";
 
 export interface ReadViewProps<T> {
@@ -12,6 +12,9 @@ export interface ReadViewProps<T> {
   /** Change it to read again in the background after a write: what's on
    *  screen stays (no skeleton) and a failed read keeps it. */
   refresh?: number;
+  /** Screen-specific words for a failure, e.g. the reader's "Open this course
+   *  once online to read it offline." Defaults otherwise. */
+  failure?: Partial<Record<FailureKind, { title?: string; text?: ReactNode }>>;
   children: (data: T) => ReactNode;
 }
 
@@ -23,6 +26,7 @@ export function ReadView<T>({
   empty,
   skeleton,
   refresh,
+  failure,
   children,
 }: ReadViewProps<T>) {
   const { state, retry } = useRead(load, refresh);
@@ -37,12 +41,15 @@ export function ReadView<T>({
       return (
         <Failure
           kind={state.status}
+          title={failure?.[state.status]?.title}
           actions={
             <Button variant="outline" tone="neutral" onClick={retry}>
               Retry
             </Button>
           }
-        />
+        >
+          {failure?.[state.status]?.text}
+        </Failure>
       );
   }
 }

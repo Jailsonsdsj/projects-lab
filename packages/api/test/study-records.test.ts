@@ -22,6 +22,18 @@ function github(files: string[], { tokenValid = true } = {}) {
     requests.push(url);
     if (!tokenValid) return new Response("Bad credentials", { status: 401 });
     const path = decodeURIComponent(url.slice(CONTENTS.length));
+    // A folder: its files, when study-materials holds any under it.
+    const inside = [...held].filter((f) => f.startsWith(`${path}/`));
+    if (url.startsWith(CONTENTS) && inside.length > 0)
+      return Response.json(
+        inside.map((f) => ({
+          type: "file",
+          name: f.slice(path.length + 1),
+          path: f,
+          sha: `${f.length}`.padStart(40, "d"),
+          size: 10,
+        })),
+      );
     if (!url.startsWith(CONTENTS) || !held.has(path))
       return new Response("not found", { status: 404 });
     return Response.json({
@@ -301,7 +313,20 @@ describe("reading a course", () => {
       path: COURSE,
       sha: "b".repeat(40),
       name: "big-o-notation__fast-track.md",
+      images: {},
     });
+  });
+
+  it("lists the course's _img/ files by name and SHA", async () => {
+    const img = "Study Lab/cs-fundamentals/big-o-notation/_img";
+    github([COURSE, `${img}/growth.png`, `${img}/curve.svg`]);
+    const res = await get(`/courses/${await courseIdOf(COURSE)}`);
+    const { course } = courseReadResponseSchema.parse(await res.json());
+    expect(Object.keys(course.images).sort()).toEqual([
+      "curve.svg",
+      "growth.png",
+    ]);
+    expect(course.images["growth.png"]).toMatch(/^d+\d+$/);
   });
 
   it("names the path when the file is gone, and 404s an unknown course", async () => {

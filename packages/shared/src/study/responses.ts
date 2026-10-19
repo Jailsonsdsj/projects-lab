@@ -68,6 +68,8 @@ export const courseReadResponseSchema = z.object({
     recordedAt: z.string(),
     sha: z.string(),
     name: z.string(),
+    /** `_img/` beside the course: file name → blob SHA. */
+    images: z.record(z.string(), z.string()),
   }),
 });
 export type CourseRead = z.infer<typeof courseReadResponseSchema>["course"];
