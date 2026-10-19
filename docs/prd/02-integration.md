@@ -76,12 +76,12 @@ Resumes, cover letters and any other career file are generated on demand by Clau
 
 The only file the app stores is the owner's profile photo, uploaded in the app with a session (Career PRD `20`). Video never goes to R2: interview videos are Google Drive links (R2-13).
 
-F-18 built signed uploads (`core_create_upload`, `PUT /api/uploads/<token>`, `UPLOAD_SIGNING_KEY`); F-23 removed them. Their `upload` table and its invariants stay until TD-01 drops them in a later contract migration.
+F-18 built signed uploads (`core_create_upload`, `PUT /api/uploads/<token>`, `UPLOAD_SIGNING_KEY`); F-23 removed them. Their `upload` table and its invariants were dropped in the next deploy by TD-01 (`0007_drop_upload`).
 
 ## Invariants (merged into `99-data-model.md`)
 
 - C-4 and C-5 (`mcp_call.tool` prefix, `mcp_call.ok` 0/1) already hold.
-- C-10 to C-13 (`upload`, F-18) still hold on a table nothing uses since F-23; TD-01 drops them with it.
+- C-10 to C-13 (`upload`, F-18) are retired: TD-01 dropped the table (`0007_drop_upload`) in the deploy after F-23.
 
 ## Decisions (owner, 2026-10-16)
 

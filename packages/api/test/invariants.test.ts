@@ -16,9 +16,6 @@ beforeAll(async () => {
       `INSERT INTO skill (id, name, created_at) VALUES ('d1', 'Elixir', 't')`,
       `INSERT INTO skill (id, name, created_at, deleted_at) VALUES ('d2', 'Erlang', 't', 't')`,
       `INSERT INTO user (id, auth_key_hash, kdf_salt, kdf_iterations, timezone, created_at) VALUES ('v1', 'h', 's', 1, 'UTC', 't')`,
-      // C-13: one upload already used, one still open.
-      `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at, used_at) VALUES ('ufix', 'resume', 'cv.pdf', 'application/pdf', 1000, 'uploads/ufix/cv.pdf', 't', 't', 't1')`,
-      `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('uopen', 'resume', 'cv.pdf', 'application/pdf', 1000, 'uploads/uopen/cv.pdf', 't', 't')`,
     ].map((sql) => db().prepare(sql)),
   );
 });
@@ -48,7 +45,7 @@ describe("permitted writes succeed", () => {
     ],
     [
       "mcp_call ok",
-      `INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES ('m1', 'core_create_upload', 'claude', 1, 't')`,
+      `INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES ('m1', 'study_add_topic', 'claude', 1, 't')`,
     ],
     [
       "mcp_call failed write",
@@ -57,22 +54,6 @@ describe("permitted writes succeed", () => {
     [
       "session_version bump",
       `UPDATE user SET session_version = session_version + 1 WHERE id = 'v1'`,
-    ],
-    [
-      "upload",
-      `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('u1', 'resume', 'cv.pdf', 'application/pdf', 1000, 'uploads/u1/cv.pdf', 't', 't')`,
-    ],
-    [
-      "upload first use",
-      `UPDATE upload SET used_at = 't2' WHERE id = 'uopen' AND used_at IS NULL`,
-    ],
-    [
-      "upload at the size cap",
-      `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('u2', 'resume', 'cv.pdf', 'application/pdf', 10485760, 'uploads/u2/cv.pdf', 't', 't')`,
-    ],
-    [
-      "upload, Word",
-      `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('u3', 'cover_letter', 'cv.pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 1000, 'uploads/u3/cv.pdf', 't', 't')`,
     ],
   ])("%s", async (_, sql) => {
     await expect(run(sql)).resolves.toBeDefined();
@@ -173,41 +154,6 @@ const forbidden: [string, string, string][] = [
     "user_session_version_min",
     `UPDATE user SET session_version = -1 WHERE id = 'v1'`,
   ],
-  [
-    "C-10 zero bytes",
-    "upload_bytes_range",
-    `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('x10a', 'resume', 'cv.pdf', 'application/pdf', 0, 'uploads/x10a/cv.pdf', 't', 't')`,
-  ],
-  [
-    "C-10 over the cap",
-    "upload_bytes_range",
-    `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('x10b', 'resume', 'cv.pdf', 'application/pdf', 10485761, 'uploads/x10b/cv.pdf', 't', 't')`,
-  ],
-  [
-    "C-10 bytes as non-numeric text",
-    "upload_bytes_range",
-    `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('x10c', 'resume', 'cv.pdf', 'application/pdf', 'many', 'uploads/x10c/cv.pdf', 't', 't')`,
-  ],
-  [
-    "C-11 kind not allowed",
-    "upload_kind_allowed",
-    `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('x11', 'video', 'cv.pdf', 'application/pdf', 1000, 'uploads/x11/cv.pdf', 't', 't')`,
-  ],
-  [
-    "C-12 content type not allowed",
-    "upload_content_type_allowed",
-    `INSERT INTO upload (id, kind, filename, content_type, bytes, r2_key, created_at, expires_at) VALUES ('x12', 'resume', 'cv.pdf', 'image/png', 1000, 'uploads/x12/cv.pdf', 't', 't')`,
-  ],
-  [
-    "C-13 used_at changed",
-    "upload_used_at_once",
-    `UPDATE upload SET used_at = 't9' WHERE id = 'ufix'`,
-  ],
-  [
-    "C-13 used_at cleared",
-    "upload_used_at_once",
-    `UPDATE upload SET used_at = NULL WHERE id = 'ufix'`,
-  ],
 ];
 
 // One NULL per NOT NULL column: [table, columns, a valid row in the same order]
@@ -241,29 +187,6 @@ const notNull: [string, string[], string[]][] = [
     ["id", "tool", "client_name", "ok", "created_at"],
     ["'n1'", "'core_x'", "'claude'", "1", "'t'"],
   ],
-  [
-    "upload",
-    [
-      "id",
-      "kind",
-      "filename",
-      "content_type",
-      "bytes",
-      "r2_key",
-      "created_at",
-      "expires_at",
-    ],
-    [
-      "'n1'",
-      "'resume'",
-      "'cv.pdf'",
-      "'application/pdf'",
-      "1000",
-      "'k'",
-      "'t'",
-      "'t'",
-    ],
-  ],
 ];
 for (const [table, columns, row] of notNull) {
   columns.forEach((column, i) => {
@@ -279,5 +202,18 @@ for (const [table, columns, row] of notNull) {
 describe("forbidden writes fail", () => {
   it.each(forbidden)("%s", async (_, error, sql) => {
     await expect(run(sql)).rejects.toThrow(error);
+  });
+});
+
+// TD-01: the contract migration after F-23 retired signed uploads. Dropping the
+// table drops its C-13 trigger with it; C-10 to C-13 are retired, not reused.
+describe("retired schema is gone", () => {
+  it("no upload table and no upload_used_at_once trigger", async () => {
+    const { results } = await db()
+      .prepare(
+        "SELECT type, name FROM sqlite_master WHERE name IN ('upload', 'upload_used_at_once')",
+      )
+      .all();
+    expect(results).toEqual([]);
   });
 });

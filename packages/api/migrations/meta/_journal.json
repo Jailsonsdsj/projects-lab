@@ -50,6 +50,13 @@
       "when": 1792181099547,
       "tag": "0006_upload_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792418102268,
+      "tag": "0007_drop_upload",
+      "breakpoints": true
     }
   ]
 }

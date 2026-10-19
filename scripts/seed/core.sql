@@ -13,6 +13,6 @@ INSERT INTO skill (id, name, aliases_json, created_at, deleted_at) VALUES
   ('seed-skill-jquery', 'jQuery', '[]', '2026-01-01T00:00:00.000Z', '2026-02-01T00:00:00.000Z');
 
 INSERT INTO mcp_call (id, tool, client_name, ok, created_at) VALUES
-  ('seed-call-1', 'core_create_upload', 'Claude', 1, '2026-01-02T09:00:00.000Z'),
+  ('seed-call-1', 'study_record_grade', 'Claude', 1, '2026-01-02T09:00:00.000Z'),
   ('seed-call-2', 'study_add_topic', 'Claude', 1, '2026-01-02T09:05:00.000Z'),
   ('seed-call-3', 'career_add_job', 'Claude', 0, '2026-01-02T09:10:00.000Z');
