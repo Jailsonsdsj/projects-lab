@@ -1,9 +1,18 @@
+import { labSummaryResponseSchema } from "@projects-lab/shared";
+import { apiFetch } from "../../core/api";
 import type { LabDefinition } from "../../core/lab-registry";
 import { ComingScreen } from "../../core/screens";
+import { BacklogScreen } from "./BacklogScreen";
 
-// Until the lab's API exists its summary is honestly "no data yet": null.
+// Home's Study card (00-platform): in progress, not started, average grade and
+// "Continue". null while the backlog is empty, which Home shows as empty.
 const home = {
-  load: async () => null,
+  load: async (signal: AbortSignal) => {
+    const response = await apiFetch("/api/study/summary", { signal });
+    if (!response.ok)
+      throw new Error(`GET /api/study/summary: ${response.status}`);
+    return labSummaryResponseSchema.parse(await response.json());
+  },
   emptyText:
     "No courses yet. Ask Claude to plan a topic and it lands in your backlog.",
 };
@@ -22,7 +31,7 @@ export const studyLab: LabDefinition = {
       label: "Backlog",
       icon: "list",
       path: "/study",
-      screen: <ComingScreen title="Backlog" icon="list" arrives={later} />,
+      screen: <BacklogScreen />,
     },
     {
       label: "Courses",

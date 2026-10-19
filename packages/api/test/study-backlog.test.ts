@@ -2,6 +2,8 @@
 // with a session, plus the Study contract Career uses. Storage is shared by
 // the tests in this file, so each test uses its own skills.
 import { SELF } from "cloudflare:test";
+import { labSummaryResponseSchema } from "@projects-lab/shared";
+import { backlogResponseSchema } from "@projects-lab/shared/study";
 import { beforeAll, describe, expect, it } from "vitest";
 import { studyContract } from "../src/labs/study/contract";
 import { db } from "./db";
@@ -317,6 +319,10 @@ describe("summary", () => {
     const react = (await backlog("?area=FE")).topics.find(
       (t) => t.id === "FE-01",
     );
+
+    // The web parses these with the shared schemas (ST-06a): the real output must pass.
+    const full = await (await api("/backlog")).json();
+    expect(backlogResponseSchema.safeParse(full).success).toBe(true);
     expect(react).toMatchObject({ grade: 85, finishedOn: "2026-10-01" });
   });
 
@@ -338,6 +344,7 @@ describe("summary", () => {
       "Average grade",
     ]);
     expect(card.foot).toEqual({ label: "Continue", value: "CSS" });
+    expect(labSummaryResponseSchema.safeParse(card).success).toBe(true);
   });
 });
 

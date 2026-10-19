@@ -19,6 +19,7 @@ import {
   EmptyState,
   ErrorState,
   Field,
+  Group,
   ICONS,
   Icon,
   type IconName,
@@ -26,6 +27,7 @@ import {
   Input,
   LabCard,
   LabSwitcher,
+  ListRow,
   OptionsMenu,
   PageHeader,
   PageTitle,
@@ -601,6 +603,111 @@ export const CATALOG: readonly CatalogEntry[] = [
             valueText="8.0"
             caption="Final exam"
           />
+        ),
+      },
+    ],
+  },
+  {
+    name: "ListRow",
+    summary:
+      "A Group's row: ID, title, meta, badges and a value. A link or button when it opens something, else static. `table` gives badges their own columns from tablet up.",
+    examples: [
+      {
+        label: "link",
+        node: (
+          <div className="group">
+            <ListRow
+              id="FE-01"
+              title="Next.js"
+              meta="Essential"
+              tags={
+                <>
+                  <Badge size="sm" tone="p1">
+                    P1
+                  </Badge>
+                  <Badge size="sm" tone="doing">
+                    In progress
+                  </Badge>
+                </>
+              }
+              href="#"
+            />
+          </div>
+        ),
+      },
+      {
+        label: "button · value · table",
+        node: (
+          <div className="group">
+            <ListRow
+              table
+              id="DB-01"
+              title="PostgreSQL indexing"
+              meta="Specialized"
+              tags={
+                <>
+                  <Badge size="sm" tone="p2">
+                    P2
+                  </Badge>
+                  <Badge size="sm" tone="done">
+                    Done
+                  </Badge>
+                </>
+              }
+              value="8.5"
+              onClick={() => {}}
+            />
+          </div>
+        ),
+      },
+      {
+        label: "current",
+        node: (
+          <div className="group">
+            <ListRow
+              id="CS-01"
+              title="Big-O notation"
+              meta="Fast track"
+              onClick={() => {}}
+              current
+            />
+          </div>
+        ),
+      },
+      {
+        label: "static · no ID",
+        node: (
+          <div className="group">
+            <ListRow title="No topics yet" />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    name: "Group",
+    summary: "A titled section of rows: kicker title and count over the group.",
+    examples: [
+      {
+        label: "with count",
+        node: (
+          <Group title="Frontend" count={2}>
+            <ListRow id="FE-01" title="Next.js" meta="Essential" href="#" />
+            <ListRow
+              id="FE-02"
+              title="React Server Components"
+              meta="Essential"
+              href="#"
+            />
+          </Group>
+        ),
+      },
+      {
+        label: "empty",
+        node: (
+          <Group title="Security" count={0}>
+            <ListRow title="No topics yet" />
+          </Group>
         ),
       },
     ],

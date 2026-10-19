@@ -271,3 +271,39 @@ dialog.is-closing::backdrop {
 .crow + .crow {
   border-top: var(--border-thin) solid var(--color-border);
 }
+
+/* ── ListRow: static rows and the tablet table row ───────────────────────
+   A row with nothing to open is a <div>: no pointer and no hover wash. The
+   bundle's tablet backlog (`.trow`, drawn in its screen page with canvas
+   pixels) takes tokens: the priority column --space-10, the status column two
+   --space-16, the value --size-control-sm, the row --space-12 plus --space-2. */
+.row--static {
+  cursor: default;
+}
+.row--static:hover,
+.row--static:active {
+  background-image: none;
+}
+.trow {
+  @variant tablet {
+    grid-template-columns:
+      var(--size-row-id) minmax(0, 1fr) var(--space-10) calc(
+        var(--space-16) *
+        2
+      )
+      var(--size-control-sm) auto;
+    min-height: calc(var(--space-12) + var(--space-2));
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+
+    .row__id {
+      align-self: center;
+      padding: 0;
+    }
+
+    /* Badges keep their own width in their column. */
+    .badge {
+      justify-self: start;
+    }
+  }
+}

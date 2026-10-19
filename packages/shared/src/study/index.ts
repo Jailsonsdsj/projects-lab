@@ -3,4 +3,5 @@
 
 export * from "./backlog";
 export * from "./grades";
+export * from "./responses";
 export * from "./schemas";
