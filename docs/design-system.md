@@ -47,6 +47,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `ProgressBar` | `.progress` | `role=progressbar` with name and value | `value`, `max`, `label`, `caption`, `valueText`, `size` sm · md, `tone` accent · success | 0–100% |
 | `ListRow` | `.row` (`.trow` on tablet) | One row of a Group: ID, title, meta, badges, value; a link or button when it opens something, else static (no chevron, no hover) | `id`, `title`, `meta`, `tags` (badges: the meta line on phone; their own columns from tablet with `table`), `value`, `href` or `onClick`, `current` | static, link, button, current, *hover, pressed, focus* |
 | `Group` | `.group` + `.group__title` | A titled section of rows | `title` (kicker), `count` (mono) | — |
+| `StatCard` | `.stat` | One figure with its label (Grades' average, courses done) | `label`, `value`, `unit`, `note`, children (e.g. a ProgressBar) | — |
 | `Banner` | `.banner` | Inline notice at the top of a screen | `tone` info · warning · danger · offline; `title` (bold lead); `action`; `flush` | warning/danger `role=alert`, info/offline `role=status` |
 | `EmptyState` | `.empty` | A successful, empty answer | `icon`, `title`, text, `actions` | — |
 | `ErrorState` | `.empty--error` / `--offline` | A failed read; never "nothing here yet" | `kind` error · offline, `code`, `actions` | error, offline |
@@ -63,7 +64,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 
 Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`, `headingSlug` and `headingIds` (the ids Prose gives every H3, for a reader's outline).
 
-**In the bundle, not built yet:** Select (a Field around a native `<select>` works today; see `/dev/ui`), SearchField (use `Input search`, or the bundle's bare `.input--search` markup where the screen has no visible label, as the Backlog does), CopyField, StatCard, ReadinessMeter. They arrive with the screens that need them.
+**In the bundle, not built yet:** Select (a Field around a native `<select>` works today; see `/dev/ui`), SearchField (use `Input search`, or the bundle's bare `.input--search` markup where the screen has no visible label, as the Backlog does), CopyField, ReadinessMeter. They arrive with the screens that need them.
 
 ## Adding a component
 

@@ -36,6 +36,7 @@ import {
   Sheet,
   SideRail,
   Skeleton,
+  StatCard,
   Tabs,
   Textarea,
   useToast,
@@ -709,6 +710,29 @@ export const CATALOG: readonly CatalogEntry[] = [
             <ListRow title="No topics yet" />
           </Group>
         ),
+      },
+    ],
+  },
+  {
+    name: "StatCard",
+    summary:
+      "One figure with its label: value, unit, note, and room for a bar.",
+    examples: [
+      {
+        label: "value and unit",
+        node: <StatCard label="Average grade" value="8.5" unit="/ 10" />,
+      },
+      {
+        label: "with a bar",
+        node: (
+          <StatCard label="Courses done" value="1" unit="of 8">
+            <ProgressBar value={1} max={8} label="Courses done" size="sm" />
+          </StatCard>
+        ),
+      },
+      {
+        label: "with a note",
+        node: <StatCard label="Average grade" value="—" note="No grades yet" />,
       },
     ],
   },

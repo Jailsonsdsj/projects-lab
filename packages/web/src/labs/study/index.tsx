@@ -1,11 +1,11 @@
 import { labSummaryResponseSchema } from "@projects-lab/shared";
 import { apiFetch } from "../../core/api";
 import type { LabDefinition } from "../../core/lab-registry";
-import { ComingScreen } from "../../core/screens";
 import { BacklogScreen } from "./BacklogScreen";
 import { CourseReader } from "./CourseReader";
 import { CoursesScreen } from "./CoursesScreen";
 import { ExamViewer } from "./ExamViewer";
+import { GradesScreen } from "./GradesScreen";
 
 // Home's Study card (00-platform): in progress, not started, average grade and
 // "Continue". null while the backlog is empty, which Home shows as empty.
@@ -19,8 +19,6 @@ const home = {
   emptyText:
     "No courses yet. Ask Claude to plan a topic and it lands in your backlog.",
 };
-
-const later = "Study Lab's screens arrive in its own phase.";
 
 export const studyLab: LabDefinition = {
   id: "study",
@@ -50,7 +48,7 @@ export const studyLab: LabDefinition = {
       label: "Grades",
       icon: "award",
       path: "/study/grades",
-      screen: <ComingScreen title="Grades" icon="award" arrives={later} />,
+      screen: <GradesScreen />,
     },
   ],
 };
