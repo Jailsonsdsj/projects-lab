@@ -401,3 +401,44 @@ export async function courseToRead(
     },
   };
 }
+
+export interface ExamToRead extends Exam {
+  skill: string;
+  /** Both files' blob SHAs and names, for /api/study/content/<sha>/<name>. */
+  md: { sha: string; name: string };
+  pdf: { sha: string; name: string };
+}
+
+/** A recorded exam with its files' current blob SHAs (PRD 12 § Screens). */
+export async function examToRead(
+  env: Env,
+  db: D1Database,
+  examId: string,
+): Promise<{ exam: ExamToRead }> {
+  const row = await db
+    .prepare(
+      `SELECT e.id AS examId, t.code AS topicId, s.name AS skill, e.level, e.attempt,
+              e.md_path AS mdPath, e.pdf_path AS pdfPath, e.created_at AS createdAt,
+              e.grade, e.graded_at AS gradedAt
+       FROM learn_exam e
+       JOIN learn_topic t ON t.id = e.topic_id
+       JOIN skill s ON s.id = t.skill_id
+       WHERE e.id = ?`,
+    )
+    .bind(examId)
+    .first<Exam & { skill: string }>();
+  if (!row) throw new ToolError("not_found", "No such exam.");
+  const [md, pdf] = (await fileEntries(
+    env,
+    db,
+    [row.mdPath, row.pdfPath],
+    (path) => `This exam file is no longer in study-materials: ${path}`,
+  )) as [GitHubEntry, GitHubEntry];
+  return {
+    exam: {
+      ...row,
+      md: { sha: md.sha, name: md.name },
+      pdf: { sha: pdf.sha, name: pdf.name },
+    },
+  };
+}

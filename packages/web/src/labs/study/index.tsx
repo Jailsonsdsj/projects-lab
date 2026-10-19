@@ -5,6 +5,7 @@ import { ComingScreen } from "../../core/screens";
 import { BacklogScreen } from "./BacklogScreen";
 import { CourseReader } from "./CourseReader";
 import { CoursesScreen } from "./CoursesScreen";
+import { ExamViewer } from "./ExamViewer";
 
 // Home's Study card (00-platform): in progress, not started, average grade and
 // "Continue". null while the backlog is empty, which Home shows as empty.
@@ -28,7 +29,10 @@ export const studyLab: LabDefinition = {
   description: "Backlog, courses, grades",
   icon: "book",
   home,
-  focus: [{ path: "/study/courses/:courseId", screen: <CourseReader /> }],
+  focus: [
+    { path: "/study/courses/:courseId", screen: <CourseReader /> },
+    { path: "/study/exams/:examId", screen: <ExamViewer /> },
+  ],
   tabs: [
     {
       label: "Backlog",

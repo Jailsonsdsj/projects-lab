@@ -90,3 +90,33 @@ export const coursesResponseSchema = z.object({
 export type CourseInfo = z.infer<
   typeof coursesResponseSchema
 >["courses"][number];
+
+const examFields = {
+  examId: z.string(),
+  topicId: z.string(),
+  level: z.enum(COURSE_LEVELS),
+  attempt: z.number().int(),
+  mdPath: z.string(),
+  pdfPath: z.string(),
+  createdAt: z.string(),
+  /** Integer tenths; null while awaiting a grade. */
+  grade: z.number().int().nullable(),
+  gradedAt: z.string().nullable(),
+};
+
+/** GET /api/study/exams: attempts, most recently graded first. */
+export const examsResponseSchema = z.object({
+  exams: z.array(z.object(examFields)),
+});
+export type ExamInfo = z.infer<typeof examsResponseSchema>["exams"][number];
+
+/** GET /api/study/exams/:examId: the exam and both files' blob SHAs. */
+export const examReadResponseSchema = z.object({
+  exam: z.object({
+    ...examFields,
+    skill: z.string(),
+    md: z.object({ sha: z.string(), name: z.string() }),
+    pdf: z.object({ sha: z.string(), name: z.string() }),
+  }),
+});
+export type ExamRead = z.infer<typeof examReadResponseSchema>["exam"];

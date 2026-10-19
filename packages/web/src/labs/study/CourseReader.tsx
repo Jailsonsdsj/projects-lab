@@ -311,7 +311,7 @@ function Reader({ course, parsed }: Loaded) {
           {page.kind === "lesson" && parsed.answers[page.n] && (
             // A new key per page: the answers start hidden on every lesson.
             <AnswerKey
-              key={current}
+              key={`answers-${current}`}
               n={page.n}
               markdown={parsed.answers[page.n] as string}
             />

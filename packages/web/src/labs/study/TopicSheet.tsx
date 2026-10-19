@@ -4,6 +4,8 @@
 // Dialog and Banner. Every write carries an Idempotency-Key.
 import { IDEMPOTENCY_KEY_HEADER } from "@projects-lab/shared";
 import {
+  type ExamInfo,
+  examsResponseSchema,
   formatGrade,
   NOTE_MAX_LENGTH,
   type Priority,
@@ -11,10 +13,21 @@ import {
   type TopicLevel,
   type TopicStatus,
 } from "@projects-lab/shared/study";
-import { type ReactNode, useState } from "react";
-import { Banner, Button, Dialog, Sheet, Textarea } from "../../components/ui";
+import { type ReactNode, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import {
+  Banner,
+  Button,
+  Dialog,
+  Group,
+  ListRow,
+  linkClick,
+  Sheet,
+  Textarea,
+} from "../../components/ui";
 import { apiFetch } from "../../core/api";
 import { failureKind } from "../../core/failure";
+import { examTitle, localDay } from "./ExamViewer";
 import { Select } from "./Select";
 
 const LEVELS: [TopicLevel, string][] = [
@@ -47,6 +60,49 @@ function changesOf(topic: TopicInfo, draft: Required<Changes>): Changes {
   if (draft.status !== topic.status) changes.status = draft.status;
   if (draft.note.trim() !== topic.note) changes.note = draft.note.trim();
   return changes;
+}
+
+/** The topic's exam attempts, newest first, each opening the exam (PRD 12). */
+function Attempts({ topicId }: { topicId: string }) {
+  const navigate = useNavigate();
+  const [exams, setExams] = useState<ExamInfo[] | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    apiFetch(`/api/study/exams?topicId=${encodeURIComponent(topicId)}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) =>
+        response.ok
+          ? setExams(examsResponseSchema.parse(await response.json()).exams)
+          : setExams([]),
+      )
+      .catch(() => {
+        if (!controller.signal.aborted) setExams([]);
+      });
+    return () => controller.abort();
+  }, [topicId]);
+  if (!exams || exams.length === 0) return null;
+  return (
+    <Group title="Exams" count={exams.length}>
+      {exams.map((exam) => {
+        const href = `/study/exams/${exam.examId}`;
+        return (
+          <ListRow
+            key={exam.examId}
+            title={examTitle(exam)}
+            meta={
+              exam.grade === null || exam.gradedAt === null
+                ? "Awaiting grade"
+                : `Graded ${localDay(exam.gradedAt)}`
+            }
+            value={exam.grade === null ? undefined : formatGrade(exam.grade)}
+            href={href}
+            onClick={linkClick(href, navigate)}
+          />
+        );
+      })}
+    </Group>
+  );
 }
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
@@ -117,6 +173,7 @@ function TopicForm({
             Your changes are still here. Save once you're back online.
           </Banner>
         )}
+        <Attempts topicId={topic.id} />
         <dl className="grid grid-cols-3 gap-3">
           <Fact label="Started">{topic.startedOn ?? "—"}</Fact>
           <Fact label="Finished">{topic.finishedOn ?? "—"}</Fact>

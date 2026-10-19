@@ -30,6 +30,7 @@ import {
 } from "./backlog";
 import {
   courseToRead,
+  examToRead,
   listCourses,
   listExams,
   recordCourse,
@@ -223,6 +224,17 @@ export function backlogRoutes() {
     });
     if (!parsed.success) return invalid(c, parsed.error);
     return c.json(await listExams(database(c.env), parsed.data.topicId));
+  });
+
+  // An exam to read (PRD 12): both files' blob SHAs, for /content.
+  app.get("/exams/:examId", async (c) => {
+    try {
+      return c.json(
+        await examToRead(c.env, database(c.env), c.req.param("examId")),
+      );
+    } catch (error) {
+      return refused(c, error);
+    }
   });
 
   app.post("/grades", idempotent("POST /api/study/grades"), async (c) => {

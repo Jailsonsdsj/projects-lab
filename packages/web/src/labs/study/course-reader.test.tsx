@@ -2,10 +2,19 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { json } from "../../../test/api";
 import bigO from "../../../test/fixtures/big-o-notation__fast-track.md?raw";
 import { createRoutes } from "../../app";
+
+// Diagrams are Prose's concern (prose-mermaid.test.tsx): no real Mermaid here,
+// which jsdom can't draw anyway; the code block stays.
+vi.mock("mermaid", () => ({
+  default: {
+    initialize: () => {},
+    render: () => Promise.reject(new Error("no Mermaid in jsdom")),
+  },
+}));
 
 const SHA = "c".repeat(40);
 const COURSE = {
@@ -56,6 +65,11 @@ function openReader(at = "/study/courses/course-bigo") {
   render(<RouterProvider router={router} />);
   return router;
 }
+
+beforeEach(() => {
+  // jsdom has no scrolling; the reader scrolls to the top on each page.
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+});
 
 afterEach(() => {
   vi.restoreAllMocks();

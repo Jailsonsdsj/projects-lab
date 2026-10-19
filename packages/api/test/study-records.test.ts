@@ -1,7 +1,10 @@
 // Recording courses, exams and grades (ST-05, PRDs 11 and 12). GitHub is a
 // stand-in on the global fetch that knows which files study-materials holds.
 import { env } from "cloudflare:workers";
-import { courseReadResponseSchema } from "@projects-lab/shared/study";
+import {
+  courseReadResponseSchema,
+  examReadResponseSchema,
+} from "@projects-lab/shared/study";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { app } from "../src/index";
 import { db } from "./db";
@@ -344,6 +347,43 @@ describe("reading a course", () => {
     const res = await get(`/courses/${await courseIdOf(COURSE)}`);
     expect(res.status).toBe(502);
     expect(await res.json()).toMatchObject({ error: "github_token_invalid" });
+  });
+});
+
+describe("reading an exam", () => {
+  const examIdOf = async (level: string, attempt: number) => {
+    const { exams } = (await (await get("/exams?topicId=CS-01")).json()) as {
+      exams: { examId: string; level: string; attempt: number }[];
+    };
+    return (
+      exams.find((e) => e.level === level && e.attempt === attempt)?.examId ??
+      ""
+    );
+  };
+
+  it("gives the exam with both files' SHAs and its grade", async () => {
+    github([exam("essential", 1, "md"), exam("essential", 1, "pdf")]);
+    const res = await get(`/exams/${await examIdOf("essential", 1)}`);
+    expect(res.status).toBe(200);
+    const { exam: read } = examReadResponseSchema.parse(await res.json());
+    expect(read).toMatchObject({
+      topicId: "CS-01",
+      skill: "Big-O notation",
+      attempt: 1,
+      grade: 90,
+      md: { name: "big-o-notation__essential__exam-1.md" },
+      pdf: { name: "big-o-notation__essential__exam-1.pdf" },
+    });
+  });
+
+  it("names the missing file, and 404s an unknown exam", async () => {
+    github([exam("essential", 1, "md")]);
+    const res = await get(`/exams/${await examIdOf("essential", 1)}`);
+    expect(res.status).toBe(404);
+    expect(((await res.json()) as { message: string }).message).toBe(
+      `This exam file is no longer in study-materials: ${exam("essential", 1, "pdf")}`,
+    );
+    expect((await get("/exams/nope")).status).toBe(404);
   });
 });
 
