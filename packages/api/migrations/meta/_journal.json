@@ -57,6 +57,27 @@
       "when": 1792418102268,
       "tag": "0007_drop_upload",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792419760751,
+      "tag": "0008_study_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792419765588,
+      "tag": "0009_study_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1792419766123,
+      "tag": "0010_study_areas",
+      "breakpoints": true
     }
   ]
 }

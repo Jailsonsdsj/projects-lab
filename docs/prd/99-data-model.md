@@ -178,25 +178,25 @@ Every column above without `?` is `NOT NULL`.
 
 | # | Invariant | Mechanism | Lands in |
 |---|---|---|---|
-| S-1 | `learn_area.prefix` is two uppercase letters, unique | `CHECK (length(prefix) = 2 AND prefix NOT GLOB '*[^A-Z]*')`; unique index | Study schema (Phase 2) |
-| S-2 | `learn_area.name` is never blank and unique ignoring case | `CHECK (length(trim(name)) > 0)`; unique index on `name COLLATE NOCASE` | Study schema |
-| S-3 | `learn_area.next_seq` is an integer >= 1 | `CHECK (typeof(next_seq) = 'integer' AND next_seq >= 1)` | Study schema |
-| S-4 | An area is never deleted and its prefix never changes | `BEFORE DELETE` and `BEFORE UPDATE OF prefix` triggers | Study triggers |
-| S-5 | `learn_topic.code` is unique, so an ID is never reused (rows are never deleted, S-9) | Unique index | Study schema |
-| S-6 | At most one topic per skill | Unique index on `skill_id`; FK to `skill` (C-7 keeps it) | Study schema |
-| S-7 | `level`, `priority` and `status` take only their listed values | `CHECK (level IN (…))`, `CHECK (typeof(priority) = 'integer' AND priority BETWEEN 1 AND 3)`, `CHECK (status IN (…))`, lists from `packages/shared` | Study schema |
-| S-8 | `learn_topic.note` is at most 120 characters | `CHECK (length(note) <= 120)`, the cap from `packages/shared` | Study schema |
-| S-9 | A topic is never hard-deleted, and its `area_id` and `code` never change | `BEFORE DELETE` and `BEFORE UPDATE OF area_id, code` triggers | Study triggers |
-| S-10 | `learn_course.level` is one of the three levels | `CHECK (level IN (…))`, list from `packages/shared` | Study schema |
-| S-11 | `learn_course.module` is an integer from 1 to 4, and 1 unless the level is Specialized | `CHECK (typeof(module) = 'integer' AND module BETWEEN 1 AND 4 AND (level = 'specialized' OR module = 1))` | Study schema |
-| S-12 | `learn_course.path` is unique, under `Study Lab/`, ending in `.md` | Unique index; `CHECK (path GLOB 'Study Lab/*.md')` | Study schema |
-| S-13 | `learn_exam.attempt` is an integer >= 1, unique per topic and level | `CHECK (typeof(attempt) = 'integer' AND attempt >= 1)`; unique index on `(topic_id, level, attempt)` | Study schema |
-| S-14 | A new attempt is one past the topic's highest at that level | `BEFORE INSERT` trigger comparing with `MAX(attempt)` | Study triggers |
-| S-15 | Exam paths are unique, under `Study Lab/`, ending in `.md` and `.pdf` | Unique indexes; `CHECK (md_path GLOB 'Study Lab/*.md' AND pdf_path GLOB 'Study Lab/*.pdf')` | Study schema |
-| S-16 | An exam is created ungraded; `grade` (integer 0..100) and `graded_at` are set together; once graded, `grade` stays an integer 0..100 (it can be corrected, never cleared) and `graded_at` never changes | `BEFORE INSERT` and `BEFORE UPDATE OF grade, graded_at` triggers (`grade` is nullable, so a trigger, not a CHECK) | Study triggers |
-| S-17 | `learn_exam.level` is one of the three levels | `CHECK (level IN (…))` | Study schema |
+| S-1 | `learn_area.prefix` is two uppercase letters, unique | `CHECK (length(prefix) = 2 AND prefix NOT GLOB '*[^A-Z]*')`; unique index | `0008_study_tables` (ST-02) |
+| S-2 | `learn_area.name` is never blank and unique ignoring case | `CHECK (length(trim(name)) > 0)`; unique index on `name COLLATE NOCASE` | `0008_study_tables` (ST-02) |
+| S-3 | `learn_area.next_seq` is an integer >= 1 | `CHECK (typeof(next_seq) = 'integer' AND next_seq >= 1)` | `0008_study_tables` (ST-02) |
+| S-4 | An area is never deleted and its prefix never changes | `BEFORE DELETE` and `BEFORE UPDATE OF prefix` triggers | `0009_study_triggers` (ST-02) |
+| S-5 | `learn_topic.code` is unique, so an ID is never reused (rows are never deleted, S-9) | Unique index | `0008_study_tables` (ST-02) |
+| S-6 | At most one topic per skill | Unique index on `skill_id`; FK to `skill` (C-7 keeps it) | `0008_study_tables` (ST-02) |
+| S-7 | `level`, `priority` and `status` take only their listed values | `CHECK (level IN (…))`, `CHECK (typeof(priority) = 'integer' AND priority BETWEEN 1 AND 3)`, `CHECK (status IN (…))`, lists from `packages/shared` | `0008_study_tables` (ST-02) |
+| S-8 | `learn_topic.note` is at most 120 characters | `CHECK (length(note) <= 120)`, the cap from `packages/shared` | `0008_study_tables` (ST-02) |
+| S-9 | A topic is never hard-deleted, and its `area_id` and `code` never change | `BEFORE DELETE` and `BEFORE UPDATE OF area_id, code` triggers | `0009_study_triggers` (ST-02) |
+| S-10 | `learn_course.level` is one of the three levels | `CHECK (level IN (…))`, list from `packages/shared` | `0008_study_tables` (ST-02) |
+| S-11 | `learn_course.module` is an integer from 1 to 4, and 1 unless the level is Specialized | `CHECK (typeof(module) = 'integer' AND module BETWEEN 1 AND 4 AND (level = 'specialized' OR module = 1))` | `0008_study_tables` (ST-02) |
+| S-12 | `learn_course.path` is unique, under `Study Lab/`, ending in `.md` | Unique index; `CHECK (path GLOB 'Study Lab/*.md')` | `0008_study_tables` (ST-02) |
+| S-13 | `learn_exam.attempt` is an integer >= 1, unique per topic and level | `CHECK (typeof(attempt) = 'integer' AND attempt >= 1)`; unique index on `(topic_id, level, attempt)` | `0008_study_tables` (ST-02) |
+| S-14 | A new attempt is one past the topic's highest at that level | `BEFORE INSERT` trigger comparing with `MAX(attempt)` | `0009_study_triggers` (ST-02) |
+| S-15 | Exam paths are unique, under `Study Lab/`, ending in `.md` and `.pdf` | Unique indexes; `CHECK (md_path GLOB 'Study Lab/*.md' AND pdf_path GLOB 'Study Lab/*.pdf')` | `0008_study_tables` (ST-02) |
+| S-16 | An exam is created ungraded; `grade` (integer 0..100) and `graded_at` are set together; once graded, `grade` stays an integer 0..100 (it can be corrected, never cleared) and `graded_at` never changes | `BEFORE INSERT` and `BEFORE UPDATE OF grade, graded_at` triggers (`grade` is nullable, so a trigger, not a CHECK) | `0009_study_triggers` (ST-02) |
+| S-17 | `learn_exam.level` is one of the three levels | `CHECK (level IN (…))` | `0008_study_tables` (ST-02) |
 
-**Build notes.** A topic's code is claimed in one `db.batch()`: `UPDATE learn_area SET next_seq = next_seq + 1 WHERE id = ?`, then `INSERT INTO learn_topic (…) SELECT …, prefix || '-' || printf('%02d', next_seq - 1), … FROM learn_area WHERE id = ?`, never read-then-write. All Study probes join `invariants.test.ts` and `verify-triggers.sh`.
+**Build notes.** The seven areas are seeded by `0010_study_areas` (fixed IDs `area-cs` … `area-se`). The tables live in `api/src/labs/study/schema.ts`, which `drizzle.config.ts` reads after core's. SQLite's INTEGER affinity turns numeric text (`'1'`, `'85'`) into integers, so only non-numeric text reaches the `typeof` checks. A topic's code is claimed in one `db.batch()`: `UPDATE learn_area SET next_seq = next_seq + 1 WHERE id = ?`, then `INSERT INTO learn_topic (…) SELECT …, prefix || '-' || printf('%02d', next_seq - 1), … FROM learn_area WHERE id = ?`, never read-then-write. All Study probes join `invariants.test.ts` and `verify-triggers.sh`.
 
 ---
 
