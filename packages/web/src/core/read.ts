@@ -24,9 +24,13 @@ interface Run {
  * without navigating. A background read swaps the data in when it arrives and,
  * if it fails, keeps what's on screen. An empty answer and a failed read are
  * different states, so a failure never renders as "nothing here yet". To read
- * new inputs, give the component a new `key`.
+ * new inputs, give the component a new `key`. To read again after a write
+ * (keeping what's on screen, like a foreground read), change `refresh`.
  */
-export function useRead<T>(load: Load<T>): {
+export function useRead<T>(
+  load: Load<T>,
+  refresh = 0,
+): {
   state: ReadState<T>;
   retry: () => void;
 } {
@@ -71,6 +75,10 @@ export function useRead<T>(load: Load<T>): {
       window.removeEventListener("online", readAgain);
     };
   }, []);
+
+  useEffect(() => {
+    if (refresh !== 0) setRun((r) => ({ n: r.n + 1, background: true }));
+  }, [refresh]);
 
   const retry = useCallback(() => {
     setState({ status: "loading" });

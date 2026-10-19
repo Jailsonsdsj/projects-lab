@@ -12,3 +12,14 @@ export interface Skill {
   name: string;
   aliases: string[];
 }
+
+export const skillSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  aliases: z.array(z.string()),
+});
+
+/** GET /api/skills?query=: the one live skill matching by name or alias. */
+export const findSkillResponseSchema = z.object({
+  skill: skillSchema.nullable(),
+});

@@ -59,7 +59,12 @@ function HomeCardLoader({ lab, home }: { lab: LabDefinition; home: LabHome }) {
       lab={lab.id}
       name={lab.name}
       icon={lab.icon}
-      href={lab.tabs[0]?.path ?? "/"}
+      // A summary can point the card somewhere else (Study: the course to continue).
+      href={
+        (read.status === "loaded" ? read.data.href : undefined) ??
+        lab.tabs[0]?.path ??
+        "/"
+      }
       state={state}
       onNavigate={navigate}
     />

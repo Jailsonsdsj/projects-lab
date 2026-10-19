@@ -28,3 +28,43 @@ export async function findSkill(
     aliases: JSON.parse(row.aliasesJson) as string[],
   };
 }
+
+/**
+ * The live skill for `name` (or one of its aliases); otherwise a soft-deleted
+ * skill with that name, restored, since C-1 keeps its name taken; otherwise a
+ * new skill. A concurrent insert of the same name loses to C-1 and re-reads.
+ */
+export async function findOrCreateSkill(
+  db: D1Database,
+  name: string,
+  now: string,
+): Promise<Skill> {
+  const wanted = name.trim();
+  const live = await findSkill(db, wanted);
+  if (live) return live;
+
+  const removed = await db
+    .prepare(
+      "SELECT id FROM skill WHERE name = ? COLLATE NOCASE AND deleted_at IS NOT NULL LIMIT 1",
+    )
+    .bind(wanted)
+    .first<{ id: string }>();
+  if (removed) {
+    await db
+      .prepare("UPDATE skill SET deleted_at = NULL WHERE id = ?")
+      .bind(removed.id)
+      .run();
+  } else {
+    try {
+      await db
+        .prepare("INSERT INTO skill (id, name, created_at) VALUES (?, ?, ?)")
+        .bind(crypto.randomUUID(), wanted, now)
+        .run();
+    } catch (error) {
+      if (!String(error).includes("UNIQUE constraint failed")) throw error;
+    }
+  }
+  const skill = await findSkill(db, wanted);
+  if (!skill) throw new Error(`Skill "${wanted}" vanished after it was saved`);
+  return skill;
+}

@@ -2,12 +2,14 @@ import {
   API_CACHE,
   API_NETWORK_TIMEOUT_SECONDS,
   CONTENT_CACHE,
+  LAZY_ASSET_CACHE,
 } from "@projects-lab/shared";
 import type { VitePWAOptions } from "vite-plugin-pwa";
 import { describe, expect, it } from "vitest";
 import wrangler from "../../api/wrangler.jsonc?raw";
 import favicon from "../public/favicon.svg?raw";
 import {
+  mermaidOnlyFiles,
   pwaOptions,
   themeColorTags,
   tokenColour,
@@ -91,6 +93,48 @@ describe("service worker", () => {
     expect(ruleFor("/api/x", "https://elsewhere.example")).toBeUndefined();
     for (const rule of workbox.runtimeCaching ?? [])
       expect(rule.method).toBe("GET");
+  });
+
+  it("keeps Mermaid's chunks out of the precache, but not the app's lazy chunks", () => {
+    const MERMAID =
+      "../../node_modules/.pnpm/mermaid@12.1.0/node_modules/mermaid/dist/mermaid.core.mjs";
+    const skip = mermaidOnlyFiles({
+      "index.html": {
+        file: "assets/index.js",
+        imports: ["_shared.js"],
+        dynamicImports: ["src/dev/KitchenSink.tsx", MERMAID],
+      },
+      "_shared.js": { file: "assets/shared.js" },
+      "src/dev/KitchenSink.tsx": {
+        file: "assets/KitchenSink.js",
+        imports: ["index.html"],
+      },
+      [MERMAID]: {
+        file: "assets/mermaid.core.js",
+        imports: ["index.html", "_shared.js", "_d3.js"],
+        dynamicImports: ["flow.mjs"],
+      },
+      "flow.mjs": {
+        file: "assets/flowDiagram.js",
+        imports: ["_d3.js", "index.html"],
+      },
+      "_d3.js": { file: "assets/d3.js" },
+    });
+    expect([...skip].sort()).toEqual([
+      "assets/d3.js",
+      "assets/flowDiagram.js",
+      "assets/mermaid.core.js",
+    ]);
+    expect(workbox.manifestTransforms).toHaveLength(1);
+  });
+
+  it("caches a lazy chunk the first time it loads, cache-first", () => {
+    const rule = ruleFor("/assets/flowDiagram-OXPTDLAJ-epmHtk44.js");
+    expect(rule?.handler).toBe("CacheFirst");
+    expect(rule?.options?.cacheName).toBe(LAZY_ASSET_CACHE);
+    expect(ruleFor("/assets/index-x.css")?.options?.cacheName).not.toBe(
+      LAZY_ASSET_CACHE,
+    );
   });
 
   it("precaches the shell, its chunks and the Latin fonts", () => {

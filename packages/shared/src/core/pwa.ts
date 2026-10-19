@@ -12,3 +12,10 @@ export const CONTENT_CACHE = "study-content";
 
 /** Content entries kept for offline reading; the oldest go first. */
 export const CONTENT_CACHE_MAX_ENTRIES = 200;
+
+/** Lazy chunks kept out of the precache (Mermaid's, ST-07d), cached when first
+ *  used (CacheFirst: hashed names never change), so a viewed diagram reads offline. */
+export const LAZY_ASSET_CACHE = "lazy-assets";
+
+/** Lazy chunks kept; Mermaid alone splits into about a hundred. */
+export const LAZY_ASSET_CACHE_MAX_ENTRIES = 300;

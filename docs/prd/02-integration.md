@@ -28,6 +28,7 @@ A failed call returns an MCP tool result with `isError: true` and a JSON body `{
 | `not_found` | The record named doesn't exist |
 | `conflict` | A rule refused the write (a duplicate, a trigger's `RAISE(ABORT)` that the service maps) |
 | `idempotency_key_reused`, `idempotency_key_in_progress` | As above |
+| `github_token_invalid`, `github_rate_limited` | A tool that checks `study-materials` (the `study_record_*` tools) couldn't reach it; the message names the fix (ST-05) |
 | `internal` | Anything else; logged on the Worker |
 
 ## Platform tools
@@ -38,18 +39,29 @@ Lab tools are specified in each lab's PRD.
 |---|---|---|---|---|
 | `core_whoami` | read | none | `{ owner: { id, timezone }, client, labs }`: proves the connection and names the client the grant belongs to | F-15 |
 | `core_find_skill` | read | `{ query }` | `{ skill: { id, name, aliases } \| null }`: by name or alias, ignoring case and soft-deleted skills; at most one (C-8) | F-15 |
+| `study_list_backlog` | read | `{ area?, status? }` | `{ areas, topics }`: the backlog in its order; each topic `{ id, skill, skillId, area, level, priority, status, grade, startedOn, finishedOn, note }` (`10`) | ST-04 |
+| `study_get_summary` | read | none | Per-area and total counts by status, average grade of Done topics (tenths), `next` topic (`10`) | ST-04 |
+| `study_add_topics` | write | `{ topics: [{ skill, area, level?, priority?, note? }], idempotencyKey? }` | `{ topics: [{ topic, created, restored }] }`; never duplicates a skill (`10`) | ST-04 |
+| `study_update_topic` | write | `{ topicId, level?, priority?, status?, note?, idempotencyKey? }` | `{ topic }` (`10`) | ST-04 |
+| `study_remove_topic` | write | `{ topicId, idempotencyKey? }` | `{ removed }`; soft delete (`10`) | ST-04 |
+| `study_add_area` | write | `{ name, prefix, idempotencyKey? }` | `{ area: { prefix, name, position } }` (`10`) | ST-04 |
+| `study_record_course` | write | `{ topicId, level, module?, path, idempotencyKey? }` | `{ courseId, topic: { id, status, startedOn } }`; the file must be in `study-materials` (`11`) | ST-05 |
+| `study_list_courses` | read | `{ topicId? }` | `{ courses: [{ courseId, topicId, level, module, path, recordedAt }] }`, newest first (`11`) | ST-05 |
+| `study_record_exam` | write | `{ topicId, level, attempt, mdPath, pdfPath, idempotencyKey? }` | `{ examId, attempt }`; both files must exist, attempt next at its level (`12`) | ST-05 |
+| `study_record_grade` | write | `{ topicId, level, attempt, grade, idempotencyKey? }` | `{ examId, grade, topic: { id, status, grade } }`; again for the same attempt corrects it (`12`) | ST-05 |
+| `study_list_exams` | read | `{ topicId? }` | `{ exams: [{ examId, topicId, level, attempt, mdPath, pdfPath, createdAt, grade, gradedAt }] }` (`12`) | ST-05 |
 
 ## Surfaces
 
-Priority A > B > D (R2-7). SP-01 filled in "Works" (2026-10-16); SP-02, redefined by R3-1, fills in "Documents": how each surface gets a generated PDF and DOCX onto the owner's device.
+Priority A > B > D (R2-7). SP-01 filled in "Works" (2026-10-16); SP-02 (redefined by R3-1) filled in "Documents" (2026-10-19): every surface turned `core_whoami` data into a one-page PDF and a DOCX and got both onto the owner's device; all opened on the Mac, iPhone and iPad.
 
 | Surface | Connects as | Works (SP-01, 2026-10-16) | Client name · registered by | Documents (SP-02) |
 |---|---|---|---|---|
-| A · Claude Code, VS Code | Remote HTTP MCP server at user scope (`claude mcp add --transport http --scope user projects-lab <origin>/mcp`); `/mcp` → Authenticate signs in through the browser | **Works**, no setting | "Claude Code" · its own client (origin not checked) | Expected: written to the Mac's disk |
-| B · Claude Code on the web | The claude.ai connector, not a registration of its own | **Works**, no setting reported | "Claude" · CIMD, via claude.ai | Expected: stays in the cloud container |
-| C · Claude chat, web and desktop | Custom connector, Settings → Connectors | **Works**, no setting | "Claude" · CIMD (`https://claude.ai/oauth/mcp-oauth-client-metadata`, seen in the logs) | Expected: download, with file creation on in claude.ai |
-| D · Claude app, phone and tablet | The connector added on claude.ai | **Works** on iPhone and iPad, no setting | "Claude" · CIMD, via claude.ai | As C |
-| Scheduled task | A Claude Code scheduled task using the connector (and Gmail, SP-03) | Unverified (SP-03) | | — |
+| A · Claude Code, VS Code | Remote HTTP MCP server at user scope (`claude mcp add --transport http --scope user projects-lab <origin>/mcp`); `/mcp` → Authenticate signs in through the browser | **Works**, no setting | "Claude Code" · its own client (origin not checked) | **Works**: written to the Mac's disk. The Mac had no PDF/DOCX libraries; Claude installed reportlab and python-docx in a throwaway virtualenv |
+| B · Claude Code on the web | The claude.ai connector, not a registration of its own | **Works**, no setting reported | "Claude" · CIMD, via claude.ai | **Works**: the web UI offers the files for download |
+| C · Claude chat, web and desktop | Custom connector, Settings → Connectors | **Works**, no setting | "Claude" · CIMD (`https://claude.ai/oauth/mcp-oauth-client-metadata`, seen in the logs) | **Works**, with **Code execution and file creation** on (it already was): download |
+| D · Claude app, phone and tablet | The connector added on claude.ai | **Works** on iPhone and iPad, no setting | "Claude" · CIMD, via claude.ai | **Works** on iPhone and iPad (the claude.ai setting applies): save from the chat |
+| Scheduled task | A Claude Code routine (claude.ai/code/routines) with the **Projects-Lab and Gmail connectors attached to the routine** (account connectors aren't inherited; add them in the routine's settings) | **Works** (SP-03, 2026-10-19): `core_whoami` and Gmail `send_message` unattended, no permission prompt, fired within a minute of schedule (once 6 min late) | "Claude" · the claude.ai connector | — |
 
 CPU per `/mcp` call is over the free tier's 10 ms (15–21 ms; `core_whoami` 10 ms), with no failed request; the fix is P-05 (post-launch). Both registration paths stay on: claude.ai uses CIMD, and Claude Code registers its own client.
 
@@ -76,12 +88,12 @@ Resumes, cover letters and any other career file are generated on demand by Clau
 
 The only file the app stores is the owner's profile photo, uploaded in the app with a session (Career PRD `20`). Video never goes to R2: interview videos are Google Drive links (R2-13).
 
-F-18 built signed uploads (`core_create_upload`, `PUT /api/uploads/<token>`, `UPLOAD_SIGNING_KEY`); F-23 removed them. Their `upload` table and its invariants stay until TD-01 drops them in a later contract migration.
+F-18 built signed uploads (`core_create_upload`, `PUT /api/uploads/<token>`, `UPLOAD_SIGNING_KEY`); F-23 removed them. Their `upload` table and its invariants were dropped in the next deploy by TD-01 (`0007_drop_upload`).
 
 ## Invariants (merged into `99-data-model.md`)
 
 - C-4 and C-5 (`mcp_call.tool` prefix, `mcp_call.ok` 0/1) already hold.
-- C-10 to C-13 (`upload`, F-18) still hold on a table nothing uses since F-23; TD-01 drops them with it.
+- C-10 to C-13 (`upload`, F-18) are retired: TD-01 dropped the table (`0007_drop_upload`) in the deploy after F-23.
 
 ## Decisions (owner, 2026-10-16)
 

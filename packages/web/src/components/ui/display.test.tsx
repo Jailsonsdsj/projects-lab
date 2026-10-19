@@ -8,6 +8,7 @@ import { EmptyState, ErrorState } from "./EmptyState";
 import { ImageTile, initialsOf } from "./ImageTile";
 import { ProgressBar } from "./ProgressBar";
 import { Skeleton } from "./Skeleton";
+import { StatCard } from "./StatCard";
 
 describe("ProgressBar", () => {
   it("exposes its value, range and name to assistive tech", () => {
@@ -125,5 +126,23 @@ describe("Banner", () => {
     rerender(<Banner tone="offline">You're offline.</Banner>);
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByRole("status")).toHaveClass("banner--offline");
+  });
+});
+
+describe("StatCard", () => {
+  it("shows its label, value with unit, note and what it holds", () => {
+    const { container } = render(
+      <StatCard label="Courses done" value="1" unit="of 8" note="This term">
+        <span>bar</span>
+      </StatCard>,
+    );
+    expect(container.querySelector(".stat__label")).toHaveTextContent(
+      "Courses done",
+    );
+    expect(container.querySelector(".stat__value")).toHaveTextContent("1of 8");
+    expect(container.querySelector(".stat__note")).toHaveTextContent(
+      "This term",
+    );
+    expect(container.querySelector(".stat")).toHaveTextContent("bar");
   });
 });

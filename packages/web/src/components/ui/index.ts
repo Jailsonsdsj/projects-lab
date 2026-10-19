@@ -35,6 +35,12 @@ export {
   LabSwitcher,
   type LabSwitcherProps,
 } from "./LabSwitcher";
+export {
+  Group,
+  type GroupProps,
+  ListRow,
+  type ListRowProps,
+} from "./ListRow";
 export { linkClick, type NavItem, type Navigate } from "./nav";
 export {
   OptionsMenu,
@@ -50,9 +56,11 @@ export {
 } from "./PageHeader";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { Prose, type ProseProps } from "./Prose";
+export { headingIds, headingSlug } from "./prose-slug";
 export { Sheet, type SheetProps } from "./Sheet";
 export { SideRail, type SideRailProps } from "./SideRail";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
+export { StatCard, type StatCardProps } from "./StatCard";
 export { type TabItem, Tabs, type TabsProps } from "./Tabs";
 export { Textarea, type TextareaProps } from "./Textarea";
 export {

@@ -133,7 +133,13 @@ describe("Claude's sign-in", () => {
     worker();
     openAuthorize({ ...PAGE, clientName: name, clientDomain: undefined });
     await signIn();
-    const heading = await screen.findByRole("heading", { level: 1 });
+    // Wait for the consent screen's heading by name: right after Sign in, the
+    // sign-in screen's own H1 ("Projects Lab") is still there while the key
+    // derivation runs, and an unnamed query could catch it (seen in CI).
+    const heading = await screen.findByRole("heading", {
+      level: 1,
+      name: `${name} wants to read and write your Projects Lab`,
+    });
     expect(heading).toHaveTextContent(`${name} wants to read and write`);
     expect(document.querySelector("img")).toBeNull();
     expect(

@@ -1,8 +1,9 @@
 // The composition root: the one place that knows every lab. Core receives the
 // list through LabsProvider and never imports a lab itself.
-import type { RouteObject } from "react-router";
+import { Outlet, type RouteObject } from "react-router";
 import { ToastProvider } from "./components/ui";
 import { AuthorizeScreen } from "./core/AuthorizeScreen";
+import { FocusFrame } from "./core/FocusFrame";
 import { LoginScreen } from "./core/LoginScreen";
 import { type LabDefinition, LabsProvider } from "./core/lab-registry";
 import { RequireSession } from "./core/RequireSession";
@@ -41,7 +42,7 @@ export function createRoutes(
         <ToastProvider>
           <LabsProvider labs={labs}>
             <RequireSession>
-              <Shell />
+              <Outlet />
             </RequireSession>
             <UpdatePrompt />
           </LabsProvider>
@@ -51,21 +52,44 @@ export function createRoutes(
       errorElement: <RouteError bare />,
       children: [
         {
-          // A screen failed: the error stands in for it and the shell stays.
-          // One boundary for every screen, so a new tab can't miss it.
-          errorElement: <RouteError />,
+          element: <Shell />,
           children: [
-            ...labs.flatMap((lab) =>
-              lab.tabs.map((tab) => ({ path: tab.path, element: tab.screen })),
-            ),
-            // Every component in every state (D-06). Loaded on first visit; not in navigation.
             {
-              path: "/dev/ui",
-              lazy: async () => ({
-                Component: (await import("./dev/KitchenSink")).KitchenSink,
-              }),
+              // A screen failed: the error stands in for it and the shell stays.
+              // One boundary for every screen, so a new tab can't miss it.
+              errorElement: <RouteError />,
+              children: [
+                ...labs.flatMap((lab) =>
+                  lab.tabs.map((tab) => ({
+                    path: tab.path,
+                    element: tab.screen,
+                  })),
+                ),
+                // Every component in every state (D-06). Loaded on first visit; not in navigation.
+                {
+                  path: "/dev/ui",
+                  lazy: async () => ({
+                    Component: (await import("./dev/KitchenSink")).KitchenSink,
+                  }),
+                },
+                { path: "*", element: <NotFoundScreen /> },
+              ],
             },
-            { path: "*", element: <NotFoundScreen /> },
+          ],
+        },
+        // Full-screen routes (the course reader): no rail, no bottom tabs.
+        {
+          element: <FocusFrame />,
+          children: [
+            {
+              errorElement: <RouteError bare />,
+              children: labs.flatMap((lab) =>
+                (lab.focus ?? []).map((route) => ({
+                  path: route.path,
+                  element: route.screen,
+                })),
+              ),
+            },
           ],
         },
       ],

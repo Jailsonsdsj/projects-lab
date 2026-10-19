@@ -68,21 +68,6 @@ github_cache(
   body_json,                             -- the entry or folder listing the app uses
   fetched_at
 )
-
--- One file Claude could upload through a signed URL (F-18). Unused since F-23
--- removed signed uploads (R3-1: documents are never stored); TD-01 drops it
--- and C-10 to C-13. Lists and the cap come from packages/shared.
-upload(
-  id,
-  kind,                                  -- resume | cover_letter (C-11)
-  filename,                              -- letters, digits, . - _ only
-  content_type,                          -- PDF or Word (C-12)
-  bytes,                                 -- integer 1..10 MB (C-10)
-  r2_key,                                -- uploads/<id>/<filename>
-  created_at,
-  expires_at,                            -- 10 minutes after created_at
-  used_at?                               -- set once, never changed (C-13)
-)
 ```
 
 Every column above without `?` is `NOT NULL`.
@@ -100,12 +85,12 @@ Every column above without `?` is `NOT NULL`.
 | C-7 | A `skill` is never hard-deleted, so no lab row can lose its skill. Removal is `deleted_at` | `BEFORE DELETE` trigger `skill_no_hard_delete` rejects every delete. Lab tables also get FKs to `skill` | `0001_triggers` (F-05) |
 | C-8 | Among live skills, no alias equals another skill's name or alias, and no name equals another skill's alias (ignoring case). Restoring a soft-deleted skill is checked again | `BEFORE INSERT` and `BEFORE UPDATE OF name, aliases_json, deleted_at` triggers using `json_each` | `0001_triggers` (F-05) |
 | C-9 | `user.session_version` is an integer >= 0 | `BEFORE INSERT` and `BEFORE UPDATE OF session_version` triggers (`typeof` check, so text can't slip past `>= 0`) | `0003_session_version_trigger` (F-08a) |
-| C-10 | `upload.bytes` is an integer from 1 to `UPLOAD_MAX_BYTES` (10 MB) | `CHECK (typeof(bytes) = 'integer' AND bytes BETWEEN 1 AND 10485760)`, the cap from `packages/shared` | `0005_upload` (F-18) |
-| C-11 | `upload.kind` is one of `UPLOAD_KINDS` | `CHECK (kind IN (…))`, built from the shared list | `0005_upload` (F-18) |
-| C-12 | `upload.content_type` is one of `UPLOAD_CONTENT_TYPES` (PDF, Word) | `CHECK (content_type IN (…))`, built from the shared list | `0005_upload` (F-18) |
-| C-13 | `upload.used_at`, once set, never changes (a used upload's file can't be overwritten) | `BEFORE UPDATE OF used_at` trigger `upload_used_at_once` | `0006_upload_triggers` (F-18) |
+| C-10 | ~~`upload.bytes` is an integer from 1 to `UPLOAD_MAX_BYTES` (10 MB)~~ Retired | `CHECK (typeof(bytes) = 'integer' AND bytes BETWEEN 1 AND 10485760)`, the cap from `packages/shared` | `0005_upload` (F-18); dropped by `0007_drop_upload` (TD-01) |
+| C-11 | ~~`upload.kind` is one of `UPLOAD_KINDS`~~ Retired | `CHECK (kind IN (…))`, built from the shared list | `0005_upload` (F-18); dropped by `0007_drop_upload` (TD-01) |
+| C-12 | ~~`upload.content_type` is one of `UPLOAD_CONTENT_TYPES` (PDF, Word)~~ Retired | `CHECK (content_type IN (…))`, built from the shared list | `0005_upload` (F-18); dropped by `0007_drop_upload` (TD-01) |
+| C-13 | ~~`upload.used_at`, once set, never changes (a used upload's file can't be overwritten)~~ Retired | `BEFORE UPDATE OF used_at` trigger `upload_used_at_once` | `0006_upload_triggers` (F-18); dropped by `0007_drop_upload` (TD-01) |
 
-Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check. Two checks prove C-1 to C-13 and every NULL case, and their probe lists must stay in sync: `packages/api/test/invariants.test.ts` (`pnpm test`) attempts each write through the D1 binding, and `scripts/verify-triggers.sh` (`pnpm verify:triggers`) runs the same probes after `wrangler d1 migrations apply` on a fresh local D1.
+Every column a CHECK references is `NOT NULL`, so a NULL can't slip past the check. Two checks prove C-1 to C-9 and every NULL case (C-10 to C-13 were retired with the `upload` table by TD-01; their IDs are never reused), and their probe lists must stay in sync: `packages/api/test/invariants.test.ts` (`pnpm test`) attempts each write through the D1 binding, and `scripts/verify-triggers.sh` (`pnpm verify:triggers`) runs the same probes after `wrangler d1 migrations apply` on a fresh local D1.
 
 ## Notes for the build
 
@@ -123,6 +108,95 @@ Settled by the owner on 2026-10-14.
 2. **Aliases are unique among live skills.** Enforced by C-8.
 3. **Skills are never hard-deleted.** C-7 rejects every delete, so core triggers never name a lab table.
 4. **Session revocation** uses `user.session_version` (C-9): every session JWT carries it, and bumping it ends every session (`01-identity-and-access.md`). Added by `0002_session_version` in F-08a.
+
+## Study Lab
+
+_From `10-study-backlog.md` (decisions settled 2026-10-19), `11-study-courses.md` and `12-study-exams.md`. `13-study-roadmap.md` adds no table._
+
+```sql
+-- A backlog area. Seeded with the seven of 10-study-backlog; never deleted
+-- (S-4), prefix fixed (S-4). next_seq is the next topic number, claimed in the
+-- same batch as the topic insert.
+learn_area(
+  id,
+  prefix,                                -- two uppercase letters, unique (S-1)
+  name,                                  -- unique ignoring case, never blank (S-2)
+  position,                              -- integer; display order
+  next_seq,                              -- integer >= 1, default 1 (S-3)
+  created_at
+)
+
+-- One topic per skill (S-6). Never hard-deleted (S-9): removal is deleted_at,
+-- so code is never reused (S-5). Grade and Finished are derived from learn_exam
+-- (12), never stored here.
+learn_topic(
+  id,
+  code,                                  -- "FE-01": area prefix + printf('%02d'), unique (S-5)
+  area_id,                               -- FK learn_area; fixed on creation (S-9)
+  skill_id,                              -- FK skill; unique (S-6)
+  level,                                 -- unset | fast_track | essential | specialized (S-7)
+  priority,                              -- integer 1..3, default 2 (S-7)
+  status,                                -- not_started | in_progress | done (S-7)
+  note,                                  -- default ''; at most 120 characters (S-8)
+  started_on?,                           -- owner-local date (YYYY-MM-DD) it first went in_progress
+  created_at,
+  updated_at,
+  deleted_at?
+)
+
+-- A course file in study-materials, recorded by study_record_course after the
+-- push (11). Upserted by path. Lesson count, minutes and title are read from
+-- the file, never stored.
+learn_course(
+  id,
+  topic_id,                              -- FK learn_topic
+  level,                                 -- fast_track | essential | specialized (S-10)
+  module,                                -- integer 1..4; 1 unless specialized (S-11)
+  path,                                  -- "Study Lab/<area>/<topic>/<topic>__<level>.md", unique (S-12)
+  recorded_at
+)
+
+-- One final-exam attempt (12). attempt counts per topic and level, like the
+-- file names. grade and graded_at are set together; a correction changes grade only (S-16). A topic's
+-- grade and Finished date come from its most recently graded row.
+learn_exam(
+  id,
+  topic_id,                              -- FK learn_topic
+  level,                                 -- fast_track | essential | specialized (S-17)
+  attempt,                               -- integer >= 1; next in sequence (S-13, S-14)
+  md_path,                               -- "…__exam-<n>.md", unique (S-15)
+  pdf_path,                              -- "…__exam-<n>.pdf", unique (S-15)
+  created_at,
+  grade?,                                -- integer tenths 0..100 (S-16)
+  graded_at?
+)
+```
+
+Every column above without `?` is `NOT NULL`.
+
+## Study Lab invariants
+
+| # | Invariant | Mechanism | Lands in |
+|---|---|---|---|
+| S-1 | `learn_area.prefix` is two uppercase letters, unique | `CHECK (length(prefix) = 2 AND prefix NOT GLOB '*[^A-Z]*')`; unique index | `0008_study_tables` (ST-02) |
+| S-2 | `learn_area.name` is never blank and unique ignoring case | `CHECK (length(trim(name)) > 0)`; unique index on `name COLLATE NOCASE` | `0008_study_tables` (ST-02) |
+| S-3 | `learn_area.next_seq` is an integer >= 1 | `CHECK (typeof(next_seq) = 'integer' AND next_seq >= 1)` | `0008_study_tables` (ST-02) |
+| S-4 | An area is never deleted and its prefix never changes | `BEFORE DELETE` and `BEFORE UPDATE OF prefix` triggers | `0009_study_triggers` (ST-02) |
+| S-5 | `learn_topic.code` is unique, so an ID is never reused (rows are never deleted, S-9) | Unique index | `0008_study_tables` (ST-02) |
+| S-6 | At most one topic per skill | Unique index on `skill_id`; FK to `skill` (C-7 keeps it) | `0008_study_tables` (ST-02) |
+| S-7 | `level`, `priority` and `status` take only their listed values | `CHECK (level IN (…))`, `CHECK (typeof(priority) = 'integer' AND priority BETWEEN 1 AND 3)`, `CHECK (status IN (…))`, lists from `packages/shared` | `0008_study_tables` (ST-02) |
+| S-8 | `learn_topic.note` is at most 120 characters | `CHECK (length(note) <= 120)`, the cap from `packages/shared` | `0008_study_tables` (ST-02) |
+| S-9 | A topic is never hard-deleted, and its `area_id` and `code` never change | `BEFORE DELETE` and `BEFORE UPDATE OF area_id, code` triggers | `0009_study_triggers` (ST-02) |
+| S-10 | `learn_course.level` is one of the three levels | `CHECK (level IN (…))`, list from `packages/shared` | `0008_study_tables` (ST-02) |
+| S-11 | `learn_course.module` is an integer from 1 to 4, and 1 unless the level is Specialized | `CHECK (typeof(module) = 'integer' AND module BETWEEN 1 AND 4 AND (level = 'specialized' OR module = 1))` | `0008_study_tables` (ST-02) |
+| S-12 | `learn_course.path` is unique, under `Study Lab/`, ending in `.md` | Unique index; `CHECK (path GLOB 'Study Lab/*.md')` | `0008_study_tables` (ST-02) |
+| S-13 | `learn_exam.attempt` is an integer >= 1, unique per topic and level | `CHECK (typeof(attempt) = 'integer' AND attempt >= 1)`; unique index on `(topic_id, level, attempt)` | `0008_study_tables` (ST-02) |
+| S-14 | A new attempt is one past the topic's highest at that level | `BEFORE INSERT` trigger comparing with `MAX(attempt)` | `0009_study_triggers` (ST-02) |
+| S-15 | Exam paths are unique, under `Study Lab/`, ending in `.md` and `.pdf` | Unique indexes; `CHECK (md_path GLOB 'Study Lab/*.md' AND pdf_path GLOB 'Study Lab/*.pdf')` | `0008_study_tables` (ST-02) |
+| S-16 | An exam is created ungraded; `grade` (integer 0..100) and `graded_at` are set together; once graded, `grade` stays an integer 0..100 (it can be corrected, never cleared) and `graded_at` never changes | `BEFORE INSERT` and `BEFORE UPDATE OF grade, graded_at` triggers (`grade` is nullable, so a trigger, not a CHECK) | `0009_study_triggers` (ST-02) |
+| S-17 | `learn_exam.level` is one of the three levels | `CHECK (level IN (…))` | `0008_study_tables` (ST-02) |
+
+**Build notes.** The seven areas are seeded by `0010_study_areas` (fixed IDs `area-cs` … `area-se`). The tables live in `api/src/labs/study/schema.ts`, which `drizzle.config.ts` reads after core's. SQLite's INTEGER affinity turns numeric text (`'1'`, `'85'`) into integers, so only non-numeric text reaches the `typeof` checks. A topic's code is claimed in one `db.batch()`: `UPDATE learn_area SET next_seq = next_seq + 1 WHERE id = ?`, then `INSERT INTO learn_topic (…) SELECT …, prefix || '-' || printf('%02d', next_seq - 1), … FROM learn_area WHERE id = ?`, never read-then-write. All Study probes join `invariants.test.ts` and `verify-triggers.sh`.
 
 ---
 

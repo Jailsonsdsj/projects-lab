@@ -15,7 +15,7 @@ export type Navigate = (href: string) => void;
 
 /** Follows a plain left click client-side; modified clicks keep browser behaviour. */
 export function linkClick(href: string, navigate?: Navigate) {
-  return (event: MouseEvent<HTMLAnchorElement>) => {
+  return (event: MouseEvent<HTMLElement>) => {
     if (!navigate || event.defaultPrevented || event.button !== 0) return;
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
       return;

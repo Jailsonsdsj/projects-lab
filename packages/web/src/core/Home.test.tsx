@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { json, mockApi } from "../../test/api";
 import { createRoutes, LABS } from "../app";
 import type { LabDefinition, LabSummary } from "./lab-registry";
 import { platformLab } from "./screens";
@@ -30,11 +31,13 @@ const card = (name: string) =>
     ?.closest(".labcard") as HTMLElement;
 
 afterEach(() => {
+  vi.restoreAllMocks();
   document.documentElement.removeAttribute("data-lab");
 });
 
 describe("Home", () => {
   it("shows a lab with no data as its empty state, not an error", async () => {
+    mockApi({ "GET /api/study/summary": () => json(null) });
     renderHome();
     for (const lab of [studyLab, careerLab]) {
       await waitFor(() =>
@@ -47,6 +50,29 @@ describe("Home", () => {
       expect(el).toHaveAttribute("href", lab.tabs[0]?.path);
     }
     expect(screen.queryByText("Couldn't load the summary.")).toBeNull();
+  });
+
+  it("shows Study's figures from /api/study/summary, with Continue", async () => {
+    mockApi({
+      "GET /api/study/summary": () =>
+        json({
+          stats: [
+            { value: "1", label: "In progress" },
+            { value: "6", label: "Not started" },
+            { value: "8.5", label: "Average grade" },
+          ],
+          foot: { label: "Continue", value: "CS-01 Big-O notation" },
+          href: "/study/courses/c-bigo",
+        }),
+    });
+    renderHome();
+    await waitFor(() => expect(card("Study Lab")).toHaveTextContent("8.5"));
+    const study = card("Study Lab");
+    expect(study).toHaveTextContent("Not started");
+    expect(study).toHaveTextContent("Continue CS-01 Big-O notation");
+    // The card opens the course to continue, not the lab's first tab.
+    expect(study).toHaveAttribute("href", "/study/courses/c-bigo");
+    expect(study).not.toHaveClass("is-muted");
   });
 
   it("keeps one lab's failure inside its own card, and Retry reads again", async () => {

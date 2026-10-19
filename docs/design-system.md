@@ -45,6 +45,9 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `OptionsMenu` | `.menu` | "More" button + anchored popover menu | `label`, `heading`, `items` (icon, danger, disabled) and `"separator"` | closed, open; arrows, Home, End, Escape |
 | `Toast` | `.toast` | Transient notice: `ToastProvider` + `useToast().show()` | `tone` neutral · success · warning · danger · info; `icon`; `action` | holding (`--duration-toast-hold[-action]`), paused on hover/focus, leaving |
 | `ProgressBar` | `.progress` | `role=progressbar` with name and value | `value`, `max`, `label`, `caption`, `valueText`, `size` sm · md, `tone` accent · success | 0–100% |
+| `ListRow` | `.row` (`.trow` on tablet) | One row of a Group: ID, title, meta, badges, value; a link or button when it opens something, else static (no chevron, no hover) | `id`, `title`, `meta`, `tags` (badges: the meta line on phone; their own columns from tablet with `table`), `value`, `href` or `onClick`, `current` | static, link, button, current, *hover, pressed, focus* |
+| `Group` | `.group` + `.group__title` | A titled section of rows | `title` (kicker), `count` (mono) | — |
+| `StatCard` | `.stat` | One figure with its label (Grades' average, courses done) | `label`, `value`, `unit`, `note`, children (e.g. a ProgressBar) | — |
 | `Banner` | `.banner` | Inline notice at the top of a screen | `tone` info · warning · danger · offline; `title` (bold lead); `action`; `flush` | warning/danger `role=alert`, info/offline `role=status` |
 | `EmptyState` | `.empty` | A successful, empty answer | `icon`, `title`, text, `actions` | — |
 | `ErrorState` | `.empty--error` / `--offline` | A failed read; never "nothing here yet" | `kind` error · offline, `code`, `actions` | error, offline |
@@ -52,16 +55,16 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `ImageTile` | `.tile` | Profile photo with initials fallback | `src`, `name`, `size` md · lg, `round` | loading, loaded, failed / no photo (initials) |
 | `LabCard` | `.labcard` | Home's per-lab card in that lab's accent | `lab`, `name`, `icon`, `href`, `state` | loading, loaded, empty, error (Retry) |
 | `LabSwitcher` | `.labsw` / `.labopt` | Current lab; opens the list of labs | `variant` sheet · menu; `block` | closed, open; current lab checked |
-| `PageHeader` | `.phead` | Screen top bar | `title`, `leading` (back or LabSwitcher), `actions` | — |
+| `PageHeader` | `.phead` | Screen top bar | `title` (an h1, or a plain label with `titleIsHeading={false}` when the content has its own H1, as the course reader), `leading` (back or LabSwitcher), `actions` | — |
 | `PageTitle` | `.phead__large` | Large screen title | `title`, `subtitle` | — |
 | `BottomTabs` | `.btabs` | Phone navigation | `label`, `items` (current) | current, *hover, pressed, focus* |
 | `SideRail` | `.rail` | Tablet navigation | `section`, `switcher`, `items`, `footItems`, `compact` | full, compact, current |
 | `Icon` | `.icon` | One of the bundle's 43 icons | `name`, `size` xs · sm · md · lg, `label` (else decorative) | — |
-| `Prose` | `.prose` | Course Markdown (no raw HTML) | `markdown`, `large` | callouts, code (Copy), tables, figures, quiz selection |
+| `Prose` | `.prose` | Course Markdown (no raw HTML) | `markdown`, `large`, `resolveImage` (relative images, e.g. a course's `_img/`) | callouts, code (Copy), tables, figures, quiz selection; ` ```mermaid ` drawn as a diagram (Mermaid loaded only then, strict mode, token colours, natural size scrolling sideways; the code shows until drawn or if it can't be) |
 
-Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`.
+Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`, `headingSlug` and `headingIds` (the ids Prose gives every H3, for a reader's outline).
 
-**In the bundle, not built yet:** Select (a Field around a native `<select>` works today; see `/dev/ui`), SearchField (use `Input search`), CopyField, ListRow, StatCard, ReadinessMeter. They arrive with the screens that need them.
+**In the bundle, not built yet:** Select (a Field around a native `<select>` works today; see `/dev/ui`), SearchField (use `Input search`, or the bundle's bare `.input--search` markup where the screen has no visible label, as the Backlog does), CopyField, ReadinessMeter. They arrive with the screens that need them.
 
 ## Adding a component
 

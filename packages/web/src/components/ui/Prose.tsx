@@ -16,27 +16,51 @@ import { cx } from "./cx";
 import { Icon } from "./Icon";
 import type { IconName } from "./icons";
 import { highlight } from "./prose-highlight";
+import { MermaidDiagram } from "./prose-mermaid";
 import { type CalloutKind, remarkCourse } from "./prose-remark";
+import { rehypeHeadingIds } from "./prose-slug";
 
 export interface ProseProps {
   /** Course Markdown (study-course-builder's template). Raw HTML is not rendered. */
   markdown: string;
   /** Tablet and wider reading size (`.prose--lg`). */
   large?: boolean;
+  /** Where a relative image (`_img/x.png`) loads from; null when the reader
+   *  has no such file, which then shows as its alt text. Absolute URLs are
+   *  used as they are. */
+  resolveImage?: (src: string) => string | null;
   className?: string;
 }
 
+const ImageContext = createContext<ProseProps["resolveImage"]>(undefined);
+const ABSOLUTE = /^(https?:|data:|\/)/i;
+
+function Image({ src = "", alt = "" }: { src?: string; alt?: string }) {
+  const resolve = useContext(ImageContext);
+  const url = ABSOLUTE.test(src) || !resolve ? src : resolve(src);
+  if (!url) return <span className="text-ink-muted">[{alt || src}]</span>;
+  return <img src={url} alt={alt} loading="lazy" />;
+}
+
 /** Long-form course reading: the bundle's `.prose` with callouts, code, tables and quizzes. */
-export function Prose({ markdown, large, className }: ProseProps) {
+export function Prose({
+  markdown,
+  large,
+  resolveImage,
+  className,
+}: ProseProps) {
   return (
-    <article className={cx("prose", large && "prose--lg", className)}>
-      <Markdown
-        remarkPlugins={[remarkGfm, remarkCourse]}
-        components={COMPONENTS}
-      >
-        {markdown}
-      </Markdown>
-    </article>
+    <ImageContext.Provider value={resolveImage}>
+      <article className={cx("prose", large && "prose--lg", className)}>
+        <Markdown
+          remarkPlugins={[remarkGfm, remarkCourse]}
+          rehypePlugins={[rehypeHeadingIds]}
+          components={COMPONENTS}
+        >
+          {markdown}
+        </Markdown>
+      </article>
+    </ImageContext.Provider>
   );
 }
 
@@ -63,6 +87,23 @@ function CodeBlock({ node }: { node?: Element }) {
     .find((c) => c.startsWith("language-"))
     ?.slice("language-".length);
   const text = (code ? textOf(code) : "").replace(/\n$/, "");
+  const listing = <CodeListing language={language} text={text} />;
+  // A diagram is drawn in the browser; its code shows until then, or if it can't be.
+  return language === "mermaid" ? (
+    <MermaidDiagram code={text} fallback={listing} />
+  ) : (
+    listing
+  );
+}
+
+/** The labelled code block with Copy. */
+function CodeListing({
+  language,
+  text,
+}: {
+  language: string | undefined;
+  text: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -205,9 +246,7 @@ const COMPONENTS = {
   ),
   th: cell("th"),
   td: cell("td"),
-  img: ({ src, alt }: { src?: string; alt?: string }) => (
-    <img src={src} alt={alt ?? ""} loading="lazy" />
-  ),
+  img: Image,
   "x-callout": Callout,
   "x-quiz": Quiz,
   "x-quiz-stem": QuizStem,
