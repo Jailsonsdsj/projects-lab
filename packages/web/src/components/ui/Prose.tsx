@@ -16,6 +16,7 @@ import { cx } from "./cx";
 import { Icon } from "./Icon";
 import type { IconName } from "./icons";
 import { highlight } from "./prose-highlight";
+import { MermaidDiagram } from "./prose-mermaid";
 import { type CalloutKind, remarkCourse } from "./prose-remark";
 import { rehypeHeadingIds } from "./prose-slug";
 
@@ -86,6 +87,23 @@ function CodeBlock({ node }: { node?: Element }) {
     .find((c) => c.startsWith("language-"))
     ?.slice("language-".length);
   const text = (code ? textOf(code) : "").replace(/\n$/, "");
+  const listing = <CodeListing language={language} text={text} />;
+  // A diagram is drawn in the browser; its code shows until then, or if it can't be.
+  return language === "mermaid" ? (
+    <MermaidDiagram code={text} fallback={listing} />
+  ) : (
+    listing
+  );
+}
+
+/** The labelled code block with Copy. */
+function CodeListing({
+  language,
+  text,
+}: {
+  language: string | undefined;
+  text: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {

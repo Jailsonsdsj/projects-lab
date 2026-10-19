@@ -9,7 +9,59 @@ import {
   API_NETWORK_TIMEOUT_SECONDS,
   CONTENT_CACHE,
   CONTENT_CACHE_MAX_ENTRIES,
+  LAZY_ASSET_CACHE,
+  LAZY_ASSET_CACHE_MAX_ENTRIES,
 } from "../shared/src/core/pwa";
+
+/** Vite's build manifest (dist/.vite/manifest.json), the fields used here. */
+export type ViteManifest = Record<
+  string,
+  { file: string; imports?: string[]; dynamicImports?: string[] }
+>;
+
+/**
+ * The files reachable from Mermaid's dynamic entry that the app doesn't load
+ * statically: kept out of the precache (about 5 MB, wanted only by a page with
+ * a diagram). The app's own lazy chunks stay precached (D-11).
+ */
+export function mermaidOnlyFiles(manifest: ViteManifest): Set<string> {
+  /** Every chunk reachable from `keys`, never entering one in `stop`. */
+  const walk = (
+    keys: string[],
+    dynamic: boolean,
+    stop: ReadonlySet<string> = new Set(),
+    seen = new Set<string>(),
+  ) => {
+    for (const key of keys) {
+      if (seen.has(key) || stop.has(key) || !manifest[key]) continue;
+      seen.add(key);
+      const chunk = manifest[key];
+      const next = [
+        ...(chunk.imports ?? []),
+        ...(dynamic ? (chunk.dynamicImports ?? []) : []),
+      ];
+      walk(next, dynamic, stop, seen);
+    }
+    return seen;
+  };
+  // The shell: the entry and what it imports statically.
+  const shell = walk(
+    Object.keys(manifest).filter((k) => k.endsWith("index.html")),
+    false,
+  );
+  // Mermaid's graph, stopping at the shell: its chunks import shared modules
+  // from the entry, whose own lazy chunks (e.g. /dev/ui) aren't Mermaid's.
+  const mermaid = walk(
+    Object.keys(manifest).filter((k) =>
+      /\/mermaid\/dist\/mermaid\.core\.mjs$/.test(k),
+    ),
+    true,
+    shell,
+  );
+  return new Set(
+    [...mermaid].map((key) => manifest[key]?.file ?? "").filter(Boolean),
+  );
+}
 
 /**
  * The paths the Worker answers itself: wrangler.jsonc `run_worker_first`, which
@@ -94,6 +146,23 @@ export function pwaOptions(tokensCss: string): Partial<VitePWAOptions> {
       // The shell, its lazy chunks and the Latin font subsets: what opens
       // offline. Other scripts' subsets still load online when text needs them.
       globPatterns: ["**/*.{js,css,html,svg,png,ico}", "**/*-latin-*.woff2"],
+      // ...but not Mermaid's chunks: a page with a diagram loads them, and the
+      // lazy-asset rule below keeps them for offline from then on.
+      manifestTransforms: [
+        async (entries) => {
+          const { readFile } = await import("node:fs/promises");
+          const raw = await readFile(
+            new URL("./dist/.vite/manifest.json", import.meta.url),
+            "utf8",
+          ).catch(() => null);
+          if (!raw) return { manifest: entries, warnings: [] };
+          const skip = mermaidOnlyFiles(JSON.parse(raw) as ViteManifest);
+          return {
+            manifest: entries.filter((e) => !skip.has(e.url)),
+            warnings: [],
+          };
+        },
+      ],
       navigateFallback: "/index.html",
       navigateFallbackDenylist: WORKER_FIRST.map(workerFirstPattern),
       cleanupOutdatedCaches: true,
@@ -108,6 +177,20 @@ export function pwaOptions(tokensCss: string): Partial<VitePWAOptions> {
           options: {
             cacheName: CONTENT_CACHE,
             expiration: { maxEntries: CONTENT_CACHE_MAX_ENTRIES },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          // Hashed, so never revalidated: Mermaid's lazy chunks after first use.
+          urlPattern: ({ sameOrigin, url }) =>
+            sameOrigin &&
+            url.pathname.startsWith("/assets/") &&
+            url.pathname.endsWith(".js"),
+          method: "GET",
+          handler: "CacheFirst",
+          options: {
+            cacheName: LAZY_ASSET_CACHE,
+            expiration: { maxEntries: LAZY_ASSET_CACHE_MAX_ENTRIES },
             cacheableResponse: { statuses: [200] },
           },
         },

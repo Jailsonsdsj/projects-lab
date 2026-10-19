@@ -26,6 +26,9 @@ export default defineConfig({
       transformIndexHtml: () => themeColorTags(tokensCss),
     },
   ],
+  // dist/.vite/manifest.json: the chunk graph pwa.config uses to keep
+  // Mermaid's lazy chunks out of the precache.
+  build: { manifest: true },
   server: {
     proxy: Object.fromEntries(workerPaths.map((p) => [p, WORKER])),
   },

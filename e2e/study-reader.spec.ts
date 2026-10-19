@@ -109,3 +109,50 @@ test("keeps a lesson's answers hidden until asked for", async ({ page }) => {
   }));
   expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
 });
+
+test("loads Mermaid only for a page with a diagram, and draws it", async ({
+  page,
+}) => {
+  const mermaidRequests: string[] = [];
+  page.on("request", (request) => {
+    if (/\/assets\/mermaid\.core-[^/]*\.js$/.test(request.url()))
+      mermaidRequests.push(request.url());
+  });
+  await page.goto("/study/courses/course-bigo?p=1");
+  await expect(page.getByText("📖 Lesson 1 of 3")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  expect(mermaidRequests).toEqual([]);
+
+  await page
+    .getByRole("button", { name: "Lesson 2 · The common complexity classes" })
+    .click();
+  const figure = page.getByRole("figure", { name: "Diagram: flowchart" });
+  await expect(figure.locator("svg")).toBeVisible();
+  expect(mermaidRequests).toHaveLength(1);
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+});
+
+test("draws diagrams in the token colours, dark scheme included", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/study/courses/course-bigo?p=2");
+  const label = page
+    .getByRole("figure", { name: "Diagram: flowchart" })
+    .locator(".nodeLabel")
+    .first();
+  await expect(label).toBeVisible();
+  const { drawn, ink } = await label.evaluate((el) => {
+    const probe = document.createElement("span");
+    probe.style.color = "var(--color-ink)";
+    document.body.append(probe);
+    const ink = getComputedStyle(probe).color;
+    probe.remove();
+    return { drawn: getComputedStyle(el).color, ink };
+  });
+  expect(drawn).toBe(ink);
+});

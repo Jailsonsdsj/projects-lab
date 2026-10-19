@@ -450,3 +450,27 @@ dialog.is-closing::backdrop {
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
 }
+
+/* ── Prose: a Mermaid diagram (drawn in the browser, ST-07d) ──────────────
+   At its natural size, centred in the reading column; a wide one scrolls
+   sideways inside its figure, never the page. */
+.prose__diagram {
+  overflow-x: auto;
+  margin: var(--space-6) 0;
+  padding: var(--space-4);
+  border: var(--border-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-1);
+
+  /* Auto margins centre a narrow diagram and fall to 0 for a wide one, so its
+     left edge stays reachable (flex centring would cut it off). */
+  svg {
+    display: block;
+    max-width: none;
+    margin-inline: auto;
+  }
+}
+.prose__diagram-note {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
