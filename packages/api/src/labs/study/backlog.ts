@@ -270,13 +270,13 @@ export async function getHomeSummary(
   if (total.notStarted + total.inProgress + total.done === 0) return null;
   const latest = await db
     .prepare(
-      `SELECT s.name AS skill FROM learn_course c
+      `SELECT c.id AS courseId, t.code, s.name AS skill FROM learn_course c
        JOIN learn_topic t ON t.id = c.topic_id
        JOIN skill s ON s.id = t.skill_id
        WHERE t.status = 'in_progress' AND t.deleted_at IS NULL
        ORDER BY c.recorded_at DESC LIMIT 1`,
     )
-    .first<{ skill: string }>();
+    .first<{ courseId: string; code: string; skill: string }>();
   return {
     stats: [
       { value: String(total.inProgress), label: "In progress" },
@@ -286,7 +286,13 @@ export async function getHomeSummary(
         label: "Average grade",
       },
     ],
-    ...(latest ? { foot: { label: "Continue", value: latest.skill } } : {}),
+    // The bundle's foot, "Continue CS-02 Graphs"; the card opens that course.
+    ...(latest
+      ? {
+          foot: { label: "Continue", value: `${latest.code} ${latest.skill}` },
+          href: `/study/courses/${latest.courseId}`,
+        }
+      : {}),
   };
 }
 

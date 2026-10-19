@@ -4,6 +4,7 @@ import type { LabDefinition } from "../../core/lab-registry";
 import { ComingScreen } from "../../core/screens";
 import { BacklogScreen } from "./BacklogScreen";
 import { CourseReader } from "./CourseReader";
+import { CoursesScreen } from "./CoursesScreen";
 
 // Home's Study card (00-platform): in progress, not started, average grade and
 // "Continue". null while the backlog is empty, which Home shows as empty.
@@ -39,7 +40,7 @@ export const studyLab: LabDefinition = {
       label: "Courses",
       icon: "book",
       path: "/study/courses",
-      screen: <ComingScreen title="Courses" icon="book" arrives={later} />,
+      screen: <CoursesScreen />,
     },
     {
       label: "Grades",

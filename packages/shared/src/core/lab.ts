@@ -9,6 +9,9 @@ export type LabId = (typeof LAB_IDS)[number];
 export const labSummarySchema = z.object({
   stats: z.array(z.object({ value: z.string(), label: z.string() })).max(3),
   foot: z.object({ label: z.string(), value: z.string() }).optional(),
+  /** Where the card opens instead of the lab's first tab, e.g. the course to
+   *  continue. An app path. */
+  href: z.string().startsWith("/").max(200).optional(),
 });
 export type LabSummary = z.infer<typeof labSummarySchema>;
 export const labSummaryResponseSchema = labSummarySchema.nullable();

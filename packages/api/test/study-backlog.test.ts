@@ -343,7 +343,8 @@ describe("summary", () => {
       "Not started",
       "Average grade",
     ]);
-    expect(card.foot).toEqual({ label: "Continue", value: "CSS" });
+    expect(card.foot).toEqual({ label: "Continue", value: "FE-04 CSS" });
+    expect((card as { href?: string }).href).toBe("/study/courses/course-css");
     expect(labSummaryResponseSchema.safeParse(card).success).toBe(true);
   });
 });

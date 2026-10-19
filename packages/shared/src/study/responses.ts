@@ -71,3 +71,20 @@ export const courseReadResponseSchema = z.object({
   }),
 });
 export type CourseRead = z.infer<typeof courseReadResponseSchema>["course"];
+
+/** GET /api/study/courses: recorded course files, newest first. */
+export const coursesResponseSchema = z.object({
+  courses: z.array(
+    z.object({
+      courseId: z.string(),
+      topicId: z.string(),
+      level: z.enum(COURSE_LEVELS),
+      module: z.number().int(),
+      path: z.string(),
+      recordedAt: z.string(),
+    }),
+  ),
+});
+export type CourseInfo = z.infer<
+  typeof coursesResponseSchema
+>["courses"][number];

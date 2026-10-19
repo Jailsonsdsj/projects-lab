@@ -61,14 +61,17 @@ describe("Home", () => {
             { value: "6", label: "Not started" },
             { value: "8.5", label: "Average grade" },
           ],
-          foot: { label: "Continue", value: "Big-O notation" },
+          foot: { label: "Continue", value: "CS-01 Big-O notation" },
+          href: "/study/courses/c-bigo",
         }),
     });
     renderHome();
     await waitFor(() => expect(card("Study Lab")).toHaveTextContent("8.5"));
     const study = card("Study Lab");
     expect(study).toHaveTextContent("Not started");
-    expect(study).toHaveTextContent("Big-O notation");
+    expect(study).toHaveTextContent("Continue CS-01 Big-O notation");
+    // The card opens the course to continue, not the lab's first tab.
+    expect(study).toHaveAttribute("href", "/study/courses/c-bigo");
     expect(study).not.toHaveClass("is-muted");
   });
 
