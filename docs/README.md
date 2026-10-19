@@ -21,8 +21,8 @@ The PRD is split one file per feature area, so a task loads one ~80-line file in
 | `11-study-courses.md` | Course levels and sizing; reading a course in the app (rendering, images, offline) | `study-course-builder` SKILL.md + `course-template.md` | Drafted |
 | `12-study-exams.md` | Exam types and scoring; exam PDF; recording grades | `exam-rules.md` | Drafted |
 | `13-study-roadmap.md` | Gap analysis and roadmap proposals | `study-course-builder` Workflow E | Drafted |
-| `20-career-profile.md` | Person, contact, links, photo, education, experience, declared skills; master-resume import | Round 1 Q8 + `Master Resume — source of truth.md` | To write (Career phase) |
-| `21-career-jobs-and-skills.md` | Mapping postings to skills, pushing gaps to Study, readiness (verified, declared, gap) | `job-mapper` SKILL.md + R2-15 | To write |
+| `20-career-profile.md` | Person, contact, links, photo, education, experience, declared skills; master-resume import | Round 1 Q8 + `Master Resume — source of truth.md` | Drafted (decisions proposed, CA-00) |
+| `21-career-jobs-and-skills.md` | Mapping postings to skills, pushing gaps to Study, readiness (verified, declared, gap) | `job-mapper` SKILL.md + R2-15 | Drafted (decisions proposed, CA-00) |
 | `22-career-documents.md` | Resumes and cover letters generated on demand from the profile, returned to the owner, never stored (`career_document_brief`); self-introductions, salary ranges per role; form-filling copy panel | R3-1, R2-11, R2-12 | To write |
 | `23-career-job-search.md` | Search criteria edited in the app; scheduled task; openings and their statuses; digest | R2-8, R2-9 | To write |
 | `24-career-interviews.md` | Interview answers in text and Drive video | R2-13 | To write |

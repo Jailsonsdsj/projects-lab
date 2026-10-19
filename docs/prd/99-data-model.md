@@ -201,3 +201,104 @@ Every column above without `?` is `NOT NULL`.
 ---
 
 *Part of the Projects Lab spec. Index: [`docs/README.md`](../README.md)*
+
+## Career Lab
+
+_Draft (2026-10-19) from `20-career-profile.md` and `21-career-jobs-and-skills.md`; their decisions are proposed, settled in CA-00. Documents (`22`), job search (`23`) and interviews (`24`) add their tables below._
+
+```sql
+-- The owner's person record: exactly one row (K-1). Contact details live here.
+career_person(
+  id,                                    -- always 'person' (K-1)
+  full_name, headline, location, timezone, email, phone,
+  summary,                               -- default ''; at most 600 characters
+  languages_json,                        -- JSON array of { name, level }; default '[]'
+  photo_key?, photo_type?,               -- set together: profile/photo.<ext>, image/jpeg|png|webp (K-3)
+  updated_at
+)
+
+career_link(
+  id, kind,                              -- linkedin | github | portfolio | scholar | other (K-2)
+  label, url,                            -- url starts with https:// (K-2)
+  position, created_at
+)
+
+career_education(
+  id, institution, degree, field,
+  start_on, end_on?,                     -- YYYY or YYYY-MM; no end = in progress (K-4)
+  notes, position, created_at, deleted_at?
+)
+
+career_experience(
+  id, organization, title,
+  kind,                                  -- job | contract | research | project
+  start_on, end_on?,                     -- YYYY or YYYY-MM; no end = current (K-4)
+  location, summary, position, created_at, deleted_at?
+)
+
+-- One claim a document can use. Never hard-deleted (K-8): a job's selection may cite it.
+career_fact(
+  id,
+  experience_id?, education_id?,         -- at most one of them
+  text,                                  -- 1..300 characters (K-5)
+  verified,                              -- 0/1 (K-5): 0 = excluded from documents
+  position, created_at, updated_at, deleted_at?
+)
+career_fact_skill(fact_id, skill_id)     -- PK both; skill FK (C-7 keeps it)
+
+-- What the owner claims (readiness Declared). One per skill (K-6).
+career_declared_skill(
+  skill_id,                              -- PK, FK skill
+  level,                                 -- familiar | working | strong (K-7)
+  years?,                                -- integer >= 0
+  note, created_at, updated_at
+)
+
+-- A tracked job. Never hard-deleted (K-14). Readiness is derived, never stored.
+career_job(
+  id, company, role, seniority, language, -- language: the posting's (documents match it)
+  work_shape,                            -- short text: contract/employment, hours, remote
+  source_url?, posting,                  -- the pasted text (at most 20,000 characters)
+  fit_total?, fit_constraints?, fit_skills?, fit_growth?, fit_pay?, fit_signal?,  -- K-10
+  decision?,                             -- apply | maybe | skip (K-10)
+  fit_notes,                             -- gaps to expect, questions to ask, red flags
+  created_at, updated_at, deleted_at?
+)
+
+career_requirement(
+  id, job_id,                            -- FK career_job
+  text,                                  -- the posting's wording, at most 120 characters
+  type,                                  -- required | nice | not_mapped (K-9)
+  skill_id?,                             -- FK skill; null iff not_mapped (K-9, K-13)
+  position
+)
+
+-- The application's history; its current status is the latest row (derived).
+career_job_event(
+  id, job_id, status,                    -- evaluated | applied | interviewing | offer | rejected | withdrawn | closed_silent (K-11, K-12)
+  at, note
+)
+```
+
+Every column above without `?` is `NOT NULL`.
+
+## Career Lab invariants
+
+| # | Invariant | Mechanism |
+|---|---|---|
+| K-1 | There is at most one person row | `CHECK (id = 'person')` with the PK |
+| K-2 | A link's kind is one of the list; its URL starts with `https://` | `CHECK` |
+| K-3 | The photo's key and type are set together, the type one of JPEG, PNG, WebP | Triggers (nullable columns) |
+| K-4 | Education and experience dates are `YYYY` or `YYYY-MM`, and an end is not before the start | `CHECK` on `start_on`; triggers for `end_on` |
+| K-5 | A fact's text is 1..300 characters; `verified` is 0 or 1; at most one of experience and education | `CHECK` (the parents by trigger) |
+| K-6 | One declaration per skill | PK on `skill_id` |
+| K-7 | A declared level is one of the list; `years`, when set, an integer ≥ 0 | `CHECK`; trigger for `years` |
+| K-8 | A fact is never hard-deleted | `BEFORE DELETE` trigger |
+| K-9 | A requirement's type is one of the list, and its skill is null exactly when it's not mapped | `CHECK (type IN (…))`; trigger for the pairing |
+| K-10 | Fit scores are integers within their maxima (25, 25, 20, 15, 15) and the total is their sum; the decision is one of the list | Triggers (nullable until scored) |
+| K-11 | An event's status is one of the list | `CHECK` |
+| K-12 | Events of a job are never edited or deleted (the history is append-only) | `BEFORE UPDATE` and `BEFORE DELETE` triggers |
+| K-13 | A requirement's skill exists in the registry | FK to `skill` |
+| K-14 | A job is never hard-deleted | `BEFORE DELETE` trigger |
+
+**Build notes.** The master-resume import (`20`) follows ST-10: a tested parser, guarded SQL the owner runs once. The Study contract's `ensureTopics` carries the area Claude chooses (ST-03).
