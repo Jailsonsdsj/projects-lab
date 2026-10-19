@@ -49,7 +49,7 @@ Priority A > B > D (R2-7). SP-01 filled in "Works" (2026-10-16); SP-02 (redefine
 | B · Claude Code on the web | The claude.ai connector, not a registration of its own | **Works**, no setting reported | "Claude" · CIMD, via claude.ai | **Works**: the web UI offers the files for download |
 | C · Claude chat, web and desktop | Custom connector, Settings → Connectors | **Works**, no setting | "Claude" · CIMD (`https://claude.ai/oauth/mcp-oauth-client-metadata`, seen in the logs) | **Works**, with **Code execution and file creation** on (it already was): download |
 | D · Claude app, phone and tablet | The connector added on claude.ai | **Works** on iPhone and iPad, no setting | "Claude" · CIMD, via claude.ai | **Works** on iPhone and iPad (the claude.ai setting applies): save from the chat |
-| Scheduled task | A Claude Code scheduled task using the connector (and Gmail, SP-03) | Unverified (SP-03) | | — |
+| Scheduled task | A Claude Code routine (claude.ai/code/routines) with the **Projects-Lab and Gmail connectors attached to the routine** (account connectors aren't inherited; add them in the routine's settings) | **Works** (SP-03, 2026-10-19): `core_whoami` and Gmail `send_message` unattended, no permission prompt, fired within a minute of schedule (once 6 min late) | "Claude" · the claude.ai connector | — |
 
 CPU per `/mcp` call is over the free tier's 10 ms (15–21 ms; `core_whoami` 10 ms), with no failed request; the fix is P-05 (post-launch). Both registration paths stay on: claude.ai uses CIMD, and Claude Code registers its own client.
 
