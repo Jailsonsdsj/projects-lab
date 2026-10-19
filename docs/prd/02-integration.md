@@ -1,6 +1,6 @@
 # Integration
 
-How Claude reaches Projects Lab: one remote MCP server on the same Worker, the tools it exposes, the Claude surfaces that connect to it, how study content is read from `study-materials`, and how files from Claude arrive (superseded by R3-1: see Uploads). Source: architecture §6–7 and the round-2 answers it cites (R2-1 to R2-10, and R3-1). Sign-in and consent are in `01-identity-and-access.md`.
+How Claude reaches Projects Lab: one remote MCP server on the same Worker, the tools it exposes, the Claude surfaces that connect to it, how study content is read from `study-materials`, and where Claude's documents go (Documents). Source: architecture §6–7 and the round-2 answers it cites (R2-1 to R2-10, and R3-1). Sign-in and consent are in `01-identity-and-access.md`.
 
 ## MCP endpoint
 
@@ -38,7 +38,6 @@ Lab tools are specified in each lab's PRD.
 |---|---|---|---|---|
 | `core_whoami` | read | none | `{ owner: { id, timezone }, client, labs }`: proves the connection and names the client the grant belongs to | F-15 |
 | `core_find_skill` | read | `{ query }` | `{ skill: { id, name, aliases } \| null }`: by name or alias, ignoring case and soft-deleted skills; at most one (C-8) | F-15 |
-| `core_create_upload` | write | `{ kind, filename, contentType, bytes, idempotencyKey? }` | `{ uploadId, uploadUrl, expiresAt }` (see Uploads) | F-18; **superseded by R3-1**, removed by F-23 |
 
 ## Surfaces
 
@@ -71,40 +70,18 @@ CPU per `/mcp` call is over the free tier's 10 ms (15–21 ms; `core_whoami` 10 
 | 503 | `github_rate_limited` | GitHub's limit reached; `Retry-After` set |
 | 404 | `not_found` | No file at that path or SHA |
 
-## Uploads (R2-10)
+## Documents (R3-1, replaces R2-10)
 
-> **Superseded by R3-1 (2026-10-17).** Resumes, cover letters and other career files are generated on demand by Claude from the profile and returned to the owner; the app never stores them (architecture §6.4). Nothing uses the flow below. It stays in the code until **F-23** removes it; then this section becomes "documents are returned to the owner; no upload route". The `upload` table goes in TD-01.
+Resumes, cover letters and any other career file are generated on demand by Claude from the profile and **returned to the owner; the app stores none** (architecture §6.4). There is **no upload route**: Claude builds the file in its own sandbox from structured data it reads over MCP (Career PRD `22`, `career_document_brief`), and nothing file-sized crosses MCP in either direction. How each surface gets the file onto the owner's device is SP-02 (Surfaces, "Documents").
 
-Resumes and cover letters are Word or PDF files made by Claude and stored in R2. Video never goes to R2: interview videos are Google Drive links (R2-13).
+The only file the app stores is the owner's profile photo, uploaded in the app with a session (Career PRD `20`). Video never goes to R2: interview videos are Google Drive links (R2-13).
 
-1. Claude calls `core_create_upload { kind, filename, contentType, bytes }`. The Worker checks `kind`, type and size, records the upload, and returns `uploadUrl`: `PUT <origin>/api/uploads/<token>`, signed with `UPLOAD_SIGNING_KEY`, valid for **10 minutes**, for **this one upload**.
-2. Claude Code runs `curl --upload-file <file> -H "Content-Type: <type>" <uploadUrl>`. The Worker checks the signature and expiry, that the upload is unused (a conditional write, never read-then-write), that `Content-Type` and `Content-Length` match what was declared, then streams the body to R2. Anything that fails writes nothing.
-3. Claude calls the lab tool that attaches the stored upload (by `uploadId`) to its record (Career PRD `22`).
-4. Where Claude can't run `curl`, it hands the owner the file, and the owner drops it on the same record in the app.
-
-**The upload URL is its own credential.** `PUT /api/uploads/<token>` is the only `/api` route without a session: `curl` in a Claude session has neither the session JWT nor an OAuth token. The token authorizes exactly one PUT of the declared file and nothing else.
-
-**Limits and storage:**
-
-- **Kinds:** `resume` and `cover_letter`.
-- **Types:** PDF (`application/pdf`) and Word (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`).
-- **Size cap:** 10 MB per file.
-- **Storage:** R2 key `uploads/<uploadId>/<filename>`, with the filename reduced to letters, digits, `.`, `-` and `_`.
-- **Tracking:** a new `upload` table (id, kind, filename, content_type, bytes, created_at, used_at?) holds each upload's state; F-18 adds it with its invariants.
-
-| Status | `error` | When |
-|---|---|---|
-| 400 | `bad_request` | `core_create_upload` input fails its schema, or an unknown `kind` |
-| 403 | `upload_invalid` | The signature doesn't verify |
-| 410 | `upload_expired` | More than 10 minutes after it was issued |
-| 409 | `upload_used` | The upload already has its file |
-| 413 | `upload_too_large` | Declared or sent size over the cap, or not the declared size |
-| 415 | `upload_wrong_type` | A type not allowed for the kind, or not the declared type |
+F-18 built signed uploads (`core_create_upload`, `PUT /api/uploads/<token>`, `UPLOAD_SIGNING_KEY`); F-23 removed them. Their `upload` table and its invariants stay until TD-01 drops them in a later contract migration.
 
 ## Invariants (merged into `99-data-model.md`)
 
 - C-4 and C-5 (`mcp_call.tool` prefix, `mcp_call.ok` 0/1) already hold.
-- **With F-18:** `upload.bytes` is an integer from 1 to the cap; `upload.kind` and `upload.content_type` come from the allowed lists; `upload.used_at`, once set, never changes.
+- C-10 to C-13 (`upload`, F-18) still hold on a table nothing uses since F-23; TD-01 drops them with it.
 
 ## Decisions (owner, 2026-10-16)
 
@@ -113,7 +90,7 @@ The choices architecture left open, as recommended in the draft:
 1. **Only writes are audited.** The Connections screen's "last use" is the last write unless the OAuth provider records last use (F-16 checks).
 2. **Lists** page with `limit` (default 50, max 200) and `cursor`.
 3. **Content by SHA** is `private, max-age=31536000, immutable`.
-4. **Uploads:** kinds `resume` and `cover_letter`, PDF and Word, 10 MB, R2 key `uploads/<uploadId>/<filename>`, tracked in a new `upload` table (F-18). Career PRD `22` may add kinds.
+4. ~~**Uploads:** kinds `resume` and `cover_letter`, PDF and Word, 10 MB, R2 key `uploads/<uploadId>/<filename>`, tracked in a new `upload` table (F-18).~~ Replaced by R3-1 (2026-10-17): documents are returned to the owner, never stored; removed by F-23.
 
 ---
 

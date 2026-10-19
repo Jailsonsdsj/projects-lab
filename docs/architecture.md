@@ -68,7 +68,7 @@ flowchart LR
 | Product shape | One app, one domain | One app hosting **lab modules** compiled in. See §4 |
 | Credentials | Passphrase → session JWT | Two credential types: session JWT for `/api`, **OAuth 2.1 access token** for `/mcp`. See §6 |
 | Bindings | D1, R2 | D1 `DB` · R2 `FILES` · **KV `OAUTH_KV`** (required by `workers-oauth-provider`) |
-| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. Fresh per project, never shared. (`UPLOAD_SIGNING_KEY`, for the signed uploads built in F-18, is removed by F-23: R3-1 left them without a use) |
+| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. Fresh per project, never shared. (`UPLOAD_SIGNING_KEY`, for the signed uploads built in F-18, was removed by F-23: R3-1 left them without a use) |
 | `run_worker_first` | `["/api/*"]` | `["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]`. Still an array, never `true` |
 | Content | Lives in D1/R2 | Study content lives in **git** (`study-materials`). D1 stores only paths and metadata. See §7 |
 | Caching | Not specified | **Don't rely on the Workers Cache API**: on a `workers.dev` hostname it can't be counted on. Content is addressed by git blob SHA and cached **in the client** as immutable. See §7 |
@@ -194,7 +194,7 @@ Claude: builds the PDF or DOCX in its own sandbox (built-in document skills) →
 
 - **The profile is the source of truth.** Skills, education and experiences are structured records in D1. A document may only use what the profile holds: Claude selects, orders and emphasizes, and never invents (the master resume's rule). A new skill or experience is added once, in the app or by telling Claude (a `career_*` write tool), and every later document can use it.
 - **Same result from every surface.** The writing rules and layout come from the app through `career_document_brief`, not from a skill installed separately on each surface, so a resume made on the phone matches one made in Claude Code.
-- **Nothing file-sized crosses MCP.** Tools exchange structured data only, and Claude builds the file itself. "No file content in tool arguments" stays a rule. `core_create_upload` and `PUT /api/uploads/:token` (F-18) lose their only use and are retired by F-23.
+- **Nothing file-sized crosses MCP.** Tools exchange structured data only, and Claude builds the file itself. "No file content in tool arguments" stays a rule. `core_create_upload` and `PUT /api/uploads/:token` (F-18) lost their only use and were retired by F-23.
 - **What the app keeps per job (A-7):** the posting, its requirement map, which profile items were selected, the self-introduction and the salary range. Never the file.
 - **Getting the file onto your device** depends on the surface, and SP-02 checks it. Expected: claude.ai and the mobile app offer it for download (needs file creation turned on in claude.ai); Claude Code in VS Code writes it to your disk; Claude Code on the web leaves it in the cloud container.
 
