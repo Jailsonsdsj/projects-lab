@@ -56,6 +56,11 @@ describe("/mcp", () => {
       "study_add_topics",
       "study_get_summary",
       "study_list_backlog",
+      "study_list_courses",
+      "study_list_exams",
+      "study_record_course",
+      "study_record_exam",
+      "study_record_grade",
       "study_remove_topic",
       "study_update_topic",
     ]);

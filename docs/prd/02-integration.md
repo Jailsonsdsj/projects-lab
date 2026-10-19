@@ -28,6 +28,7 @@ A failed call returns an MCP tool result with `isError: true` and a JSON body `{
 | `not_found` | The record named doesn't exist |
 | `conflict` | A rule refused the write (a duplicate, a trigger's `RAISE(ABORT)` that the service maps) |
 | `idempotency_key_reused`, `idempotency_key_in_progress` | As above |
+| `github_token_invalid`, `github_rate_limited` | A tool that checks `study-materials` (the `study_record_*` tools) couldn't reach it; the message names the fix (ST-05) |
 | `internal` | Anything else; logged on the Worker |
 
 ## Platform tools
@@ -44,6 +45,11 @@ Lab tools are specified in each lab's PRD.
 | `study_update_topic` | write | `{ topicId, level?, priority?, status?, note?, idempotencyKey? }` | `{ topic }` (`10`) | ST-04 |
 | `study_remove_topic` | write | `{ topicId, idempotencyKey? }` | `{ removed }`; soft delete (`10`) | ST-04 |
 | `study_add_area` | write | `{ name, prefix, idempotencyKey? }` | `{ area: { prefix, name, position } }` (`10`) | ST-04 |
+| `study_record_course` | write | `{ topicId, level, module?, path, idempotencyKey? }` | `{ courseId, topic: { id, status, startedOn } }`; the file must be in `study-materials` (`11`) | ST-05 |
+| `study_list_courses` | read | `{ topicId? }` | `{ courses: [{ courseId, topicId, level, module, path, recordedAt }] }`, newest first (`11`) | ST-05 |
+| `study_record_exam` | write | `{ topicId, level, attempt, mdPath, pdfPath, idempotencyKey? }` | `{ examId, attempt }`; both files must exist, attempt next at its level (`12`) | ST-05 |
+| `study_record_grade` | write | `{ topicId, level, attempt, grade, idempotencyKey? }` | `{ examId, grade, topic: { id, status, grade } }`; again for the same attempt corrects it (`12`) | ST-05 |
+| `study_list_exams` | read | `{ topicId? }` | `{ exams: [{ examId, topicId, level, attempt, mdPath, pdfPath, createdAt, grade, gradedAt }] }` (`12`) | ST-05 |
 
 ## Surfaces
 

@@ -5,6 +5,11 @@ import {
   addAreaInputSchema,
   addTopicsInputSchema,
   listBacklogInputSchema,
+  listCoursesInputSchema,
+  listExamsInputSchema,
+  recordCourseInputSchema,
+  recordExamInputSchema,
+  recordGradeInputSchema,
   topicCodeSchema,
   updateTopicInputSchema,
 } from "@projects-lab/shared/study";
@@ -23,8 +28,21 @@ import {
   removeTopic,
   updateTopic,
 } from "./backlog";
+import {
+  listCourses,
+  listExams,
+  recordCourse,
+  recordExam,
+  recordGrade,
+} from "./records";
 
-const STATUS = { bad_request: 400, not_found: 404, conflict: 409 } as const;
+const STATUS = {
+  bad_request: 400,
+  not_found: 404,
+  conflict: 409,
+  github_token_invalid: 502,
+  github_rate_limited: 503,
+} as const;
 
 function invalid(c: Context, error: z.ZodError) {
   const issue = error.issues[0];
@@ -141,6 +159,71 @@ export function backlogRoutes() {
       return c.json({
         area: await addArea(database(c.env), parsed.data, new Date()),
       });
+    } catch (error) {
+      return refused(c, error);
+    }
+  });
+
+  // --- Courses and exams (PRDs 11, 12): recorded after Claude pushes the files.
+
+  app.post("/courses", idempotent("POST /api/study/courses"), async (c) => {
+    const parsed = recordCourseInputSchema.safeParse(await body(c));
+    if (!parsed.success) return invalid(c, parsed.error);
+    try {
+      return c.json(
+        await recordCourse(
+          c.env,
+          database(c.env),
+          parsed.data,
+          new Date(),
+          await zone(c),
+        ),
+      );
+    } catch (error) {
+      return refused(c, error);
+    }
+  });
+
+  app.get("/courses", async (c) => {
+    const parsed = listCoursesInputSchema.safeParse({
+      topicId: c.req.query("topicId"),
+    });
+    if (!parsed.success) return invalid(c, parsed.error);
+    return c.json(await listCourses(database(c.env), parsed.data.topicId));
+  });
+
+  app.post("/exams", idempotent("POST /api/study/exams"), async (c) => {
+    const parsed = recordExamInputSchema.safeParse(await body(c));
+    if (!parsed.success) return invalid(c, parsed.error);
+    try {
+      return c.json(
+        await recordExam(c.env, database(c.env), parsed.data, new Date()),
+      );
+    } catch (error) {
+      return refused(c, error);
+    }
+  });
+
+  app.get("/exams", async (c) => {
+    const parsed = listExamsInputSchema.safeParse({
+      topicId: c.req.query("topicId"),
+    });
+    if (!parsed.success) return invalid(c, parsed.error);
+    return c.json(await listExams(database(c.env), parsed.data.topicId));
+  });
+
+  app.post("/grades", idempotent("POST /api/study/grades"), async (c) => {
+    const parsed = recordGradeInputSchema.safeParse(await body(c));
+    if (!parsed.success) return invalid(c, parsed.error);
+    try {
+      return c.json(
+        await recordGrade(
+          database(c.env),
+          parsed.data,
+          new Date(),
+          await zone(c),
+        ),
+      );
     } catch (error) {
       return refused(c, error);
     }

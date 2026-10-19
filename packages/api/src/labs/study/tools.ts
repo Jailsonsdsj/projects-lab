@@ -6,6 +6,11 @@ import {
   addTopicsInputSchema,
   getSummaryInputSchema,
   listBacklogInputSchema,
+  listCoursesInputSchema,
+  listExamsInputSchema,
+  recordCourseInputSchema,
+  recordExamInputSchema,
+  recordGradeInputSchema,
   removeTopicInputSchema,
   updateTopicInputSchema,
 } from "@projects-lab/shared/study";
@@ -19,6 +24,13 @@ import {
   removeTopic,
   updateTopic,
 } from "./backlog";
+import {
+  listCourses,
+  listExams,
+  recordCourse,
+  recordExam,
+  recordGrade,
+} from "./records";
 
 const zone = (ctx: ToolContext) => ownerTimeZone(ctx.db, ctx.userId);
 
@@ -92,6 +104,56 @@ export const studyTools = [
     input: addAreaInputSchema,
     async run(input, ctx) {
       return { area: await addArea(ctx.db, input, new Date()) };
+    },
+  }),
+  defineTool({
+    name: "study_record_course",
+    kind: "write",
+    description:
+      "Records a course file after you push it to study-materials (Study Lab/<area>/<topic>/<topic>__<level>[_m<n>].md). The file must already be on GitHub. Sets the topic's level, and a Not started topic goes In progress.",
+    input: recordCourseInputSchema,
+    async run(input, ctx) {
+      return recordCourse(ctx.env, ctx.db, input, new Date(), await zone(ctx));
+    },
+  }),
+  defineTool({
+    name: "study_list_courses",
+    kind: "read",
+    description:
+      "Lists recorded course files, newest first, optionally for one topic: their level, module and path in study-materials.",
+    input: listCoursesInputSchema,
+    async run({ topicId }, ctx) {
+      return listCourses(ctx.db, topicId);
+    },
+  }),
+  defineTool({
+    name: "study_record_exam",
+    kind: "write",
+    description:
+      "Records a final exam after you push its .md (questions only) and .pdf. The attempt must be the next one for that topic and level (1, then one past the highest). Doesn't change the topic's status.",
+    input: recordExamInputSchema,
+    async run(input, ctx) {
+      return recordExam(ctx.env, ctx.db, input, new Date());
+    },
+  }),
+  defineTool({
+    name: "study_record_grade",
+    kind: "write",
+    description:
+      "Records an exam's grade in integer tenths (8.5 → 85) after you push its Results, and marks the topic Done. Calling it again for the same attempt corrects the grade; the graded date stays.",
+    input: recordGradeInputSchema,
+    async run(input, ctx) {
+      return recordGrade(ctx.db, input, new Date(), await zone(ctx));
+    },
+  }),
+  defineTool({
+    name: "study_list_exams",
+    kind: "read",
+    description:
+      "Lists exam attempts, most recently graded first, optionally for one topic: level, attempt, paths, and the grade in tenths (null while awaiting one).",
+    input: listExamsInputSchema,
+    async run({ topicId }, ctx) {
+      return listExams(ctx.db, topicId);
     },
   }),
 ];

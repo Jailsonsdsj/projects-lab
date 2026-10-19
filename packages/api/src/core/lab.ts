@@ -37,7 +37,13 @@ export interface LabTool<Input extends z.ZodObject = z.ZodObject> {
 /** A refusal a tool reports to Claude as `{ error, message }` (PRD 02). */
 export class ToolError extends Error {
   constructor(
-    readonly code: "bad_request" | "not_found" | "conflict",
+    readonly code:
+      | "bad_request"
+      | "not_found"
+      | "conflict"
+      // study-materials unreachable (PRD 02): the message names the fix.
+      | "github_token_invalid"
+      | "github_rate_limited",
     message: string,
   ) {
     super(message);
