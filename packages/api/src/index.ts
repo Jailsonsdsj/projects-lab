@@ -12,6 +12,7 @@ import { type LabEnv, mountLabs } from "./core/lab";
 import { authorizeRoutes } from "./core/oauth/authorize";
 import { publicOrigin } from "./core/oauth/origin";
 import { pruneOldRows } from "./core/prune";
+import { skillsRoutes } from "./core/skills-routes";
 import { careerLab } from "./labs/career";
 import { studyLab } from "./labs/study";
 import { mcpApiHandler } from "./mcp/server";
@@ -23,6 +24,7 @@ export const app = new Hono<LabEnv>();
 app.get("/api/health", (c) => c.json({ ok: true }));
 app.route("/api/auth", authRoutes());
 app.route("/api/connections", connectionsRoutes());
+app.route("/api/skills", skillsRoutes());
 app.route("/oauth", authorizeRoutes());
 
 const study = studyLab();

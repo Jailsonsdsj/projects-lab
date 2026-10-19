@@ -12,17 +12,10 @@ import {
   type TopicStatus,
 } from "@projects-lab/shared/study";
 import { type ReactNode, useState } from "react";
-import {
-  Banner,
-  Button,
-  Dialog,
-  Field,
-  Icon,
-  Sheet,
-  Textarea,
-} from "../../components/ui";
+import { Banner, Button, Dialog, Sheet, Textarea } from "../../components/ui";
 import { apiFetch } from "../../core/api";
 import { failureKind } from "../../core/failure";
+import { Select } from "./Select";
 
 const LEVELS: [TopicLevel, string][] = [
   ["unset", "Not chosen"],
@@ -45,48 +38,6 @@ type Changes = Partial<
   Pick<TopicInfo, "level" | "priority" | "status" | "note">
 >;
 type Outcome = "saved" | "removed" | "gone";
-
-function Select<V extends string | number>({
-  label,
-  value,
-  options,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  value: V;
-  options: [V, string][];
-  onChange: (value: V) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Field label={label} disabled={disabled}>
-      {(control) => (
-        <div className="input">
-          <select
-            id={control.id}
-            aria-describedby={control.describedBy}
-            value={String(value)}
-            disabled={disabled}
-            onChange={(event) => {
-              const picked = options.find(
-                ([option]) => String(option) === event.target.value,
-              );
-              if (picked) onChange(picked[0]);
-            }}
-          >
-            {options.map(([option, text]) => (
-              <option key={String(option)} value={String(option)}>
-                {text}
-              </option>
-            ))}
-          </select>
-          <Icon name="chevron-down" className="input__chev" />
-        </div>
-      )}
-    </Field>
-  );
-}
 
 /** What changed, so a save sends only that (PATCH). */
 function changesOf(topic: TopicInfo, draft: Required<Changes>): Changes {

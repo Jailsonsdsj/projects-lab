@@ -9,10 +9,11 @@ import {
   type TopicInfo,
   type TopicStatus,
 } from "@projects-lab/shared/study";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Badge,
   type BadgeTone,
+  Button,
   EmptyState,
   Group,
   Icon,
@@ -25,6 +26,7 @@ import {
 } from "../../components/ui";
 import { apiFetch } from "../../core/api";
 import { ReadView } from "../../core/ReadView";
+import { type Added, AddTopicSheet } from "./AddTopicSheet";
 import { TopicSheet } from "./TopicSheet";
 
 type Filter = "all" | TopicStatus;
@@ -42,14 +44,13 @@ const LEVEL: Record<TopicInfo["level"], string> = {
 };
 const PRIORITY_TONE = { 1: "p1", 2: "p2", 3: "p3" } as const;
 
-async function loadBacklog(
-  signal: AbortSignal,
-): Promise<BacklogResponse | null> {
+/** The whole backlog, areas included even when it has no topics (the Add
+ *  sheet needs them). */
+async function fetchBacklog(signal: AbortSignal): Promise<BacklogResponse> {
   const response = await apiFetch("/api/study/backlog", { signal });
   if (!response.ok)
     throw new Error(`GET /api/study/backlog: ${response.status}`);
-  const backlog = backlogResponseSchema.parse(await response.json());
-  return backlog.topics.length > 0 ? backlog : null;
+  return backlogResponseSchema.parse(await response.json());
 }
 
 /** "8 topics · 1 in progress · avg grade 8.5" (the bundle's subtitle). */
@@ -109,10 +110,12 @@ function Backlog({
   backlog,
   openId,
   onOpen,
+  onAdd,
 }: {
   backlog: BacklogResponse;
   openId: string | null;
   onOpen: (topic: TopicInfo) => void;
+  onAdd: () => void;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
@@ -137,9 +140,9 @@ function Backlog({
         <div className="flex-1">
           <PageTitle title="Backlog" subtitle={subtitle(backlog)} />
         </div>
-        <div className="px-4 tablet:w-(--size-rail) tablet:box-content tablet:pl-0">
+        <div className="flex gap-2 px-4 tablet:pl-0">
           {/* The bundle's search box: no visible label (SearchField isn't built). */}
-          <div className="input input--search">
+          <div className="input input--search flex-1 tablet:w-(--size-rail) tablet:flex-none">
             <Icon name="search" className="input__icon" />
             <input
               type="search"
@@ -159,6 +162,9 @@ function Backlog({
               </button>
             )}
           </div>
+          <Button variant="soft" icon="plus" onClick={onAdd}>
+            Add
+          </Button>
         </div>
       </div>
       <Tabs
@@ -244,25 +250,52 @@ const DONE: Record<
   gone: (t) => ({ message: `${t.id} was already removed`, tone: "info" }),
 };
 
+function addedToast({ topic, created, restored }: Added): ToastInput {
+  const name = `${topic.id} · ${topic.skill}`;
+  if (created) return { message: `Added ${name}`, tone: "success" };
+  if (restored) return { message: `Restored ${name}`, tone: "success" };
+  return {
+    message: `${topic.skill} is already in the backlog as ${topic.id}`,
+    tone: "info",
+  };
+}
+
 /** Backlog (`/study`, Study's first tab). */
 export function BacklogScreen() {
   const { show } = useToast();
   const [topic, setTopic] = useState<TopicInfo | null>(null);
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [latest, setLatest] = useState<BacklogResponse | null>(null);
   const [refresh, setRefresh] = useState(0);
+
+  // An empty backlog reads as null (its empty state); the areas are kept.
+  const load = useCallback(async (signal: AbortSignal) => {
+    const backlog = await fetchBacklog(signal);
+    setLatest(backlog);
+    return backlog.topics.length > 0 ? backlog : null;
+  }, []);
 
   return (
     <div className="flex flex-col gap-3 tablet:gap-4">
       <ReadView
         refresh={refresh}
-        load={loadBacklog}
+        load={load}
         skeleton={<BacklogSkeleton />}
         empty={
           <>
             <PageTitle title="Backlog" />
             <div className="px-4 pb-6">
               <div className="group">
-                <EmptyState icon="list" title="No topics yet">
+                <EmptyState
+                  icon="list"
+                  title="No topics yet"
+                  actions={
+                    <Button icon="plus" onClick={() => setAdding(true)}>
+                      Add a topic
+                    </Button>
+                  }
+                >
                   Add one here, or ask Claude to <code>/add</code> it.
                 </EmptyState>
               </div>
@@ -278,6 +311,7 @@ export function BacklogScreen() {
               setTopic(t);
               setOpen(true);
             }}
+            onAdd={() => setAdding(true)}
           />
         )}
       </ReadView>
@@ -288,6 +322,16 @@ export function BacklogScreen() {
         onDone={(t, outcome) => {
           show(DONE[outcome](t));
           setOpen(false);
+          setRefresh((n) => n + 1);
+        }}
+      />
+      <AddTopicSheet
+        open={adding}
+        backlog={latest}
+        onClose={() => setAdding(false)}
+        onAdded={(added) => {
+          show(addedToast(added));
+          setAdding(false);
           setRefresh((n) => n + 1);
         }}
       />

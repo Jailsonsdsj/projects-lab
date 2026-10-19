@@ -35,3 +35,18 @@ export const backlogResponseSchema = z.object({
   topics: z.array(topicSchema),
 });
 export type BacklogResponse = z.infer<typeof backlogResponseSchema>;
+
+/** POST /api/study/topics: each topic, and whether it was new or restored. */
+export const addTopicsResponseSchema = z.object({
+  topics: z.array(
+    z.object({
+      topic: topicSchema,
+      created: z.boolean(),
+      restored: z.boolean(),
+    }),
+  ),
+});
+export type AddTopicsResponse = z.infer<typeof addTopicsResponseSchema>;
+
+/** POST /api/study/areas */
+export const addAreaResponseSchema = z.object({ area: areaSchema });

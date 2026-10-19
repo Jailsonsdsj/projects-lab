@@ -143,3 +143,66 @@ test("edits a topic in its sheet and shows the change", async ({ page }) => {
     row.getByText("In progress").locator("visible=true"),
   ).toHaveCount(1);
 });
+
+test("adds a topic from the Add sheet", async ({ page }) => {
+  let added = false;
+  const graphs = topic("CS-03", "Heaps");
+  await page.route("**/api/study/backlog", (route) =>
+    route.fulfill({
+      json: added
+        ? { ...BACKLOG, topics: [...BACKLOG.topics, graphs] }
+        : BACKLOG,
+    }),
+  );
+  await page.route("**/api/skills?**", (route) =>
+    route.fulfill({ json: { skill: null } }),
+  );
+  await page.route("**/api/study/topics", async (route) => {
+    expect(route.request().headers()["idempotency-key"]).toBeTruthy();
+    expect(route.request().postDataJSON()).toEqual({
+      topics: [{ skill: "Heaps", area: "CS", priority: 2 }],
+    });
+    added = true;
+    await route.fulfill({
+      json: { topics: [{ topic: graphs, created: true, restored: false }] },
+    });
+  });
+  await page.goto("/study");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+
+  const sheet = page.getByRole("dialog", { name: "Add a topic" });
+  await sheet.getByLabel("Skill").fill("Heaps");
+  await expect(sheet.getByText("A new skill.")).toBeVisible();
+  await sheet.getByLabel("Area").selectOption("CS");
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+  await sheet.getByRole("button", { name: "Add to backlog" }).click();
+
+  await expect(page.getByText("Added CS-03 · Heaps")).toBeVisible();
+  await expect(sheet).toBeHidden();
+  await expect(
+    page.getByRole("region", { name: "CS Fundamentals" }).locator(".row__id"),
+  ).toContainText(["CS-03"]);
+});
+
+test("shows a taken prefix under Prefix in the Add sheet", async ({ page }) => {
+  await page.route("**/api/study/backlog", (route) =>
+    route.fulfill({ json: BACKLOG }),
+  );
+  await page.route("**/api/skills?**", (route) =>
+    route.fulfill({ json: { skill: null } }),
+  );
+  await page.goto("/study");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: "Add a topic" });
+  await sheet.getByLabel("Skill").fill("Swift");
+  await sheet.getByLabel("Area").selectOption("+new");
+  await sheet.getByLabel("Area name").fill("Mobile");
+  await sheet.getByLabel("Prefix").fill("fe");
+  await expect(
+    sheet.getByText("FE is already an area's prefix."),
+  ).toBeVisible();
+});
