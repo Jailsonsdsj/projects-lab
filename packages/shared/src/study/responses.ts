@@ -2,7 +2,12 @@
 // parses responses with these, and an API test parses the real output, so the
 // two sides can't drift apart.
 import { z } from "zod";
-import { PRIORITIES, TOPIC_LEVELS, TOPIC_STATUSES } from "./backlog";
+import {
+  COURSE_LEVELS,
+  PRIORITIES,
+  TOPIC_LEVELS,
+  TOPIC_STATUSES,
+} from "./backlog";
 
 export const areaSchema = z.object({
   prefix: z.string(),
@@ -50,3 +55,19 @@ export type AddTopicsResponse = z.infer<typeof addTopicsResponseSchema>;
 
 /** POST /api/study/areas */
 export const addAreaResponseSchema = z.object({ area: areaSchema });
+
+/** GET /api/study/courses/:courseId: the course and its file's blob SHA. */
+export const courseReadResponseSchema = z.object({
+  course: z.object({
+    courseId: z.string(),
+    topicId: z.string(),
+    skill: z.string(),
+    level: z.enum(COURSE_LEVELS),
+    module: z.number().int(),
+    path: z.string(),
+    recordedAt: z.string(),
+    sha: z.string(),
+    name: z.string(),
+  }),
+});
+export type CourseRead = z.infer<typeof courseReadResponseSchema>["course"];

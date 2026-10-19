@@ -1,6 +1,7 @@
 // Recording courses, exams and grades (ST-05, PRDs 11 and 12). GitHub is a
 // stand-in on the global fetch that knows which files study-materials holds.
 import { env } from "cloudflare:workers";
+import { courseReadResponseSchema } from "@projects-lab/shared/study";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { app } from "../src/index";
 import { db } from "./db";
@@ -275,6 +276,49 @@ describe("recording a grade", () => {
       grade: 70,
     });
     expect(res.status).toBe(404);
+  });
+});
+
+describe("reading a course", () => {
+  const courseIdOf = async (path: string) => {
+    const { courses } = (await (
+      await get("/courses?topicId=CS-01")
+    ).json()) as {
+      courses: { courseId: string; path: string }[];
+    };
+    return courses.find((c) => c.path === path)?.courseId ?? "";
+  };
+
+  it("gives the course with its file's blob SHA, for /content", async () => {
+    github([COURSE]);
+    const res = await get(`/courses/${await courseIdOf(COURSE)}`);
+    expect(res.status).toBe(200);
+    const { course } = courseReadResponseSchema.parse(await res.json());
+    expect(course).toMatchObject({
+      topicId: "CS-01",
+      skill: "Big-O notation",
+      level: "fast_track",
+      path: COURSE,
+      sha: "b".repeat(40),
+      name: "big-o-notation__fast-track.md",
+    });
+  });
+
+  it("names the path when the file is gone, and 404s an unknown course", async () => {
+    github([]);
+    const gone = await get(`/courses/${await courseIdOf(COURSE)}`);
+    expect(gone.status).toBe(404);
+    expect(((await gone.json()) as { message: string }).message).toBe(
+      `This course file is no longer in study-materials: ${COURSE}`,
+    );
+    expect((await get("/courses/no-such-course")).status).toBe(404);
+  });
+
+  it("names the fix when GitHub refuses the token", async () => {
+    github([COURSE], { tokenValid: false });
+    const res = await get(`/courses/${await courseIdOf(COURSE)}`);
+    expect(res.status).toBe(502);
+    expect(await res.json()).toMatchObject({ error: "github_token_invalid" });
   });
 });
 

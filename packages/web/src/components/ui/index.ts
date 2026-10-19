@@ -56,6 +56,7 @@ export {
 } from "./PageHeader";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { Prose, type ProseProps } from "./Prose";
+export { headingIds, headingSlug } from "./prose-slug";
 export { Sheet, type SheetProps } from "./Sheet";
 export { SideRail, type SideRailProps } from "./SideRail";
 export { Skeleton, type SkeletonProps } from "./Skeleton";

@@ -8,31 +8,39 @@ import {
   type CourseLevel,
   localDate,
 } from "@projects-lab/shared/study";
-import { GitHubError, getMetadata, githubDeps } from "../../core/github";
+import {
+  type GitHubEntry,
+  GitHubError,
+  getMetadata,
+  githubDeps,
+} from "../../core/github";
 import { ToolError } from "../../core/lab";
 import { getTopic, type Topic } from "./backlog";
 
 /** Throws not_found unless every path is a file in study-materials. A GitHub
  *  failure becomes a ToolError naming its fix (PRD 02). */
-async function ensureFiles(
+/** The file entry at each path in study-materials, or a ToolError: not_found
+ *  (with `missing` as the message), or the GitHub failure naming its fix. */
+async function fileEntries(
   env: Env,
   db: D1Database,
   paths: readonly string[],
-): Promise<void> {
+  missing: (path: string) => string,
+): Promise<GitHubEntry[]> {
   try {
     const deps = githubDeps(env, db);
+    const entries: GitHubEntry[] = [];
     for (const path of paths) {
       const meta = await getMetadata(deps, path).catch((error: unknown) => {
         if (error instanceof GitHubError && error.code === "not_found")
-          throw new ToolError(
-            "not_found",
-            `No file at "${path}" in study-materials. Push it first, then record it.`,
-          );
+          throw new ToolError("not_found", missing(path));
         throw error;
       });
       if (Array.isArray(meta) || meta.type !== "file")
         throw new ToolError("not_found", `"${path}" is a folder, not a file.`);
+      entries.push(meta);
     }
+    return entries;
   } catch (error) {
     if (error instanceof GitHubError)
       throw new ToolError(
@@ -43,6 +51,21 @@ async function ensureFiles(
       );
     throw error;
   }
+}
+
+/** Throws not_found unless every path is a file in study-materials. */
+async function ensureFiles(
+  env: Env,
+  db: D1Database,
+  paths: readonly string[],
+): Promise<void> {
+  await fileEntries(
+    env,
+    db,
+    paths,
+    (path) =>
+      `No file at "${path}" in study-materials. Push it first, then record it.`,
+  );
 }
 
 async function liveTopicId(db: D1Database, code: string) {
@@ -305,4 +328,47 @@ export async function listExams(
     .bind(topicId ?? null)
     .all<Exam>();
   return { exams: results };
+}
+
+export interface CourseToRead extends Course {
+  skill: string;
+  /** The file's blob SHA and name: read it at /api/study/content/<sha>/<name>. */
+  sha: string;
+  name: string;
+}
+
+/**
+ * A recorded course with its file's current blob SHA (PRD 11 § Reading). The
+ * metadata comes through the ETag cache, so an unchanged file costs a 304.
+ */
+export async function courseToRead(
+  env: Env,
+  db: D1Database,
+  courseId: string,
+): Promise<{ course: CourseToRead }> {
+  const row = await db
+    .prepare(
+      `SELECT c.id AS courseId, t.code AS topicId, s.name AS skill, c.level,
+              c.module, c.path, c.recorded_at AS recordedAt
+       FROM learn_course c
+       JOIN learn_topic t ON t.id = c.topic_id
+       JOIN skill s ON s.id = t.skill_id
+       WHERE c.id = ?`,
+    )
+    .bind(courseId)
+    .first<Course & { skill: string }>();
+  if (!row) throw new ToolError("not_found", "No such course.");
+  const [entry] = await fileEntries(
+    env,
+    db,
+    [row.path],
+    (path) => `This course file is no longer in study-materials: ${path}`,
+  );
+  return {
+    course: {
+      ...row,
+      sha: (entry as GitHubEntry).sha,
+      name: (entry as GitHubEntry).name,
+    },
+  };
 }

@@ -19,6 +19,14 @@ export interface LabTab {
  *  (e.g. "Continue" + "FE-01 Next.js"). The API's GET /api/<lab>/summary. */
 export type { LabSummary } from "@projects-lab/shared";
 
+/** A full-screen route: inside the session gate and an error boundary, without
+ *  the shell's navigation (the course reader, PRD 11). */
+export interface LabFocusRoute {
+  /** Absolute; may have params, e.g. "/study/courses/:courseId". */
+  path: string;
+  screen: ReactNode;
+}
+
 export interface LabHome {
   /** Reads the lab's summary (`GET /api/<lab>/summary`). Resolves to null when
    *  the lab has no data yet; rejects only when the read itself failed. */
@@ -40,6 +48,8 @@ export interface LabDefinition {
   tabs: readonly LabTab[];
   /** Its Home card; labs only (not the platform). */
   home?: LabHome;
+  /** Full-screen routes outside the shell's navigation. */
+  focus?: readonly LabFocusRoute[];
 }
 
 export const SETTINGS_PATH = "/settings";

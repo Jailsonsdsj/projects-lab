@@ -916,6 +916,20 @@ export const CATALOG: readonly CatalogEntry[] = [
     summary: "The screen's top bar.",
     examples: [
       {
+        label: "title as a label (content has its own H1)",
+        node: (
+          <PageHeader
+            title="CS-01 · Big-O Notation"
+            titleIsHeading={false}
+            leading={
+              <Button variant="ghost" tone="neutral" icon="chevron-left">
+                Courses
+              </Button>
+            }
+          />
+        ),
+      },
+      {
         label: "title · back · action",
         node: (
           <PageHeader

@@ -307,3 +307,139 @@ dialog.is-closing::backdrop {
     }
   }
 }
+
+/* ── Course reader (full screen: no rail, no bottom tabs) ─────────────────
+   The bundle's reader screens, rebuilt from tokens. Its outline (`.toc`) and
+   lessons list (`.lesson`) were drawn in the screen page with canvas pixels:
+   the lesson mark takes --size-lab-mark, the gaps --space-1 and --space-2,
+   the small text --text-xs; the outline column is --size-outline. */
+.focus {
+  min-height: 100dvh;
+  background-color: var(--color-ground);
+}
+.reader__head {
+  position: sticky;
+  top: 0;
+  background-color: var(--color-ground);
+  border-bottom: var(--border-thin) solid var(--color-border);
+
+  .progress__track {
+    border-radius: 0;
+  }
+}
+.reader {
+  @variant tablet {
+    display: flex;
+    align-items: flex-start;
+  }
+}
+.reader__main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+
+  @variant tablet {
+    padding: var(--space-10) var(--space-12)
+      calc(var(--space-12) + var(--space-2));
+  }
+}
+.reader__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+.reader__pager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-10);
+  padding-top: var(--space-6);
+  border-top: var(--border-thin) solid var(--color-border);
+}
+.reader__aside {
+  position: sticky;
+  top: var(--size-header);
+  flex: none;
+  width: var(--size-outline);
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-10) var(--space-4) var(--space-6);
+  border-left: var(--border-thin) solid var(--color-border);
+}
+/* Not `.outline`: that is Tailwind's outline-style utility. */
+.reader__outline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.reader__outline .kicker {
+  padding: 0 var(--space-3) var(--space-2);
+}
+.toc {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+.toc a {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--color-ink-secondary);
+  text-decoration: none;
+}
+.toc a:hover {
+  background-image: var(--gradient-hover);
+  color: var(--color-ink);
+}
+.toc a[aria-current="page"],
+.toc a[aria-current="location"] {
+  color: var(--color-lab-accent);
+  background-color: var(--color-lab-accent-tint);
+  font-weight: var(--font-weight-medium);
+}
+.lesson {
+  display: grid;
+  grid-template-columns: var(--size-lab-mark) minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.lesson:hover {
+  background-image: var(--gradient-hover);
+}
+.lesson__n {
+  display: grid;
+  place-items: center;
+  width: var(--size-lab-mark);
+  height: var(--size-lab-mark);
+  border-radius: var(--radius-full);
+  border: var(--border-thin) solid var(--color-border-strong);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-ink-secondary);
+}
+.lesson[aria-current="page"] .lesson__n {
+  background-color: var(--color-lab-accent);
+  border-color: var(--color-lab-accent);
+  color: var(--color-lab-on-accent);
+}
+.lesson__t {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+.lesson__m {
+  grid-column: 2;
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+}

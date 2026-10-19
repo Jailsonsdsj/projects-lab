@@ -17,6 +17,7 @@ import { Icon } from "./Icon";
 import type { IconName } from "./icons";
 import { highlight } from "./prose-highlight";
 import { type CalloutKind, remarkCourse } from "./prose-remark";
+import { rehypeHeadingIds } from "./prose-slug";
 
 export interface ProseProps {
   /** Course Markdown (study-course-builder's template). Raw HTML is not rendered. */
@@ -32,6 +33,7 @@ export function Prose({ markdown, large, className }: ProseProps) {
     <article className={cx("prose", large && "prose--lg", className)}>
       <Markdown
         remarkPlugins={[remarkGfm, remarkCourse]}
+        rehypePlugins={[rehypeHeadingIds]}
         components={COMPONENTS}
       >
         {markdown}

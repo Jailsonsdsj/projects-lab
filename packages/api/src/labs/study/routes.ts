@@ -29,6 +29,7 @@ import {
   updateTopic,
 } from "./backlog";
 import {
+  courseToRead,
   listCourses,
   listExams,
   recordCourse,
@@ -190,6 +191,18 @@ export function backlogRoutes() {
     });
     if (!parsed.success) return invalid(c, parsed.error);
     return c.json(await listCourses(database(c.env), parsed.data.topicId));
+  });
+
+  // The reader (PRD 11): the course and its file's blob SHA; the content itself
+  // comes from /content/<sha>/<name>, immutable and cached for offline.
+  app.get("/courses/:courseId", async (c) => {
+    try {
+      return c.json(
+        await courseToRead(c.env, database(c.env), c.req.param("courseId")),
+      );
+    } catch (error) {
+      return refused(c, error);
+    }
   });
 
   app.post("/exams", idempotent("POST /api/study/exams"), async (c) => {

@@ -54,14 +54,14 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `ImageTile` | `.tile` | Profile photo with initials fallback | `src`, `name`, `size` md · lg, `round` | loading, loaded, failed / no photo (initials) |
 | `LabCard` | `.labcard` | Home's per-lab card in that lab's accent | `lab`, `name`, `icon`, `href`, `state` | loading, loaded, empty, error (Retry) |
 | `LabSwitcher` | `.labsw` / `.labopt` | Current lab; opens the list of labs | `variant` sheet · menu; `block` | closed, open; current lab checked |
-| `PageHeader` | `.phead` | Screen top bar | `title`, `leading` (back or LabSwitcher), `actions` | — |
+| `PageHeader` | `.phead` | Screen top bar | `title` (an h1, or a plain label with `titleIsHeading={false}` when the content has its own H1, as the course reader), `leading` (back or LabSwitcher), `actions` | — |
 | `PageTitle` | `.phead__large` | Large screen title | `title`, `subtitle` | — |
 | `BottomTabs` | `.btabs` | Phone navigation | `label`, `items` (current) | current, *hover, pressed, focus* |
 | `SideRail` | `.rail` | Tablet navigation | `section`, `switcher`, `items`, `footItems`, `compact` | full, compact, current |
 | `Icon` | `.icon` | One of the bundle's 43 icons | `name`, `size` xs · sm · md · lg, `label` (else decorative) | — |
 | `Prose` | `.prose` | Course Markdown (no raw HTML) | `markdown`, `large` | callouts, code (Copy), tables, figures, quiz selection |
 
-Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`.
+Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`, `headingSlug` and `headingIds` (the ids Prose gives every H3, for a reader's outline).
 
 **In the bundle, not built yet:** Select (a Field around a native `<select>` works today; see `/dev/ui`), SearchField (use `Input search`, or the bundle's bare `.input--search` markup where the screen has no visible label, as the Backlog does), CopyField, StatCard, ReadinessMeter. They arrive with the screens that need them.
 
