@@ -12,7 +12,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 | Spikes | 3 | 3 | Done |
 | 1 Design system | 16 | 16 | Done |
 | 2 Study Lab | 16 | 18 | In progress |
-| 3 Career Lab | — | — | Detailed after PRD `20`–`24` and the spikes |
+| 3 Career Lab | 0 | 1 | PRDs `20`–`24` drafted; CA-00 settles them, then the tasks are detailed |
 | Hardening | 0 | 5 | — |
 | Go-Live | 0 | 5 | — |
 

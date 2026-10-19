@@ -204,7 +204,7 @@ Every column above without `?` is `NOT NULL`.
 
 ## Career Lab
 
-_Draft (2026-10-19) from `20-career-profile.md` and `21-career-jobs-and-skills.md`; their decisions are proposed, settled in CA-00. Documents (`22`), job search (`23`) and interviews (`24`) add their tables below._
+_Draft (2026-10-19) from `20`–`24`; their decisions are proposed, settled in CA-00._
 
 ```sql
 -- The owner's person record: exactly one row (K-1). Contact details live here.
@@ -278,6 +278,48 @@ career_job_event(
   id, job_id, status,                    -- evaluated | applied | interviewing | offer | rejected | withdrawn | closed_silent (K-11, K-12)
   at, note
 )
+
+-- 22: what a job's documents were made from, and what its application copies (A-7).
+career_job_item(job_id, item_kind, item_id, variant, position)  -- item_kind: fact | experience | education | skill (K-15)
+career_job_kit(
+  job_id,                                -- PK, FK career_job
+  intro,                                 -- default ''; at most 1,500 characters (K-17)
+  salary_min?, salary_max?,              -- integers, whole currency units (K-16)
+  salary_currency?, salary_period?,      -- ISO code; hour | month | year (K-16)
+  updated_at
+)
+career_form_answer(id, job_id, question, answer, position)       -- answer at most 2,000 characters (K-17)
+career_standard_answer(id, label, value, position)               -- label unique (K-18), value at most 300 (K-19)
+
+-- 23: the search criteria (one row) and the openings the routine saves.
+career_search_criteria(
+  id,                                    -- always 'criteria' (K-20)
+  queries_json, lanes_json, shapes_json, auto_reject_json, sources_json,  -- JSON arrays
+  max_hours,                             -- integer >= 0 (K-21)
+  timezone_note,
+  rate_floor?, rate_currency?, rate_period?,  -- set together (K-21)
+  max_age_days,                          -- integer >= 1 (K-21)
+  updated_at
+)
+career_opening(
+  id, url,                               -- unique (K-22)
+  company, role, lane, posting, posted_on?, rate_text, why,
+  status,                                -- new | kept | dismissed | tracked (K-22)
+  job_id?,                               -- set exactly when tracked (K-23)
+  created_at, updated_at
+)
+
+-- 24: stories, answers and the drill log.
+career_story(id, title, situation, task, action, result, experience_id?, created_at, updated_at)  -- each part at most 600 (K-24)
+career_story_fact(story_id, fact_id)     -- K-25
+career_story_skill(story_id, skill_id)
+career_answer(
+  id, question, answer,                  -- question at most 200, answer at most 3,000
+  drive_file_id?,                        -- Drive's file ID format (K-26)
+  story_id?, job_id?,                    -- exist (K-27)
+  created_at, updated_at
+)
+career_drill(id, at, mode, topic, weakest_json, fix)  -- mode: behavioral | technical | negotiation (K-28)
 ```
 
 Every column above without `?` is `NOT NULL`.
@@ -300,5 +342,19 @@ Every column above without `?` is `NOT NULL`.
 | K-12 | Events of a job are never edited or deleted (the history is append-only) | `BEFORE UPDATE` and `BEFORE DELETE` triggers |
 | K-13 | A requirement's skill exists in the registry | FK to `skill` |
 | K-14 | A job is never hard-deleted | `BEFORE DELETE` trigger |
+| K-15 | A selection item's kind is one of the list and its item exists | `CHECK`; trigger for existence |
+| K-16 | A salary range's minimum and maximum are integers with minimum ≤ maximum, set with a currency and a period from the list | Triggers (nullable) |
+| K-17 | Intro and form-answer lengths | `CHECK` |
+| K-18 | Standard answer labels are unique ignoring case | Unique index `COLLATE NOCASE` |
+| K-19 | A standard answer's value is at most 300 characters | `CHECK` |
+| K-20 | There is at most one criteria row | `CHECK (id = 'criteria')` |
+| K-21 | `max_hours` ≥ 0 and `max_age_days` ≥ 1 integers; the rate floor, currency and period set together | `CHECK`; trigger for the floor |
+| K-22 | An opening's URL is unique and its status one of the list | Unique index; `CHECK` |
+| K-23 | An opening has a job exactly when it's tracked | Trigger |
+| K-24 | Each STAR part is at most 600 characters | `CHECK` |
+| K-25 | A story's facts exist | FK |
+| K-26 | A Drive file ID is 10–100 characters of letters, digits, `-` and `_` | Trigger (nullable) |
+| K-27 | An answer's story and job exist | FK |
+| K-28 | A drill's mode is one of the list | `CHECK` |
 
 **Build notes.** The master-resume import (`20`) follows ST-10: a tested parser, guarded SQL the owner runs once. The Study contract's `ensureTopics` carries the area Claude chooses (ST-03).
