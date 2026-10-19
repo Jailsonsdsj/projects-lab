@@ -87,17 +87,59 @@ test("shows the backlog grouped by area and filters it", async ({ page }) => {
 });
 
 test("tells an empty backlog from a failed read", async ({ page }) => {
+  let failing = false;
   await page.route("**/api/study/backlog", (route) =>
-    route.fulfill({ json: { areas: BACKLOG.areas, topics: [] } }),
+    failing
+      ? route.fulfill({ status: 500, json: { error: "internal" } })
+      : route.fulfill({ json: { areas: BACKLOG.areas, topics: [] } }),
   );
   await page.goto("/study");
   await expect(page.getByText("No topics yet")).toBeVisible();
 
-  await page.unroute("**/api/study/backlog");
-  await page.route("**/api/study/backlog", (route) =>
-    route.fulfill({ status: 500, json: { error: "internal" } }),
-  );
+  failing = true;
   await page.reload();
   await expect(page.getByText("Couldn't load this")).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+});
+
+test("edits a topic in its sheet and shows the change", async ({ page }) => {
+  let saved: Record<string, unknown> | null = null;
+  await page.route("**/api/study/backlog", (route) =>
+    route.fulfill({
+      json: saved
+        ? {
+            ...BACKLOG,
+            topics: BACKLOG.topics.map((t) =>
+              t.id === "CS-01" ? { ...t, ...saved } : t,
+            ),
+          }
+        : BACKLOG,
+    }),
+  );
+  await page.route("**/api/study/topics/CS-01", async (route) => {
+    expect(route.request().method()).toBe("PATCH");
+    expect(route.request().headers()["idempotency-key"]).toBeTruthy();
+    saved = route.request().postDataJSON();
+    await route.fulfill({ json: { topic: {} } });
+  });
+  await page.goto("/study");
+  await page.getByRole("button", { name: /CS-01.*Big-O notation/ }).click();
+
+  const sheet = page.getByRole("dialog", { name: "CS-01 · Big-O notation" });
+  await expect(sheet).toBeVisible();
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+
+  await sheet.getByLabel("Status").selectOption("in_progress");
+  await sheet.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("CS-01 saved")).toBeVisible();
+  expect(saved).toEqual({ status: "in_progress" });
+  await expect(sheet).toBeHidden();
+  const row = page.getByRole("button", { name: /CS-01.*Big-O notation/ });
+  await expect(
+    row.getByText("In progress").locator("visible=true"),
+  ).toHaveCount(1);
 });

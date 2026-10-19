@@ -190,6 +190,36 @@ describe("ReadView", () => {
     expect(screen.queryByText("Nothing here yet")).toBeNull();
   });
 
+  it("reads again in the background when `refresh` changes, keeping what's shown", async () => {
+    let answer = "grades";
+    let release: () => void = () => {};
+    const load = vi.fn(async () => answer);
+    const shown = (refresh: number) => (
+      <ReadView
+        load={load}
+        refresh={refresh}
+        empty={<p>Nothing here yet</p>}
+        skeleton={<p>Loading</p>}
+      >
+        {(data) => <p>Got {data}</p>}
+      </ReadView>
+    );
+    const { rerender } = render(shown(0));
+    expect(await screen.findByText("Got grades")).toBeInTheDocument();
+
+    answer = "new grades";
+    load.mockImplementationOnce(
+      () => new Promise((resolve) => (release = () => resolve(answer))),
+    );
+    rerender(shown(1));
+    // No skeleton while it reads again: the old data stays until the new arrives.
+    expect(screen.queryByText("Loading")).toBeNull();
+    expect(screen.getByText("Got grades")).toBeInTheDocument();
+    release();
+    expect(await screen.findByText("Got new grades")).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
   it("ignores a read that finishes after it was abandoned", async () => {
     let finish: (value: string) => void = () => {};
     const { unmount } = view(

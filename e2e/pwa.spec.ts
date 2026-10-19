@@ -13,6 +13,10 @@ async function installed(page: Page) {
     .toBe(true);
 }
 
+// Expected noise: while installing, the service worker itself fetches Home's
+// /api/study/summary. WebKit's Playwright can't route a worker's requests, so
+// they reach the preview server, which logs "http proxy error … ECONNREFUSED"
+// (it has no API behind it). The card shows its error state; nothing fails.
 test("the shell opens offline, on Home and on a deep link", async ({
   page,
   context,

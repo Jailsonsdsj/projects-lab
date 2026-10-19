@@ -20,9 +20,12 @@ import {
   PageTitle,
   Skeleton,
   Tabs,
+  type ToastInput,
+  useToast,
 } from "../../components/ui";
 import { apiFetch } from "../../core/api";
 import { ReadView } from "../../core/ReadView";
+import { TopicSheet } from "./TopicSheet";
 
 type Filter = "all" | TopicStatus;
 
@@ -69,11 +72,21 @@ function subtitle(backlog: BacklogResponse): string {
     .join(" · ");
 }
 
-function TopicRow({ topic }: { topic: TopicInfo }) {
+function TopicRow({
+  topic,
+  current,
+  onOpen,
+}: {
+  topic: TopicInfo;
+  current: boolean;
+  onOpen: (topic: TopicInfo) => void;
+}) {
   const status = STATUS[topic.status];
   return (
     <ListRow
       table
+      current={current}
+      onClick={() => onOpen(topic)}
       id={topic.id}
       title={topic.skill}
       meta={LEVEL[topic.level] || undefined}
@@ -92,7 +105,15 @@ function TopicRow({ topic }: { topic: TopicInfo }) {
   );
 }
 
-function Backlog({ backlog }: { backlog: BacklogResponse }) {
+function Backlog({
+  backlog,
+  openId,
+  onOpen,
+}: {
+  backlog: BacklogResponse;
+  openId: string | null;
+  onOpen: (topic: TopicInfo) => void;
+}) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const counts = (status: TopicStatus) =>
@@ -176,7 +197,14 @@ function Backlog({ backlog }: { backlog: BacklogResponse }) {
               {topics.length === 0 ? (
                 <ListRow title="No topics yet" />
               ) : (
-                topics.map((topic) => <TopicRow key={topic.id} topic={topic} />)
+                topics.map((topic) => (
+                  <TopicRow
+                    key={topic.id}
+                    topic={topic}
+                    current={topic.id === openId}
+                    onOpen={onOpen}
+                  />
+                ))
               )}
             </Group>
           );
@@ -207,11 +235,26 @@ function BacklogSkeleton() {
   );
 }
 
+const DONE: Record<
+  "saved" | "removed" | "gone",
+  (topic: TopicInfo) => ToastInput
+> = {
+  saved: (t) => ({ message: `${t.id} saved`, tone: "success" }),
+  removed: (t) => ({ message: `${t.id} removed`, tone: "success" }),
+  gone: (t) => ({ message: `${t.id} was already removed`, tone: "info" }),
+};
+
 /** Backlog (`/study`, Study's first tab). */
 export function BacklogScreen() {
+  const { show } = useToast();
+  const [topic, setTopic] = useState<TopicInfo | null>(null);
+  const [open, setOpen] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+
   return (
     <div className="flex flex-col gap-3 tablet:gap-4">
       <ReadView
+        refresh={refresh}
         load={loadBacklog}
         skeleton={<BacklogSkeleton />}
         empty={
@@ -227,8 +270,27 @@ export function BacklogScreen() {
           </>
         }
       >
-        {(backlog) => <Backlog backlog={backlog} />}
+        {(backlog) => (
+          <Backlog
+            backlog={backlog}
+            openId={open ? (topic?.id ?? null) : null}
+            onOpen={(t) => {
+              setTopic(t);
+              setOpen(true);
+            }}
+          />
+        )}
       </ReadView>
+      <TopicSheet
+        topic={topic}
+        open={open}
+        onClose={() => setOpen(false)}
+        onDone={(t, outcome) => {
+          show(DONE[outcome](t));
+          setOpen(false);
+          setRefresh((n) => n + 1);
+        }}
+      />
     </div>
   );
 }
