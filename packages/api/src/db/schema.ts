@@ -109,9 +109,10 @@ export const githubCache = sqliteTable("github_cache", {
 const sqlList = (values: readonly string[]) =>
   sql.raw(values.map((value) => `'${value.replace(/'/g, "''")}'`).join(", "));
 
-// One file Claude may upload through a signed URL (F-18, PRD 02 "Uploads").
-// The row exists from core_create_upload; used_at is set once, when its PUT
-// is accepted (C-13). The lists and the cap come from packages/shared.
+// One file Claude could upload through a signed URL (F-18). Unused since F-23
+// (R3-1: Claude's documents are never stored); TD-01 drops it in a contract
+// migration. used_at, once set, never changes (C-13). The lists and the cap
+// come from packages/shared.
 export const upload = sqliteTable(
   "upload",
   {

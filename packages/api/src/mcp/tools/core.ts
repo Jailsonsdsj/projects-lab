@@ -1,15 +1,10 @@
 // Platform tools (docs/prd/02-integration.md). Thin adapters: a shared schema,
 // a service call, compact JSON. No SQL here.
-import {
-  createUploadInputSchema,
-  findSkillInputSchema,
-  LAB_IDS,
-} from "@projects-lab/shared";
+import { findSkillInputSchema, LAB_IDS } from "@projects-lab/shared";
 import { z } from "zod";
 import { getOwnerProfile } from "../../core/auth/owner";
 import { defineTool, ToolError } from "../../core/lab";
 import { findSkill } from "../../core/skills";
-import { createUpload } from "../../core/uploads";
 
 export const coreTools = [
   defineTool({
@@ -33,16 +28,6 @@ export const coreTools = [
     input: findSkillInputSchema,
     async run({ query }, ctx) {
       return { skill: await findSkill(ctx.db, query) };
-    },
-  }),
-  defineTool({
-    name: "core_create_upload",
-    kind: "write",
-    description:
-      'Starts uploading a file Claude made (a resume or cover letter; PDF or Word; up to 10 MB). Returns a one-time uploadUrl that works for 10 minutes: then run `curl --upload-file <file> -H "Content-Type: <contentType>" <uploadUrl>`. Never put file content in a tool call.',
-    input: createUploadInputSchema,
-    async run(input, ctx) {
-      return createUpload(ctx.db, ctx.env, input, Date.now());
     },
   }),
 ];

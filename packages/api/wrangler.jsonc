@@ -19,7 +19,7 @@
   },
   // Set with `wrangler secret put` (owner only); locally in .dev.vars.
   "secrets": {
-    "required": ["TOKEN_SIGNING_KEY", "GITHUB_TOKEN", "UPLOAD_SIGNING_KEY"]
+    "required": ["TOKEN_SIGNING_KEY", "GITHUB_TOKEN"]
   },
   "vars": {
     // The app's public https origin: the OAuth issuer and the base of the MCP

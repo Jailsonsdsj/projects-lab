@@ -32,7 +32,7 @@ Infra → docs/architecture.md · UI → docs/design-system.md
 - `study-materials` is read-only to the app (GITHUB_TOKEN, Contents read). Only Claude Code pushes there. Fetch content by blob SHA; don't rely on the Workers Cache API.
 - Video never goes to R2. Interview videos are Google Drive links.
 - assets.run_worker_first is ["/api/*","/mcp","/oauth/*","/.well-known/*"], never true.
-- Read secrets (TOKEN_SIGNING_KEY, GITHUB_TOKEN, UPLOAD_SIGNING_KEY) outside any try that maps errors to 401; a missing secret throws a message naming the fix.
+- Read secrets (TOKEN_SIGNING_KEY, GITHUB_TOKEN) outside any try that maps errors to 401; a missing secret throws a message naming the fix.
 - Never pin a dependency version from memory; report anything >1 minor behind.
 - TypeScript stays on 5.x until Drizzle supports 7.
 - Colours/type/spacing/border widths/breakpoints come from tokens.css; literals fail CI. A lab's colour is `--color-lab-accent` only.
