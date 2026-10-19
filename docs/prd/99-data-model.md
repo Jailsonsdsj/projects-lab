@@ -109,6 +109,60 @@ Settled by the owner on 2026-10-14.
 3. **Skills are never hard-deleted.** C-7 rejects every delete, so core triggers never name a lab table.
 4. **Session revocation** uses `user.session_version` (C-9): every session JWT carries it, and bumping it ends every session (`01-identity-and-access.md`). Added by `0002_session_version` in F-08a.
 
+## Study Lab
+
+_From `10-study-backlog.md` (decisions settled 2026-10-19). Courses (`11`) and exams (`12`) add `learn_course` and `learn_exam` here._
+
+```sql
+-- A backlog area. Seeded with the seven of 10-study-backlog; never deleted
+-- (S-4), prefix fixed (S-4). next_seq is the next topic number, claimed in the
+-- same batch as the topic insert.
+learn_area(
+  id,
+  prefix,                                -- two uppercase letters, unique (S-1)
+  name,                                  -- unique ignoring case, never blank (S-2)
+  position,                              -- integer; display order
+  next_seq,                              -- integer >= 1, default 1 (S-3)
+  created_at
+)
+
+-- One topic per skill (S-6). Never hard-deleted (S-9): removal is deleted_at,
+-- so code is never reused (S-5). Grade and Finished are derived from learn_exam
+-- (12), never stored here.
+learn_topic(
+  id,
+  code,                                  -- "FE-01": area prefix + printf('%02d'), unique (S-5)
+  area_id,                               -- FK learn_area; fixed on creation (S-9)
+  skill_id,                              -- FK skill; unique (S-6)
+  level,                                 -- unset | fast_track | essential | specialized (S-7)
+  priority,                              -- integer 1..3, default 2 (S-7)
+  status,                                -- not_started | in_progress | done (S-7)
+  note,                                  -- default ''; at most 120 characters (S-8)
+  started_on?,                           -- owner-local date (YYYY-MM-DD) it first went in_progress
+  created_at,
+  updated_at,
+  deleted_at?
+)
+```
+
+Every column above without `?` is `NOT NULL`.
+
+## Study Lab invariants
+
+| # | Invariant | Mechanism | Lands in |
+|---|---|---|---|
+| S-1 | `learn_area.prefix` is two uppercase letters, unique | `CHECK (length(prefix) = 2 AND prefix NOT GLOB '*[^A-Z]*')`; unique index | Study schema (Phase 2) |
+| S-2 | `learn_area.name` is never blank and unique ignoring case | `CHECK (length(trim(name)) > 0)`; unique index on `name COLLATE NOCASE` | Study schema |
+| S-3 | `learn_area.next_seq` is an integer >= 1 | `CHECK (typeof(next_seq) = 'integer' AND next_seq >= 1)` | Study schema |
+| S-4 | An area is never deleted and its prefix never changes | `BEFORE DELETE` and `BEFORE UPDATE OF prefix` triggers | Study triggers |
+| S-5 | `learn_topic.code` is unique, so an ID is never reused (rows are never deleted, S-9) | Unique index | Study schema |
+| S-6 | At most one topic per skill | Unique index on `skill_id`; FK to `skill` (C-7 keeps it) | Study schema |
+| S-7 | `level`, `priority` and `status` take only their listed values | `CHECK (level IN (…))`, `CHECK (typeof(priority) = 'integer' AND priority BETWEEN 1 AND 3)`, `CHECK (status IN (…))`, lists from `packages/shared` | Study schema |
+| S-8 | `learn_topic.note` is at most 120 characters | `CHECK (length(note) <= 120)`, the cap from `packages/shared` | Study schema |
+| S-9 | A topic is never hard-deleted, and its `area_id` and `code` never change | `BEFORE DELETE` and `BEFORE UPDATE OF area_id, code` triggers | Study triggers |
+
+**Build notes.** A topic's code is claimed in one `db.batch()`: `UPDATE learn_area SET next_seq = next_seq + 1 WHERE id = ?`, then `INSERT INTO learn_topic (…) SELECT …, prefix || '-' || printf('%02d', next_seq - 1), … FROM learn_area WHERE id = ?`, never read-then-write. All Study probes join `invariants.test.ts` and `verify-triggers.sh`.
+
 ---
 
 *Part of the Projects Lab spec. Index: [`docs/README.md`](../README.md)*

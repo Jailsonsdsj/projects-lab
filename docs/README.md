@@ -17,7 +17,7 @@ The PRD is split one file per feature area, so a task loads one ~80-line file in
 | `00-platform.md` | Product thesis; what a lab is; the shell: lab switcher, navigation on phone and tablet; home screen with a cross-lab summary | Questionnaire rounds 1–2 + design bundle screens | Drafted |
 | `01-identity-and-access.md` | Passphrase login, session expiry, logout, change passphrase; OAuth sign-in and consent for Claude; Connections screen and revoke | Playbook §8 + architecture §6 | Drafted |
 | `02-integration.md` | MCP tool conventions; Claude surfaces; the `study-materials` content contract; documents returned to the owner, no upload route (R3-1) | Architecture §6–7 | Drafted |
-| `10-study-backlog.md` | Areas, IDs, levels, priorities, statuses, grades, sorting, summary; `/add`, `/backlog`, manual edits | cs-learning-lab `backlog-rules.md` | To write (Study phase) |
+| `10-study-backlog.md` | Areas, IDs, levels, priorities, statuses, grades, sorting, summary; `/add`, `/backlog`, manual edits | cs-learning-lab `backlog-rules.md` | Drafted |
 | `11-study-courses.md` | Course levels and sizing; reading a course in the app (rendering, images, offline) | `study-course-builder` SKILL.md + `course-template.md` | To write |
 | `12-study-exams.md` | Exam types and scoring; exam PDF; recording grades | `exam-rules.md` | To write |
 | `13-study-roadmap.md` | Gap analysis and roadmap proposals | `study-course-builder` Workflow E | To write |
