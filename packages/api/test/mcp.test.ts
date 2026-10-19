@@ -52,6 +52,12 @@ describe("/mcp", () => {
     expect(tools.map((t) => t.name).sort()).toEqual([
       "core_find_skill",
       "core_whoami",
+      "study_add_area",
+      "study_add_topics",
+      "study_get_summary",
+      "study_list_backlog",
+      "study_remove_topic",
+      "study_update_topic",
     ]);
     for (const tool of tools)
       expect(tool.description.length).toBeGreaterThan(20);

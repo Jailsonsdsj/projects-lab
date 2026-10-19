@@ -38,6 +38,12 @@ Lab tools are specified in each lab's PRD.
 |---|---|---|---|---|
 | `core_whoami` | read | none | `{ owner: { id, timezone }, client, labs }`: proves the connection and names the client the grant belongs to | F-15 |
 | `core_find_skill` | read | `{ query }` | `{ skill: { id, name, aliases } \| null }`: by name or alias, ignoring case and soft-deleted skills; at most one (C-8) | F-15 |
+| `study_list_backlog` | read | `{ area?, status? }` | `{ areas, topics }`: the backlog in its order; each topic `{ id, skill, skillId, area, level, priority, status, grade, startedOn, finishedOn, note }` (`10`) | ST-04 |
+| `study_get_summary` | read | none | Per-area and total counts by status, average grade of Done topics (tenths), `next` topic (`10`) | ST-04 |
+| `study_add_topics` | write | `{ topics: [{ skill, area, level?, priority?, note? }], idempotencyKey? }` | `{ topics: [{ topic, created, restored }] }`; never duplicates a skill (`10`) | ST-04 |
+| `study_update_topic` | write | `{ topicId, level?, priority?, status?, note?, idempotencyKey? }` | `{ topic }` (`10`) | ST-04 |
+| `study_remove_topic` | write | `{ topicId, idempotencyKey? }` | `{ removed }`; soft delete (`10`) | ST-04 |
+| `study_add_area` | write | `{ name, prefix, idempotencyKey? }` | `{ area: { prefix, name, position } }` (`10`) | ST-04 |
 
 ## Surfaces
 

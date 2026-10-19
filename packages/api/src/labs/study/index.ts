@@ -6,6 +6,7 @@ import type { ApiLab, LabEnv } from "../../core/lab";
 import { contentRoutes } from "./content";
 import { studyContract } from "./contract";
 import { backlogRoutes } from "./routes";
+import { studyTools } from "./tools";
 
 export function studyLab(): ApiLab & {
   contract: (db: D1Database) => StudyContract;
@@ -14,5 +15,5 @@ export function studyLab(): ApiLab & {
   routes.route("/", backlogRoutes());
   routes.route("/", contentRoutes());
 
-  return { id: "study", routes, tools: [], contract: studyContract };
+  return { id: "study", routes, tools: studyTools, contract: studyContract };
 }
