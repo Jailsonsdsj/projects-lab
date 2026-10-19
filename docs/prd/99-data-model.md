@@ -111,7 +111,7 @@ Settled by the owner on 2026-10-14.
 
 ## Study Lab
 
-_From `10-study-backlog.md` (decisions settled 2026-10-19). Courses (`11`) and exams (`12`) add `learn_course` and `learn_exam` here._
+_From `10-study-backlog.md` (decisions settled 2026-10-19), `11-study-courses.md` and `12-study-exams.md`. `13-study-roadmap.md` adds no table._
 
 ```sql
 -- A backlog area. Seeded with the seven of 10-study-backlog; never deleted
@@ -143,6 +143,33 @@ learn_topic(
   updated_at,
   deleted_at?
 )
+
+-- A course file in study-materials, recorded by study_record_course after the
+-- push (11). Upserted by path. Lesson count, minutes and title are read from
+-- the file, never stored.
+learn_course(
+  id,
+  topic_id,                              -- FK learn_topic
+  level,                                 -- fast_track | essential | specialized (S-10)
+  module,                                -- integer 1..4; 1 unless specialized (S-11)
+  path,                                  -- "Study Lab/<area>/<topic>/<topic>__<level>.md", unique (S-12)
+  recorded_at
+)
+
+-- One final-exam attempt (12). attempt counts per topic and level, like the
+-- file names. grade and graded_at are set together; a correction changes grade only (S-16). A topic's
+-- grade and Finished date come from its most recently graded row.
+learn_exam(
+  id,
+  topic_id,                              -- FK learn_topic
+  level,                                 -- fast_track | essential | specialized (S-17)
+  attempt,                               -- integer >= 1; next in sequence (S-13, S-14)
+  md_path,                               -- "…__exam-<n>.md", unique (S-15)
+  pdf_path,                              -- "…__exam-<n>.pdf", unique (S-15)
+  created_at,
+  grade?,                                -- integer tenths 0..100 (S-16)
+  graded_at?
+)
 ```
 
 Every column above without `?` is `NOT NULL`.
@@ -160,6 +187,14 @@ Every column above without `?` is `NOT NULL`.
 | S-7 | `level`, `priority` and `status` take only their listed values | `CHECK (level IN (…))`, `CHECK (typeof(priority) = 'integer' AND priority BETWEEN 1 AND 3)`, `CHECK (status IN (…))`, lists from `packages/shared` | Study schema |
 | S-8 | `learn_topic.note` is at most 120 characters | `CHECK (length(note) <= 120)`, the cap from `packages/shared` | Study schema |
 | S-9 | A topic is never hard-deleted, and its `area_id` and `code` never change | `BEFORE DELETE` and `BEFORE UPDATE OF area_id, code` triggers | Study triggers |
+| S-10 | `learn_course.level` is one of the three levels | `CHECK (level IN (…))`, list from `packages/shared` | Study schema |
+| S-11 | `learn_course.module` is an integer from 1 to 4, and 1 unless the level is Specialized | `CHECK (typeof(module) = 'integer' AND module BETWEEN 1 AND 4 AND (level = 'specialized' OR module = 1))` | Study schema |
+| S-12 | `learn_course.path` is unique, under `Study Lab/`, ending in `.md` | Unique index; `CHECK (path GLOB 'Study Lab/*.md')` | Study schema |
+| S-13 | `learn_exam.attempt` is an integer >= 1, unique per topic and level | `CHECK (typeof(attempt) = 'integer' AND attempt >= 1)`; unique index on `(topic_id, level, attempt)` | Study schema |
+| S-14 | A new attempt is one past the topic's highest at that level | `BEFORE INSERT` trigger comparing with `MAX(attempt)` | Study triggers |
+| S-15 | Exam paths are unique, under `Study Lab/`, ending in `.md` and `.pdf` | Unique indexes; `CHECK (md_path GLOB 'Study Lab/*.md' AND pdf_path GLOB 'Study Lab/*.pdf')` | Study schema |
+| S-16 | An exam is created ungraded; `grade` (integer 0..100) and `graded_at` are set together; once graded, `grade` stays an integer 0..100 (it can be corrected, never cleared) and `graded_at` never changes | `BEFORE INSERT` and `BEFORE UPDATE OF grade, graded_at` triggers (`grade` is nullable, so a trigger, not a CHECK) | Study triggers |
+| S-17 | `learn_exam.level` is one of the three levels | `CHECK (level IN (…))` | Study schema |
 
 **Build notes.** A topic's code is claimed in one `db.batch()`: `UPDATE learn_area SET next_seq = next_seq + 1 WHERE id = ?`, then `INSERT INTO learn_topic (…) SELECT …, prefix || '-' || printf('%02d', next_seq - 1), … FROM learn_area WHERE id = ?`, never read-then-write. All Study probes join `invariants.test.ts` and `verify-triggers.sh`.
 
