@@ -276,7 +276,7 @@ career_requirement(
 -- The application's history; its current status is the latest row (derived).
 career_job_event(
   id, job_id, status,                    -- evaluated | applied | interviewing | offer | rejected | withdrawn | closed_silent (K-11, K-12)
-  at, note
+  at, note                               -- note at most 500 characters
 )
 
 -- 22: what a job's documents were made from, and what its application copies (A-7).
@@ -330,14 +330,14 @@ Every column above without `?` is `NOT NULL`.
 |---|---|---|
 | K-1 | There is at most one person row | `CHECK (id = 'person')` with the PK |
 | K-2 | A link's kind is one of the list; its URL starts with `https://` | `CHECK` |
-| K-3 | The photo's key and type are set together, the type one of JPEG, PNG, WebP | Triggers (nullable columns) |
+| K-3 | The photo's key and type are set together, the type one of JPEG, PNG, WebP and the key that type's `profile/photo.<ext>` | Triggers (nullable columns) |
 | K-4 | Education and experience dates are `YYYY` or `YYYY-MM`, and an end is not before the start | `CHECK` on `start_on`; triggers for `end_on` |
 | K-5 | A fact's text is 1..300 characters; `verified` is 0 or 1; at most one of experience and education | `CHECK` (the parents by trigger) |
 | K-6 | One declaration per skill | PK on `skill_id` |
 | K-7 | A declared level is one of the list; `years`, when set, an integer ≥ 0 | `CHECK`; trigger for `years` |
 | K-8 | A fact is never hard-deleted | `BEFORE DELETE` trigger |
 | K-9 | A requirement's type is one of the list, and its skill is null exactly when it's not mapped | `CHECK (type IN (…))`; trigger for the pairing |
-| K-10 | Fit scores are integers within their maxima (25, 25, 20, 15, 15) and the total is their sum; the decision is one of the list | Triggers (nullable until scored) |
+| K-10 | Fit scores are all set or all unset; set, they are integers within their maxima (25, 25, 20, 15, 15), the total is their sum and the decision one of the list | Triggers (nullable until scored). The 75/55 thresholds stay in `shared/career` `scoreFit`, so CA-00 can change them without a migration |
 | K-11 | An event's status is one of the list | `CHECK` |
 | K-12 | Events of a job are never edited or deleted (the history is append-only) | `BEFORE UPDATE` and `BEFORE DELETE` triggers |
 | K-13 | A requirement's skill exists in the registry | FK to `skill` |

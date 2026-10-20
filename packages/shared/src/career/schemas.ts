@@ -3,7 +3,7 @@
 // named in LONG_TOOL_STRINGS (core/tool-strings.ts). No tool takes file
 // content: the photo is the app's only upload, and documents are never stored.
 import { z } from "zod";
-import { APPLICATION_STATUSES } from "./applications";
+import { APPLICATION_STATUSES, JOB_NOTE_MAX_LENGTH } from "./applications";
 import { DOCUMENT_KINDS, SELECTION_ITEM_KINDS } from "./brief";
 import { driveFileId } from "./drive";
 import { FIT_DIMENSIONS, FIT_MAX, FIT_NOTES_MAX_LENGTH } from "./fit";
@@ -268,7 +268,7 @@ export const updateJobInputSchema = z
   .object({
     jobId: idSchema,
     status: z.enum(APPLICATION_STATUSES).optional(),
-    note: text(500).optional(),
+    note: text(JOB_NOTE_MAX_LENGTH).optional(),
     fit: fitScoresSchema.optional(),
     fitNotes: text(FIT_NOTES_MAX_LENGTH).optional(),
   })

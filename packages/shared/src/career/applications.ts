@@ -12,6 +12,9 @@ export const APPLICATION_STATUSES = [
 ] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
+/** The note that goes with a status change. */
+export const JOB_NOTE_MAX_LENGTH = 500;
+
 /** An application with no answer for 3 weeks is closed silent (career-os /weekly-review). */
 export const SILENT_AFTER_DAYS = 21;
 const DAY_MS = 24 * 60 * 60 * 1000;
