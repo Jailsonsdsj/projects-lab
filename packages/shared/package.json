@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./study": "./src/study/index.ts"
+    "./study": "./src/study/index.ts",
+    "./career": "./src/career/index.ts"
   },
   "scripts": {
     "test": "vitest run"

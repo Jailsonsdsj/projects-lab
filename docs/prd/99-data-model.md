@@ -201,3 +201,160 @@ Every column above without `?` is `NOT NULL`.
 ---
 
 *Part of the Projects Lab spec. Index: [`docs/README.md`](../README.md)*
+
+## Career Lab
+
+_From `20`–`24` (decisions approved 2026-10-19, flagged to refine in CA-00)._
+
+```sql
+-- The owner's person record: exactly one row (K-1). Contact details live here.
+career_person(
+  id,                                    -- always 'person' (K-1)
+  full_name, headline, location, timezone, email, phone,
+  summary,                               -- default ''; at most 600 characters
+  languages_json,                        -- JSON array of { name, level }; default '[]'
+  photo_key?, photo_type?,               -- set together: profile/photo.<ext>, image/jpeg|png|webp (K-3)
+  updated_at
+)
+
+career_link(
+  id, kind,                              -- linkedin | github | portfolio | scholar | other (K-2)
+  label, url,                            -- url starts with https:// (K-2)
+  position, created_at
+)
+
+career_education(
+  id, institution, degree, field,
+  start_on, end_on?,                     -- YYYY or YYYY-MM; no end = in progress (K-4)
+  notes, position, created_at, deleted_at?
+)
+
+career_experience(
+  id, organization, title,
+  kind,                                  -- job | contract | research | project
+  start_on, end_on?,                     -- YYYY or YYYY-MM; no end = current (K-4)
+  location, summary, position, created_at, deleted_at?
+)
+
+-- One claim a document can use. Never hard-deleted (K-8): a job's selection may cite it.
+career_fact(
+  id,
+  experience_id?, education_id?,         -- at most one of them
+  text,                                  -- 1..300 characters (K-5)
+  verified,                              -- 0/1 (K-5): 0 = excluded from documents
+  position, created_at, updated_at, deleted_at?
+)
+career_fact_skill(fact_id, skill_id)     -- PK both; skill FK (C-7 keeps it)
+
+-- What the owner claims (readiness Declared). One per skill (K-6).
+career_declared_skill(
+  skill_id,                              -- PK, FK skill
+  level,                                 -- familiar | working | strong (K-7)
+  years?,                                -- integer >= 0
+  note, created_at, updated_at
+)
+
+-- A tracked job. Never hard-deleted (K-14). Readiness is derived, never stored.
+career_job(
+  id, company, role, seniority, language, -- language: the posting's (documents match it)
+  work_shape,                            -- short text: contract/employment, hours, remote
+  source_url?, posting,                  -- the pasted text (at most 20,000 characters)
+  fit_total?, fit_constraints?, fit_skills?, fit_growth?, fit_pay?, fit_signal?,  -- K-10
+  decision?,                             -- apply | maybe | skip (K-10)
+  fit_notes,                             -- gaps to expect, questions to ask, red flags
+  created_at, updated_at, deleted_at?
+)
+
+career_requirement(
+  id, job_id,                            -- FK career_job
+  text,                                  -- the posting's wording, at most 120 characters
+  type,                                  -- required | nice | not_mapped (K-9)
+  skill_id?,                             -- FK skill; null iff not_mapped (K-9, K-13)
+  position
+)
+
+-- The application's history; its current status is the latest row (derived).
+career_job_event(
+  id, job_id, status,                    -- evaluated | applied | interviewing | offer | rejected | withdrawn | closed_silent (K-11, K-12)
+  at, note                               -- note at most 500 characters
+)
+
+-- 22: what a job's documents were made from, and what its application copies (A-7).
+career_job_item(job_id, item_kind, item_id, variant, position)  -- item_kind: fact | experience | education | skill (K-15)
+career_job_kit(
+  job_id,                                -- PK, FK career_job
+  intro,                                 -- default ''; at most 1,500 characters (K-17)
+  salary_min?, salary_max?,              -- integers, whole currency units (K-16)
+  salary_currency?, salary_period?,      -- ISO code; hour | month | year (K-16)
+  updated_at
+)
+career_form_answer(id, job_id, question, answer, position)       -- answer at most 2,000 characters (K-17)
+career_standard_answer(id, label, value, position)               -- label unique (K-18), value at most 300 (K-19)
+
+-- 23: the search criteria (one row) and the openings the routine saves.
+career_search_criteria(
+  id,                                    -- always 'criteria' (K-20)
+  queries_json, lanes_json, shapes_json, auto_reject_json, sources_json,  -- JSON arrays
+  max_hours,                             -- integer >= 0 (K-21)
+  timezone_note,
+  rate_floor?, rate_currency?, rate_period?,  -- set together (K-21)
+  max_age_days,                          -- integer >= 1 (K-21)
+  updated_at
+)
+career_opening(
+  id, url,                               -- unique (K-22)
+  company, role, lane, posting, posted_on?, rate_text, why,
+  status,                                -- new | kept | dismissed | tracked (K-22)
+  job_id?,                               -- set exactly when tracked (K-23)
+  created_at, updated_at
+)
+
+-- 24: stories, answers and the drill log.
+career_story(id, title, situation, task, action, result, experience_id?, created_at, updated_at)  -- each part at most 600 (K-24)
+career_story_fact(story_id, fact_id)     -- K-25
+career_story_skill(story_id, skill_id)
+career_answer(
+  id, question, answer,                  -- question at most 200, answer at most 3,000
+  drive_file_id?,                        -- Drive's file ID format (K-26)
+  story_id?, job_id?,                    -- exist (K-27)
+  created_at, updated_at
+)
+career_drill(id, at, mode, topic, weakest_json, fix)  -- mode: behavioral | technical | negotiation (K-28)
+```
+
+Every column above without `?` is `NOT NULL`.
+
+## Career Lab invariants
+
+| # | Invariant | Mechanism |
+|---|---|---|
+| K-1 | There is at most one person row | `CHECK (id = 'person')` with the PK |
+| K-2 | A link's kind is one of the list; its URL starts with `https://` | `CHECK` |
+| K-3 | The photo's key and type are set together, the type one of JPEG, PNG, WebP and the key that type's `profile/photo.<ext>` | Triggers (nullable columns) |
+| K-4 | Education and experience dates are `YYYY` or `YYYY-MM`, and an end is not before the start | `CHECK` on `start_on`; triggers for `end_on` |
+| K-5 | A fact's text is 1..300 characters; `verified` is 0 or 1; at most one of experience and education | `CHECK` (the parents by trigger) |
+| K-6 | One declaration per skill | PK on `skill_id` |
+| K-7 | A declared level is one of the list; `years`, when set, an integer ≥ 0 | `CHECK`; trigger for `years` |
+| K-8 | A fact is never hard-deleted | `BEFORE DELETE` trigger |
+| K-9 | A requirement's type is one of the list, and its skill is null exactly when it's not mapped | `CHECK (type IN (…))`; trigger for the pairing |
+| K-10 | Fit scores are all set or all unset; set, they are integers within their maxima (25, 25, 20, 15, 15), the total is their sum and the decision one of the list | Triggers (nullable until scored). The 75/55 thresholds stay in `shared/career` `scoreFit`, so CA-00 can change them without a migration |
+| K-11 | An event's status is one of the list | `CHECK` |
+| K-12 | Events of a job are never edited or deleted (the history is append-only) | `BEFORE UPDATE` and `BEFORE DELETE` triggers |
+| K-13 | A requirement's skill exists in the registry | FK to `skill` |
+| K-14 | A job is never hard-deleted | `BEFORE DELETE` trigger |
+| K-15 | A selection item's kind is one of the list and its item exists and isn't removed (a fact removed later stays cited, K-8) | `CHECK`; trigger for existence |
+| K-16 | A salary range's minimum and maximum are integers with minimum ≤ maximum, set with a currency and a period from the list | Triggers (nullable) |
+| K-17 | Intro and form-answer lengths | `CHECK` |
+| K-18 | Standard answer labels are unique ignoring case | Unique index `COLLATE NOCASE` |
+| K-19 | A standard answer's value is at most 300 characters | `CHECK` |
+| K-20 | There is at most one criteria row | `CHECK (id = 'criteria')` |
+| K-21 | `max_hours` ≥ 0 and `max_age_days` ≥ 1 integers; the rate floor, currency and period set together | `CHECK`; trigger for the floor |
+| K-22 | An opening's URL is unique and `https://`, its status one of the list | Unique index; `CHECK` |
+| K-23 | An opening has a job exactly when it's tracked | Trigger |
+| K-24 | Each STAR part is at most 600 characters | `CHECK` |
+| K-25 | A story's facts exist | FK |
+| K-26 | A Drive file ID is 10–100 characters of letters, digits, `-` and `_` | Trigger (nullable) |
+| K-27 | An answer's story and job exist | FK |
+| K-28 | A drill's mode is one of the list | `CHECK` |
+
+**Build notes.** The master-resume import (`20`) follows ST-10: a tested parser, guarded SQL the owner runs once. The Study contract's `ensureTopics` carries the area Claude chooses (ST-03).

@@ -1,5 +1,8 @@
+import { backupDue } from "@projects-lab/shared";
+import { useSyncExternalStore } from "react";
 import { useNavigate } from "react-router";
 import {
+  Banner,
   Button,
   EmptyState,
   ErrorState,
@@ -8,6 +11,7 @@ import {
   type LabCardState,
   PageTitle,
 } from "../components/ui";
+import { readBackupStatus } from "./BackupCard";
 import { ConnectionsScreen } from "./ConnectionsScreen";
 import {
   type LabDefinition,
@@ -20,18 +24,64 @@ import { SettingsScreen } from "./SettingsScreen";
 
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five"];
 
+/** The browser's own idea of being online, kept current by its events. */
+function useOnline(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("online", onChange);
+      window.addEventListener("offline", onChange);
+      return () => {
+        window.removeEventListener("online", onChange);
+        window.removeEventListener("offline", onChange);
+      };
+    },
+    () => navigator.onLine,
+  );
+}
+
 /** Home (00-platform): one card per lab, each loading its own summary so one
- *  lab failing never blanks another. */
+ *  lab failing never blanks another. Offline, a banner says why the cards
+ *  can't load (LabCard has no offline variant); they read again online. */
 export function HomeScreen() {
   const labs = labsOnly(useLabs());
   const count = COUNT_WORDS[labs.length] ?? String(labs.length);
+  const online = useOnline();
   return (
     <div className="home">
       <PageTitle title="Home" subtitle={`Your ${count} labs`} />
+      {!online && (
+        <Banner tone="offline" title="You're offline.">
+          The labs' summaries load again when you're back online.
+        </Banner>
+      )}
+      <BackupNudge />
       {labs.map((lab) => (
         <HomeCard key={lab.id} lab={lab} />
       ))}
     </div>
+  );
+}
+
+/** Never backed up, or not for BACKUP_NUDGE_DAYS: a quiet reminder. A failed
+ *  check says nothing (the cards already show the failure). */
+function BackupNudge() {
+  const navigate = useNavigate();
+  const { state } = useRead(readBackupStatus);
+  if (state.status !== "loaded") return null;
+  const last = state.data.lastExportedAt;
+  if (!backupDue(last, new Date().toISOString())) return null;
+  return (
+    <Banner
+      tone="info"
+      title={last ? "No backup in a while." : "No backup yet."}
+      action={
+        <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
+          Back up
+        </Button>
+      }
+    >
+      Download one from Settings: everything that's yours, in one file.
+    </Banner>
   );
 }
 
@@ -43,8 +93,8 @@ function HomeCard({ lab }: { lab: LabDefinition }) {
 function HomeCardLoader({ lab, home }: { lab: LabDefinition; home: LabHome }) {
   const navigate = useNavigate();
   const { state: read, retry } = useRead(home.load);
-  // LabCard has no offline variant: offline shows as the error card until the
-  // Banner arrives (D-05).
+  // LabCard has no offline variant: offline shows as the error card, under
+  // HomeScreen's offline banner.
   const state: LabCardState =
     read.status === "loaded"
       ? { status: "loaded", data: read.data }

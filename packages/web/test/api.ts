@@ -21,3 +21,13 @@ export const json = (body: unknown, init?: ResponseInit) =>
     headers: { "Content-Type": "application/json" },
     ...init,
   });
+
+/** Settings' Backup card reads its status on open: no backup yet. */
+export const NO_BACKUP = { lastExportedAt: null };
+
+/** The calls a test's action made: everything but the Backup card's own read. */
+export function actionCalls(fetchMock: ReturnType<typeof mockApi>) {
+  return fetchMock.mock.calls.filter(
+    ([input]) => String(input) !== "/api/backup",
+  );
+}

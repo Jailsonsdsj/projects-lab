@@ -49,3 +49,5 @@ jobs:
       - run: pnpm exec playwright install --with-deps webkit
       # WebKit at phone, tablet and wide, on the built app with a mocked API.
       - run: pnpm e2e
+      # The journeys on the real stack: local Worker and D1, fixed test secrets.
+      - run: pnpm e2e:journeys

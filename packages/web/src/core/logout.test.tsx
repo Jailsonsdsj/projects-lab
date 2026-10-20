@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mockApi } from "../../test/api";
+import { actionCalls, json, mockApi, NO_BACKUP } from "../../test/api";
 import { createRoutes } from "../app";
 import { endSession, sessionToken } from "./session";
 
@@ -32,7 +32,7 @@ function openSettings() {
 describe("Log out", () => {
   it("asks first; Cancel keeps the session", async () => {
     const user = userEvent.setup();
-    const fetchMock = mockApi({});
+    const fetchMock = mockApi({ "GET /api/backup": () => json(NO_BACKUP) });
     const router = openSettings();
     await user.click(screen.getByRole("button", { name: "Log out" }));
     const dialog = screen.getByRole("dialog", {
@@ -44,7 +44,8 @@ describe("Log out", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
     expect(sessionToken()).not.toBeNull();
-    expect(fetchMock).not.toHaveBeenCalled();
+    // Only the Backup card's own read: Cancel sent nothing.
+    expect(actionCalls(fetchMock)).toEqual([]);
     expect(router.state.location.pathname).toBe("/settings");
   });
 
@@ -52,6 +53,7 @@ describe("Log out", () => {
     const user = userEvent.setup();
     const token = sessionToken();
     const fetchMock = mockApi({
+      "GET /api/backup": () => json(NO_BACKUP),
       "POST /api/auth/logout": () => new Response(null, { status: 204 }),
     });
     const router = openSettings();
@@ -61,7 +63,7 @@ describe("Log out", () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
     await screen.findByRole("heading", { name: "Projects Lab" });
-    const headers = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+    const headers = new Headers(actionCalls(fetchMock)[0]?.[1]?.headers);
     expect(headers.get("Authorization")).toBe(`Bearer ${token}`);
     expect(sessionToken()).toBeNull();
     expect(deleteCache).toHaveBeenCalledWith(API_CACHE);

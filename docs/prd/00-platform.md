@@ -30,7 +30,7 @@ The shell and Home iterate the registry; core code never imports a lab. A lab wi
 | `/connections`, `/settings` | platform | Connections (`01-identity`), Settings |
 | `/login`, `/oauth/authorize` | platform | Login, Allow Claude (no shell) |
 | `/study`, `/study/courses`, `/study/grades` | study | Backlog (first tab), Courses, Grades |
-| `/career`, `/career/skills`, `/career/profile`, `/career/documents` | career | Jobs (first tab), Skills, Profile, Documents |
+| `/career`, `/career/skills`, `/career/profile`, `/career/documents`, `/career/interviews` | career | Jobs (first tab), Skills, Profile, Documents, Interviews (CA-13); `/career/jobs/:jobId` is a page under Jobs (CA-11a) |
 
 The current lab comes from the first path segment, so a deep link opens in the right lab with the right accent.
 

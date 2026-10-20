@@ -1,7 +1,12 @@
-// A labelled native <select> (the design system's stand-in until Select is
-// built: a Field around the bundle's .input with its chevron).
-import { Field, Icon } from "../../components/ui";
+import { Field } from "./Field";
+import { Icon } from "./Icon";
 
+/**
+ * A labelled native <select>: a Field around the bundle's .input with its
+ * chevron. The bundle's tablet listbox is drawn as a custom popover; the native
+ * control gives the same choice with the platform's own picker (and its
+ * accessibility) on iPhone and iPad.
+ */
 export function Select<V extends string | number>({
   label,
   value,

@@ -27,6 +27,16 @@ export interface LabFocusRoute {
   screen: ReactNode;
 }
 
+/** A screen inside the shell but not in its navigation (a job's screen): the
+ *  tab it belongs to stays current while it's open. */
+export interface LabPage {
+  /** Absolute; may have params, e.g. "/career/jobs/:jobId". */
+  path: string;
+  screen: ReactNode;
+  /** The path of the tab it belongs to, e.g. "/career". */
+  tab: string;
+}
+
 export interface LabHome {
   /** Reads the lab's summary (`GET /api/<lab>/summary`). Resolves to null when
    *  the lab has no data yet; rejects only when the read itself failed. */
@@ -50,6 +60,8 @@ export interface LabDefinition {
   home?: LabHome;
   /** Full-screen routes outside the shell's navigation. */
   focus?: readonly LabFocusRoute[];
+  /** Screens inside the shell, under one of its tabs. */
+  pages?: readonly LabPage[];
 }
 
 export const SETTINGS_PATH = "/settings";

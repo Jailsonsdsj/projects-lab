@@ -1,16 +1,26 @@
-// Career Lab (stub until Phase 3): mounts at /api/career. Reaches Study Lab
-// only through the StudyContract factory it's given at mount time.
-import type { LabSummary, StudyContract } from "@projects-lab/shared";
+// Career Lab: mounts at /api/career (profile, photo, jobs, documents, job
+// search, interviews and Home's card).
+// Reaches Study Lab only through the StudyContract factory it's given at
+// mount time, built per request with that request's D1.
 import { Hono } from "hono";
 import type { ApiLab, LabEnv } from "../../core/lab";
+import { documentRoutes } from "./documents-routes";
+import { interviewRoutes } from "./interviews-routes";
+import type { Study } from "./jobs";
+import { jobRoutes } from "./jobs-routes";
+import { photoRoutes } from "./photo";
+import { profileRoutes } from "./routes";
+import { searchRoutes } from "./search-routes";
+import { careerTools } from "./tools";
 
-export function careerLab(_deps: {
-  /** Built per request with that request's D1. */
-  study: (db: D1Database) => StudyContract;
-}): ApiLab {
+export function careerLab(deps: { study: Study }): ApiLab {
   const routes = new Hono<LabEnv>();
-  // No data yet: Home shows Career's empty card.
-  routes.get("/summary", (c) => c.json<LabSummary | null>(null));
+  routes.route("/", jobRoutes(deps.study));
+  routes.route("/", documentRoutes(deps.study));
+  routes.route("/", profileRoutes());
+  routes.route("/", photoRoutes());
+  routes.route("/", searchRoutes());
+  routes.route("/", interviewRoutes());
 
-  return { id: "career", routes, tools: [] };
+  return { id: "career", routes, tools: careerTools(deps.study) };
 }

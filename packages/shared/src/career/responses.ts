@@ -1,0 +1,322 @@
+// What /api/career's reads return, as Zod schemas: the web parses every
+// response with them, and the API's tests parse its real output, so the two
+// can't drift. Shapes follow the services in api/src/labs/career.
+import { z } from "zod";
+import { APPLICATION_STATUSES } from "./applications";
+import { FIT_DECISIONS } from "./fit";
+import { DRILL_MODES } from "./interviews";
+import { EXPERIENCE_KINDS, LINK_KINDS, SKILL_LEVELS } from "./profile";
+import { READINESS, REQUIREMENT_TYPES } from "./readiness";
+import { CURRENCIES, PAY_PERIODS } from "./salary";
+import { saveSearchCriteriaInputSchema } from "./schemas";
+import { OPENING_STATUSES } from "./search";
+
+const skillRef = z.object({ id: z.string(), name: z.string() });
+
+export const profileFactSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  verified: z.boolean(),
+  position: z.number().int(),
+  skills: z.array(skillRef),
+});
+export type ProfileFact = z.infer<typeof profileFactSchema>;
+
+export const profilePersonSchema = z.object({
+  fullName: z.string(),
+  headline: z.string(),
+  location: z.string(),
+  timezone: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  summary: z.string(),
+  languages: z.array(z.object({ name: z.string(), level: z.string() })),
+  photo: z.object({ type: z.string() }).nullable(),
+  updatedAt: z.string().nullable(),
+});
+export type ProfilePerson = z.infer<typeof profilePersonSchema>;
+
+export const profileLinkSchema = z.object({
+  id: z.string(),
+  kind: z.enum(LINK_KINDS),
+  label: z.string(),
+  url: z.string(),
+  position: z.number().int(),
+});
+export type ProfileLink = z.infer<typeof profileLinkSchema>;
+
+export const profileExperienceSchema = z.object({
+  id: z.string(),
+  organization: z.string(),
+  title: z.string(),
+  kind: z.enum(EXPERIENCE_KINDS),
+  start: z.string(),
+  end: z.string().nullable(),
+  location: z.string(),
+  summary: z.string(),
+  position: z.number().int(),
+  facts: z.array(profileFactSchema),
+});
+export type ProfileExperience = z.infer<typeof profileExperienceSchema>;
+
+export const profileEducationSchema = z.object({
+  id: z.string(),
+  institution: z.string(),
+  degree: z.string(),
+  field: z.string(),
+  start: z.string(),
+  end: z.string().nullable(),
+  notes: z.string(),
+  position: z.number().int(),
+  facts: z.array(profileFactSchema),
+});
+export type ProfileEducation = z.infer<typeof profileEducationSchema>;
+
+export const declaredSkillSchema = z.object({
+  skillId: z.string(),
+  name: z.string(),
+  level: z.enum(SKILL_LEVELS),
+  years: z.number().int().nullable(),
+  note: z.string(),
+});
+export type DeclaredSkill = z.infer<typeof declaredSkillSchema>;
+
+/** GET /api/career/profile */
+export const profileResponseSchema = z.object({
+  person: profilePersonSchema,
+  links: z.array(profileLinkSchema),
+  experiences: z.array(profileExperienceSchema),
+  education: z.array(profileEducationSchema),
+  facts: z.array(profileFactSchema),
+  skills: z.array(declaredSkillSchema),
+});
+export type ProfileResponse = z.infer<typeof profileResponseSchema>;
+
+const tally = z.object({ ready: z.number().int(), total: z.number().int() });
+
+export const jobSummarySchema = z.object({
+  id: z.string(),
+  company: z.string(),
+  role: z.string(),
+  status: z.enum(APPLICATION_STATUSES),
+  statusAt: z.string(),
+  fit: z
+    .object({ total: z.number().int(), decision: z.enum(FIT_DECISIONS) })
+    .nullable(),
+  readiness: z.object({ required: tally, nice: tally }),
+  nextUp: z.array(
+    z.object({
+      requirementId: z.string(),
+      text: z.string(),
+      skill: z.string(),
+    }),
+  ),
+  silent: z.boolean(),
+  updatedAt: z.string(),
+});
+export type JobSummary = z.infer<typeof jobSummarySchema>;
+
+/** GET /api/career/jobs */
+export const jobsResponseSchema = z.object({ jobs: z.array(jobSummarySchema) });
+
+export const requirementSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  type: z.enum(REQUIREMENT_TYPES),
+  skillId: z.string().nullable(),
+  skill: z.string().nullable(),
+  position: z.number().int(),
+});
+
+/** GET /api/career/jobs/:id */
+export const jobResponseSchema = z.object({
+  job: jobSummarySchema.omit({ fit: true }).extend({
+    seniority: z.string(),
+    language: z.string(),
+    workShape: z.string(),
+    sourceUrl: z.string().nullable(),
+    posting: z.string(),
+    fit: z
+      .object({
+        total: z.number().int(),
+        decision: z.enum(FIT_DECISIONS),
+        scores: z.object({
+          constraints: z.number().int(),
+          skills: z.number().int(),
+          growth: z.number().int(),
+          pay: z.number().int(),
+          signal: z.number().int(),
+        }),
+      })
+      .nullable(),
+    fitNotes: z.string(),
+    requirements: z.array(
+      requirementSchema.extend({
+        readiness: z.enum(READINESS),
+        /** The skill's Study topic, when it's in the backlog. */
+        study: z
+          .object({
+            topicId: z.string(),
+            status: z.enum(["not_started", "in_progress", "done"]),
+            grade: z.number().int().nullable(),
+          })
+          .nullable(),
+      }),
+    ),
+    notMapped: z.array(requirementSchema),
+    events: z.array(
+      z.object({
+        status: z.enum(APPLICATION_STATUSES),
+        at: z.string(),
+        note: z.string(),
+      }),
+    ),
+    createdAt: z.string(),
+  }),
+});
+export type JobDetail = z.infer<typeof jobResponseSchema>["job"];
+
+export const jobKitSchema = z.object({
+  jobId: z.string(),
+  intro: z.string(),
+  salary: z
+    .object({
+      min: z.number().int(),
+      max: z.number().int(),
+      currency: z.enum(CURRENCIES),
+      period: z.enum(PAY_PERIODS),
+    })
+    .nullable(),
+  answers: z.array(z.object({ question: z.string(), answer: z.string() })),
+  selection: z
+    .object({
+      variant: z.string(),
+      items: z.array(
+        z.object({
+          kind: z.string(),
+          id: z.string(),
+          label: z.string().nullable(),
+        }),
+      ),
+    })
+    .nullable(),
+});
+export type JobKit = z.infer<typeof jobKitSchema>;
+
+/** GET /api/career/jobs/:id/kit */
+export const jobKitResponseSchema = z.object({ kit: jobKitSchema });
+
+/** GET /api/career/standard-answers */
+export const standardAnswersResponseSchema = z.object({
+  answers: z.array(z.object({ label: z.string(), value: z.string() })),
+});
+export type StandardAnswer = z.infer<
+  typeof standardAnswersResponseSchema
+>["answers"][number];
+
+/** GET /api/career/skills: declared skills with readiness, and Study's offers (A-8). */
+export const skillsResponseSchema = z.object({
+  skills: z.array(
+    declaredSkillSchema.extend({
+      readiness: z.enum(["verified", "declared"]),
+      /** Study's grade (tenths) when verified. */
+      grade: z.number().int().nullable(),
+    }),
+  ),
+  offers: z.array(
+    z.object({
+      skillId: z.string(),
+      name: z.string(),
+      grade: z.number().int(),
+    }),
+  ),
+});
+export type SkillsResponse = z.infer<typeof skillsResponseSchema>;
+
+/** GET /api/career/study-areas: the backlog's areas, for "Add to Study backlog". */
+export const studyAreasResponseSchema = z.object({
+  areas: z.array(z.object({ prefix: z.string(), name: z.string() })),
+});
+
+export const openingSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  company: z.string(),
+  role: z.string(),
+  lane: z.string(),
+  posting: z.string(),
+  postedOn: z.string().nullable(),
+  rateText: z.string(),
+  why: z.string(),
+  status: z.enum(OPENING_STATUSES),
+  jobId: z.string().nullable(),
+  stale: z.boolean(),
+  createdAt: z.string(),
+});
+export type Opening = z.infer<typeof openingSchema>;
+
+/** GET /api/career/openings: a page, and where the next one starts. */
+export const openingsResponseSchema = z.object({
+  openings: z.array(openingSchema),
+  nextCursor: z.string().optional(),
+});
+
+/** GET /api/career/search-criteria: null until the owner saves the form. */
+export const searchCriteriaResponseSchema = z.object({
+  criteria: saveSearchCriteriaInputSchema
+    .extend({ updatedAt: z.string() })
+    .nullable(),
+});
+export type SearchCriteria = NonNullable<
+  z.infer<typeof searchCriteriaResponseSchema>["criteria"]
+>;
+
+export const storySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  situation: z.string(),
+  task: z.string(),
+  action: z.string(),
+  result: z.string(),
+  experienceId: z.string().nullable(),
+  facts: z.array(
+    z.object({ id: z.string(), text: z.string(), verified: z.boolean() }),
+  ),
+  skills: z.array(skillRef),
+  /** Derived: every fact it cites is live and verified. */
+  verified: z.boolean(),
+  updatedAt: z.string(),
+});
+export type Story = z.infer<typeof storySchema>;
+/** GET /api/career/stories */
+export const storiesResponseSchema = z.object({
+  stories: z.array(storySchema),
+});
+
+export const answerSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  answer: z.string(),
+  video: z.object({ fileId: z.string(), previewUrl: z.string() }).nullable(),
+  storyId: z.string().nullable(),
+  jobId: z.string().nullable(),
+  updatedAt: z.string(),
+});
+export type Answer = z.infer<typeof answerSchema>;
+/** GET /api/career/answers (with `intro` when asked for one job). */
+export const answersResponseSchema = z.object({
+  answers: z.array(answerSchema),
+  intro: z.string().optional(),
+});
+
+export const drillSchema = z.object({
+  id: z.string(),
+  at: z.string(),
+  mode: z.enum(DRILL_MODES),
+  topic: z.string(),
+  weakest: z.array(z.string()),
+  fix: z.string(),
+});
+export type Drill = z.infer<typeof drillSchema>;
+/** GET /api/career/drills */
+export const drillsResponseSchema = z.object({ drills: z.array(drillSchema) });

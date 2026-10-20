@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -37,7 +37,10 @@ afterEach(() => {
 
 describe("Home", () => {
   it("shows a lab with no data as its empty state, not an error", async () => {
-    mockApi({ "GET /api/study/summary": () => json(null) });
+    mockApi({
+      "GET /api/career/summary": () => json(null),
+      "GET /api/study/summary": () => json(null),
+    });
     renderHome();
     for (const lab of [studyLab, careerLab]) {
       await waitFor(() =>
@@ -54,6 +57,7 @@ describe("Home", () => {
 
   it("shows Study's figures from /api/study/summary, with Continue", async () => {
     mockApi({
+      "GET /api/career/summary": () => json(null),
       "GET /api/study/summary": () =>
         json({
           stats: [
@@ -129,7 +133,27 @@ describe("Home", () => {
     );
   });
 
+  it("says it's offline above the cards, and not once back online", async () => {
+    mockApi({
+      "GET /api/study/summary": () => json(null),
+      "GET /api/career/summary": () => json(null),
+    });
+    const onLine = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    renderHome();
+    expect(await screen.findByText("You're offline.")).toBeInTheDocument();
+    onLine.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(screen.queryByText("You're offline.")).not.toBeInTheDocument();
+  });
+
   it("opens the lab from its card without leaving the app", async () => {
+    mockApi({
+      "GET /api/study/summary": () => json(null),
+      "GET /api/career/summary": () => json(null),
+      "GET /api/career/jobs": () => json({ jobs: [] }),
+    });
     const user = userEvent.setup();
     const router = renderHome();
     await waitFor(() =>

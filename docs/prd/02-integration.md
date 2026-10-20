@@ -11,12 +11,12 @@ How Claude reaches Projects Lab: one remote MCP server on the same Worker, the t
 ## Tool conventions
 
 - **Names** match `^(core|study|career)_[a-z_]+$` (C-4), verb first after the prefix: `study_list_backlog`, `career_map_job`. Each lab registers its tools at mount time; `mountLabs` refuses a name without its lab's prefix. Core tools are registered by the MCP module.
-- **One description per tool**, one or two sentences: what it does and when Claude should use it.
+- **One description per tool**, one or two sentences: what it does and when Claude should use it. Longer only when the tool carries a procedure Claude must follow on every surface, so no surface needs its own skill (architecture §6.6): `career_add_job`'s mapping and skip rule, `career_document_brief`'s writing rules, `career_save_openings`'s triage, `career_log_drill`'s session (CA-08).
 - **Thin adapters.** A tool's input schema is the shared Zod schema of the matching `/api` route; the handler validates, calls the **same service function**, and maps the result. No SQL and no business logic in a tool (F-15 checks this; H-05 tests every tool's schema).
-- **Reads are compact**: the fields Claude needs, not whole rows. Lists take `limit` (default 50, max 200) and `cursor`, and return `nextCursor` when there is more.
+- **Reads are compact**: the fields Claude needs, not whole rows. A list that can grow without bound pages: it takes `limit` (default 50, max 200; `shared/core/lists.ts`) and `cursor`, and returns `nextCursor` while there is more (`career_list_openings`, which grows every week). A list bounded by one owner's records (the backlog, jobs, stories, answers, the profile) returns whole; drills take a `limit` (CA-08).
 - **Writes are idempotent**: every write tool takes an optional `idempotencyKey` (at most 200 characters) and goes through the same `mutation` table as `/api`, with the tool name as its scope. A retry with the key gets the stored result; the key on another tool is `idempotency_key_reused`; a key whose first call hasn't finished is `idempotency_key_in_progress`.
 - **Every write is audited**: one `mcp_call` row per call to a write tool (tool, client name, `ok`, time), replays and failures included, so the owner sees what Claude did. Reads aren't audited.
-- **Never file content as an argument**, base64 or otherwise: a model has to generate it token by token. Claude's documents go straight to the owner and the app stores none (R3-1, architecture §6.4); the only upload is the owner's profile photo, in the app with a session.
+- **Never file content as an argument**, base64 or otherwise: a model has to generate it token by token. Claude's documents go straight to the owner and the app stores none (R3-1, architecture §6.4); the only upload is the owner's profile photo, in the app with a session. So **every string a tool takes is an enum or at most 1,000 characters**, except a few named prose fields (a pasted posting, an interview answer, a form answer, a self-introduction, fit notes), each with its own cap in its schema and never above 20,000: `LONG_TOOL_STRINGS` in `shared/core/tool-strings.ts` names them, and both tool-string tests (shared and `tools/list`) fail on a long field it doesn't name, or a name it lists that isn't long. A 100 KB PDF in base64 is about 133,000 characters (CA-01b).
 
 ### Errors
 
@@ -50,6 +50,43 @@ Lab tools are specified in each lab's PRD.
 | `study_record_exam` | write | `{ topicId, level, attempt, mdPath, pdfPath, idempotencyKey? }` | `{ examId, attempt }`; both files must exist, attempt next at its level (`12`) | ST-05 |
 | `study_record_grade` | write | `{ topicId, level, attempt, grade, idempotencyKey? }` | `{ examId, grade, topic: { id, status, grade } }`; again for the same attempt corrects it (`12`) | ST-05 |
 | `study_list_exams` | read | `{ topicId? }` | `{ exams: [{ examId, topicId, level, attempt, mdPath, pdfPath, createdAt, grade, gradedAt }] }` (`12`) | ST-05 |
+
+## Career tools
+
+Registered by Career Lab at mount time (`labs/career/tools.ts`), each over the same service as its `/api/career` route. No tool takes the profile photo or any file.
+
+| Tool | Kind | Input | Returns | Task |
+|---|---|---|---|---|
+| `career_get_profile` | read | none | `{ person, links, experiences, education, facts, skills }`: facts nested under live parents with `verified` and skills (`20`) | CA-03b |
+| `career_update_person` | write | `{ fullName?, headline?, location?, timezone?, email?, phone?, summary?, languages?, idempotencyKey? }` | `{ person }`; creates the one row on the first edit (`20`) | CA-03b |
+| `career_set_links` | write | `{ links: [{ kind, label, url }], idempotencyKey? }` | `{ links }`; replaces them in order (`20`) | CA-03b |
+| `career_save_experience` | write | `{ id?, organization, title, kind, start, end?, location?, summary?, position?, idempotencyKey? }` | `{ experience }`; no `id` adds, an omitted field is kept, `null` clears (`20`) | CA-03b |
+| `career_save_education` | write | `{ id?, institution, degree, field?, start, end?, notes?, position?, idempotencyKey? }` | `{ education }` (`20`) | CA-03b |
+| `career_save_fact` | write | `{ id?, experienceId?, educationId?, text, verified?, skills?, position?, idempotencyKey? }` | `{ fact }`; `verified` kept unless given, set only after the owner confirms (`20`) | CA-03b |
+| `career_declare_skill` | write | `{ skill, level, years?, note?, idempotencyKey? }` | `{ skill }`; one declaration per skill, by name or alias (`20`) | CA-03b |
+| `career_remove_item` | write | `{ kind, id, idempotencyKey? }` | `{ removed }`; experience, education or fact, soft (`20`) | CA-03b |
+| `career_remove_skill` | write | `{ skill, idempotencyKey? }` | `{ removed }`; the skill stays in the registry (`20`) | CA-03b |
+| `career_add_job` | write | `{ openingId?, company, role, seniority?, language, workShape?, sourceUrl?, posting, requirements: [{ text, type, skill? }], fit: { constraints, skills, growth, pay, signal }, fitNotes?, idempotencyKey? }` | `{ job }`; total and decision computed (`scoreFit`), first event `evaluated`, the opening tracked (`21`) | CA-04b |
+| `career_list_jobs` | read | `{ status? }` | `{ jobs }` best-ready first: status, fit, readiness, next gaps, `silent` (`21`) | CA-04b |
+| `career_get_job` | read | `{ jobId }` | `{ job }`: posting, fit, requirements with Verified/Declared/Gap, not mapped, history (`21`) | CA-04b |
+| `career_update_job` | write | `{ jobId, status?, note?, fit?, fitNotes?, idempotencyKey? }` | `{ job }`; a status appends an event (`21`) | CA-04b |
+| `career_update_requirement` | write | `{ requirementId, type?, skill?, idempotencyKey? }` | `{ job }`; a skill exactly when mapped (`21`) | CA-04b |
+| `career_send_gaps` | write | `{ jobId, gaps: [{ requirementId, area, priority }], idempotencyKey? }` | `{ gaps: [{ requirementId, skill, topicId, created }] }` through Study's `ensureTopics`; never duplicates (`21`) | CA-04b |
+| `career_remove_job` | write | `{ jobId, idempotencyKey? }` | `{ removed }`; soft, Study topics stay (`21`) | CA-04b |
+| `career_document_brief` | read | `{ jobId, kind }` | Job, ranked verified facts, `askFirst`, skills, selection, rules, layout (`22`) | CA-05 |
+| `career_save_selection` | write | `{ jobId, items: [{ kind, id }], variant, idempotencyKey? }` | `{ selection }`; live items, verified facts only (`22`) | CA-05 |
+| `career_save_job_kit` | write | `{ jobId, intro?, salary?, answers?, idempotencyKey? }` | `{ kit }`; each part replaces its own, `salary: null` clears (`22`) | CA-05 |
+| `career_save_standard_answers` | write | `{ answers: [{ label, value }], idempotencyKey? }` | `{ answers }`; replaces the list (`22`) | CA-05 |
+| `career_get_search_criteria` | read | none | `{ criteria \| null }`; only the app writes them (`23`) | CA-06a |
+| `career_save_openings` | write | `{ openings: [{ url, company, role, lane, posting, postedOn?, rateText?, why }], idempotencyKey? }` | `{ saved, skipped }`: URLs; a known URL is skipped (`23`) | CA-06a |
+| `career_list_openings` | read | `{ status?, limit?, cursor? }` | `{ openings, nextCursor? }`: new, kept, tracked, dismissed; `stale` (`23`) | CA-06a, CA-08 |
+| `career_update_opening` | write | `{ openingId, status, idempotencyKey? }` | `{ opening }`; kept or dismissed, a tracked one 409 (`23`) | CA-06a |
+| `career_list_stories` | read | none | `{ stories }` with facts, skills and derived `verified` (`24`) | CA-07 |
+| `career_save_story` | write | `{ id?, title, situation, task, action, result, experienceId?, factIds?, skills?, idempotencyKey? }` | `{ story }` (`24`) | CA-07 |
+| `career_list_answers` | read | `{ jobId?, general? }` | `{ answers, intro? }`; a job's with its self-introduction (`24`) | CA-07 |
+| `career_save_answer` | write | `{ id?, question, answer, driveLink?, storyId?, jobId?, idempotencyKey? }` | `{ answer }` with `video: { fileId, previewUrl } \| null`; Drive links only (`24`) | CA-07 |
+| `career_log_drill` | write | `{ mode, topic, weakest, fix, idempotencyKey? }` | `{ drill }` (`24`) | CA-07 |
+| `career_list_drills` | read | `{ limit? }` | `{ drills }` newest first, 10 by default (`24`) | CA-07 |
 
 ## Surfaces
 

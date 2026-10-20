@@ -76,12 +76,15 @@ expect_blocked api/src/labs/study ../career "$LAB" "api study → career"
 expect_blocked web/src/labs/career ../study/screens "$LAB" "web career → study"
 expect_blocked shared/src/career ../study/rules "$LAB" "shared career → study"
 expect_blocked api/src/labs/career @projects-lab/shared/study "$LAB" "career → @projects-lab/shared/study"
+expect_blocked web/src/labs/study @projects-lab/shared/career "$LAB" "study → @projects-lab/shared/career"
+expect_blocked api/src/core @projects-lab/shared/career "$CORE" "core → @projects-lab/shared/career"
 
 expect_allowed api/src/labs/career @projects-lab/shared "a lab → the shared root (core + contracts)"
 expect_allowed api/src/labs/career ../../../../shared/src/contracts/study "a lab → contracts by path"
+expect_allowed web/src/labs/career @projects-lab/shared/career "a lab → its own shared subpath"
 expect_allowed api/src/core @projects-lab/shared "core → the shared root"
 expect_allowed api/src ./labs/study "the API composition root → a lab"
 expect_allowed web/src ./labs/career "the web composition root → a lab"
 
 if [ "$failures" -gt 0 ]; then exit 1; fi
-echo "✓ boundary self-test: 6 forbidden imports refused; contracts and the composition roots allowed"
+echo "✓ boundary self-test: 8 forbidden imports refused; contracts and the composition roots allowed"

@@ -78,6 +78,34 @@
       "when": 1792419766123,
       "tag": "0010_study_areas",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1792456231812,
+      "tag": "0011_career_profile_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1792456239168,
+      "tag": "0012_career_profile_jobs_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1792457737603,
+      "tag": "0013_career_documents_search_interviews",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1792457763531,
+      "tag": "0014_career_documents_search_interviews_triggers",
+      "breakpoints": true
     }
   ]
 }

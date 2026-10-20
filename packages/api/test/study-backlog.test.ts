@@ -396,5 +396,12 @@ describe("the Study contract", () => {
       { verified: false, grade: 90 },
       { verified: false, grade: null },
     ]);
+
+    // verifiedSkills: the same rule over the whole backlog, verified ones only.
+    const verified = await contract().verifiedSkills();
+    expect(verified).toContainEqual({ skillId: skillOf["FE-01"], grade: 85 });
+    const ids2 = verified.map((v) => v.skillId);
+    for (const code of ["FE-02", "FE-03", "FE-04"])
+      expect(ids2, code).not.toContain(skillOf[code]);
   });
 });

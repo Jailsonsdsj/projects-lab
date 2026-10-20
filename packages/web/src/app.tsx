@@ -65,6 +65,12 @@ export function createRoutes(
                     element: tab.screen,
                   })),
                 ),
+                ...labs.flatMap((lab) =>
+                  (lab.pages ?? []).map((page) => ({
+                    path: page.path,
+                    element: page.screen,
+                  })),
+                ),
                 // Every component in every state (D-06). Loaded on first visit; not in navigation.
                 {
                   path: "/dev/ui",

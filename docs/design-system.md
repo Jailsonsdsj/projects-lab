@@ -40,6 +40,9 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `Checkbox` | `.check` | A `--size-touch` row around a `--size-checkbox` box | `mixed`, `invalid` + input props | unchecked, checked, mixed, invalid, disabled, *pressed, focus* |
 | `Badge` | `.badge` | Status label; semantic tones carry an icon | `tone` neutral · accent · success · warning · danger · info · verified · declared · gap · todo · doing · done · p1 · p2 · p3; `size` sm · md; `mono` | per tone |
 | `Tabs` | `.tabs` / `.tab` | ARIA tabs, one tab stop | `items` (label, count, disabled), `value`, `onChange` | selected, disabled, *hover, focus*; arrows, Home, End |
+| `ReadinessMeter` | `.meter` | How ready the owner is for a job: ready of the required skills, a verified / declared / gap bar, its legend | `verified`, `declared`, `gap` (counts), `title`, `detailed` (tablet: figure under the title, column legend with long labels) | ready, all ready, none mapped |
+| `RequirementRow` | `.req` (`.treq` on tablet) | One job requirement: name, readiness badge, where it stands, an action for a gap (a list item of a `.group` list) | `name`, `readiness` verified · declared · gap, `meta`, `action`, `table` | per readiness, with or without action |
+| `Select` | `.input` + `select` | A labelled native `<select>` in a Field, the bundle's chevron (the platform's own picker on iPhone and iPad stands in for the bundle's tablet listbox) | `label`, `value`, `options` ([value, text]), `onChange`, `disabled`, `error` | default, invalid, disabled, *focus* |
 | `Sheet` | `.sheet` | Bottom sheet on `<dialog>` | `open`, `onClose`, `title`, `footer` | closed, open, closing (exit animation), Escape closes |
 | `Dialog` | `.dialog` | Confirmation on `<dialog>` | `tone` accent · danger, `icon`, `actions`, `stretchActions` | closed, open, closing; focus returns to the opener |
 | `OptionsMenu` | `.menu` | "More" button + anchored popover menu | `label`, `heading`, `items` (icon, danger, disabled) and `"separator"` | closed, open; arrows, Home, End, Escape |
@@ -47,6 +50,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `ProgressBar` | `.progress` | `role=progressbar` with name and value | `value`, `max`, `label`, `caption`, `valueText`, `size` sm · md, `tone` accent · success | 0–100% |
 | `ListRow` | `.row` (`.trow` on tablet) | One row of a Group: ID, title, meta, badges, value; a link or button when it opens something, else static (no chevron, no hover) | `id`, `title`, `meta`, `tags` (badges: the meta line on phone; their own columns from tablet with `table`), `value`, `href` or `onClick`, `current` | static, link, button, current, *hover, pressed, focus* |
 | `Group` | `.group` + `.group__title` | A titled section of rows | `title` (kicker), `count` (mono) | — |
+| `CopyField` | `.copy` | A value the owner copies into a form (the copy panel) | `label`, `value`, `long` (an answer, full width), `mono` (a URL), `onCopyFailed` | Copy, Copied (`btn--copied` for `--duration-copied-hold`, then back; announced "<label> copied"), *hover, pressed, focus* |
 | `StatCard` | `.stat` | One figure with its label (Grades' average, courses done) | `label`, `value`, `unit`, `note`, children (e.g. a ProgressBar) | — |
 | `Banner` | `.banner` | Inline notice at the top of a screen | `tone` info · warning · danger · offline; `title` (bold lead); `action`; `flush` | warning/danger `role=alert`, info/offline `role=status` |
 | `EmptyState` | `.empty` | A successful, empty answer | `icon`, `title`, text, `actions` | — |
@@ -64,7 +68,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 
 Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`, `headingSlug` and `headingIds` (the ids Prose gives every H3, for a reader's outline).
 
-**In the bundle, not built yet:** Select (a Field around a native `<select>` works today; see `/dev/ui`), SearchField (use `Input search`, or the bundle's bare `.input--search` markup where the screen has no visible label, as the Backlog does), CopyField, ReadinessMeter. They arrive with the screens that need them.
+**In the bundle, not built yet:** SearchField (use `Input search`, or the bundle's bare `.input--search` markup where the screen has no visible label, as the Backlog does). They arrive with the screens that need them.
 
 ## Adding a component
 

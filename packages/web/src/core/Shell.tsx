@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { matchPath, Outlet, useLocation, useNavigate } from "react-router";
 import {
   BottomTabs,
   LabSwitcher,
@@ -9,19 +9,26 @@ import {
   useMinWidth,
 } from "../components/ui";
 import {
+  type LabDefinition,
   type LabTab,
   labForPath,
   SETTINGS_PATH,
   useLabs,
 } from "./lab-registry";
 
-function toItem(tab: LabTab, pathname: string): NavItem {
+function toItem(tab: LabTab, current: string): NavItem {
   return {
     label: tab.label,
     icon: tab.icon,
     href: tab.path,
-    current: pathname === tab.path,
+    current: current === tab.path,
   };
+}
+
+/** The tab a path belongs to: itself, or the tab of the page it opens. */
+function currentTab(lab: LabDefinition, pathname: string): string {
+  const page = (lab.pages ?? []).find((p) => matchPath(p.path, pathname));
+  return page?.tab ?? pathname;
 }
 
 /**
@@ -51,7 +58,7 @@ export function Shell() {
   const settings = labs
     .flatMap((l) => l.tabs)
     .find((tab) => tab.path === SETTINGS_PATH);
-  const tabs = lab.tabs.map((tab) => toItem(tab, pathname));
+  const tabs = lab.tabs.map((tab) => toItem(tab, currentTab(lab, pathname)));
 
   return (
     <div className="shell">

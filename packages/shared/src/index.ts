@@ -4,12 +4,16 @@
 
 export * from "./contracts/study";
 export * from "./core/auth";
+export * from "./core/backup";
 export * from "./core/bytes";
 export * from "./core/connections";
+export * from "./core/grades";
 export * from "./core/idempotency";
 export * from "./core/kdf";
 export * from "./core/lab";
+export * from "./core/lists";
 export * from "./core/oauth";
 export * from "./core/pwa";
 export * from "./core/retention";
 export * from "./core/skill";
+export * from "./core/tool-strings";
