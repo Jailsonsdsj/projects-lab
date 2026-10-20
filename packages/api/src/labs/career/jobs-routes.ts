@@ -67,6 +67,11 @@ export function jobRoutes(study: Study) {
     c.json(await listSkills(database(c.env), study)),
   );
 
+  // Where "Add to Study backlog" can put a gap: the backlog's areas, through the contract.
+  app.get("/study-areas", async (c) =>
+    c.json({ areas: await study(database(c.env)).areas() }),
+  );
+
   app.get("/jobs", async (c) => {
     const parsed = listJobsInputSchema.safeParse({
       status: c.req.query("status"),

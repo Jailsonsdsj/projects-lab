@@ -1,11 +1,21 @@
+import { labSummaryResponseSchema } from "@projects-lab/shared";
+import { apiFetch } from "../../core/api";
 import type { LabDefinition } from "../../core/lab-registry";
 import { ComingScreen } from "../../core/screens";
+import { JobScreen } from "./JobScreen";
+import { JobsScreen } from "./JobsScreen";
 import { ProfileScreen } from "./ProfileScreen";
 import { SkillsScreen } from "./SkillsScreen";
 
-// Until the lab's API exists its summary is honestly "no data yet": null.
+// Home's Career card (00-platform): the best-ready job, its required skills
+// ready and gaps, opening its Job screen. null with no jobs.
 const home = {
-  load: async () => null,
+  load: async (signal: AbortSignal) => {
+    const response = await apiFetch("/api/career/summary", { signal });
+    if (!response.ok)
+      throw new Error(`GET /api/career/summary: ${response.status}`);
+    return labSummaryResponseSchema.parse(await response.json());
+  },
   emptyText: "No jobs tracked yet. Ask Claude to map a posting you like.",
 };
 
@@ -18,12 +28,15 @@ export const careerLab: LabDefinition = {
   description: "Profile, skills, job readiness",
   icon: "briefcase",
   home,
+  pages: [
+    { path: "/career/jobs/:jobId", screen: <JobScreen />, tab: "/career" },
+  ],
   tabs: [
     {
       label: "Jobs",
       icon: "target",
       path: "/career",
-      screen: <ComingScreen title="Jobs" icon="target" arrives={later} />,
+      screen: <JobsScreen />,
     },
     {
       label: "Skills",

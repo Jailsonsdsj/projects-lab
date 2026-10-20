@@ -49,6 +49,8 @@ export interface FormSheetProps {
   onSave: () => Promise<Response> | null;
   /** After a write that worked: refresh and close. */
   onDone: (message: string) => void;
+  /** Instead of onDone, when the caller needs the response (e.g. a new ID). */
+  onSaved?: (response: Response) => void | Promise<void>;
   saveLabel?: string;
   /** For an existing record. */
   remove?: {
@@ -66,6 +68,7 @@ export function FormSheet({
   onClose,
   onSave,
   onDone,
+  onSaved,
   saveLabel = "Save",
   remove,
   children,
@@ -86,7 +89,10 @@ export function FormSheet({
     setBusy(kind);
     try {
       const response = await pending;
-      if (response.ok) return onDone(kind === "save" ? "Saved" : "Removed");
+      if (response.ok)
+        return kind === "save" && onSaved
+          ? await onSaved(response)
+          : onDone(kind === "save" ? "Saved" : "Removed");
       const message = await refusal(response);
       if (message) setRefused(message);
       else setFailed("error");

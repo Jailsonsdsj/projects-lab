@@ -479,3 +479,70 @@ dialog.is-closing::backdrop {
 .copy__value--mono {
   font-size: var(--text-sm);
 }
+
+/* ReadinessMeter: each segment's share of the bar (the bundle's inline flex). */
+.meter__seg {
+  flex-grow: var(--_share, 1);
+}
+
+/* ReadinessMeter, tablet: the legend as a column (the bundle sets it inline). */
+.meter__legend--column {
+  flex-direction: column;
+  gap: calc(var(--space-1) + var(--border-thick));
+}
+
+/* RequirementRow: the bundle's "Job readiness" rows, drawn in that screen's
+   own <style> with literal sizes; here from tokens. Phone: .req; tablet: .treq. */
+.req,
+.treq {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  list-style: none;
+}
+.req + .req,
+.treq + .treq {
+  border-top: var(--border-thin) solid var(--color-border);
+}
+.req {
+  gap: var(--space-1) var(--space-3);
+  padding: calc(var(--space-3) + var(--border-thick)) var(--space-3)
+    calc(var(--space-3) + var(--border-thick)) var(--space-4);
+}
+.req__name,
+.treq__name {
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-snug);
+}
+.req__meta,
+.treq__meta {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-snug);
+}
+.req__meta {
+  grid-column: 1 / -1;
+}
+.req__meta a,
+.treq__meta a {
+  color: var(--color-lab-accent);
+  text-underline-offset: var(--space-1);
+}
+.req__action {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: calc(var(--space-1) + var(--border-thick));
+}
+.treq {
+  gap: var(--border-thick) var(--space-3);
+  min-height: var(--size-header);
+  padding: calc(var(--space-2) + var(--border-thick)) var(--space-3)
+    calc(var(--space-2) + var(--border-thick)) var(--space-4);
+}
+.treq__side {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space-2) + var(--border-thick));
+}

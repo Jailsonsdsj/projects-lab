@@ -42,19 +42,24 @@ export function studyContract(db: D1Database): StudyContract {
 
     async verifiedSkills() {
       const rows = await topicRows(db, "t.status = 'done'");
-      return [...new Set(rows.map((row) => row.skillId))]
-        .map((skillId) => statusOf(skillId, rows))
-        .filter(
-          (s): s is { skillId: string; verified: true; grade: number } =>
-            s.verified && s.grade !== null,
-        )
-        .map(({ skillId, grade }) => ({ skillId, grade }));
+      return [...new Set(rows.map((row) => row.skillId))].flatMap((skillId) => {
+        const { verified, grade } = statusOf(skillId, rows);
+        return verified && grade !== null ? [{ skillId, grade }] : [];
+      });
+    },
+
+    async areas() {
+      const { results } = await db
+        .prepare("SELECT prefix, name FROM learn_area ORDER BY position")
+        .all<{ prefix: string; name: string }>();
+      return results;
     },
   };
 }
 
 type TopicRow = {
   skillId: string;
+  code: string;
   status: "not_started" | "in_progress" | "done";
   level: "fast_track" | "essential" | "specialized" | null;
   attempt: number | null;
@@ -70,7 +75,7 @@ async function topicRows(
 ): Promise<TopicRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT t.skill_id AS skillId, t.status,
+      `SELECT t.skill_id AS skillId, t.code, t.status,
               e.level, e.attempt, e.grade, e.graded_at AS gradedAt
        FROM learn_topic t
        LEFT JOIN learn_exam e ON e.topic_id = t.id AND e.grade IS NOT NULL
@@ -84,7 +89,14 @@ async function topicRows(
 /** A skill's grade (its topic's latest graded exam) and whether it's verified. */
 function statusOf(skillId: string, rows: readonly TopicRow[]) {
   const own = rows.filter((row) => row.skillId === skillId);
-  if (own.length === 0) return { skillId, verified: false, grade: null };
+  if (own.length === 0)
+    return {
+      skillId,
+      verified: false,
+      grade: null,
+      topicId: null,
+      topicStatus: null,
+    };
   const { grade } = deriveGrade(
     own
       .filter((row) => row.level !== null && row.attempt !== null)
@@ -97,5 +109,11 @@ function statusOf(skillId: string, rows: readonly TopicRow[]) {
     "UTC",
   );
   const status = (own[0] as TopicRow).status;
-  return { skillId, verified: isVerified({ status, grade }), grade };
+  return {
+    skillId,
+    verified: isVerified({ status, grade }),
+    grade,
+    topicId: (own[0] as TopicRow).code,
+    topicStatus: status,
+  };
 }

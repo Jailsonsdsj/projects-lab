@@ -34,6 +34,8 @@ import {
   PageTitle,
   ProgressBar,
   Prose,
+  ReadinessMeter,
+  RequirementRow,
   Select,
   Sheet,
   SideRail,
@@ -742,6 +744,87 @@ export const CATALOG: readonly CatalogEntry[] = [
             long
             value="Acme builds the scheduling tools my last two teams relied on, and its platform team is working on the problem I enjoy most."
           />
+        ),
+      },
+    ],
+  },
+  {
+    name: "ReadinessMeter",
+    summary:
+      "Ready out of a job's required skills: verified, declared and gap, as a figure, a bar and its legend.",
+    examples: [
+      {
+        label: "phone",
+        node: <ReadinessMeter verified={1} declared={4} gap={3} />,
+      },
+      {
+        label: "detailed (tablet)",
+        node: <ReadinessMeter verified={1} declared={4} gap={3} detailed />,
+      },
+      {
+        label: "all ready",
+        node: <ReadinessMeter verified={3} declared={0} gap={0} />,
+      },
+      {
+        label: "nothing mapped",
+        node: <ReadinessMeter verified={0} declared={0} gap={0} />,
+      },
+    ],
+  },
+  {
+    name: "RequirementRow",
+    summary:
+      "One job requirement with its readiness badge, where it stands, and an action for a gap.",
+    examples: [
+      {
+        label: "phone",
+        node: (
+          <ul className="group">
+            <RequirementRow
+              name="Kubernetes"
+              readiness="gap"
+              meta="Not in your profile or backlog"
+              action={
+                <Button variant="soft" size="sm" icon="plus">
+                  Add to Study backlog
+                </Button>
+              }
+            />
+            <RequirementRow
+              name="TypeScript"
+              readiness="declared"
+              meta="In your profile · no exam yet"
+            />
+            <RequirementRow
+              name="PostgreSQL"
+              readiness="verified"
+              meta="Passed DB-01 · 8.5"
+            />
+          </ul>
+        ),
+      },
+      {
+        label: "table (tablet)",
+        node: (
+          <ul className="group">
+            <RequirementRow
+              table
+              name="Kubernetes"
+              readiness="gap"
+              meta="Not in your profile or backlog"
+              action={
+                <Button variant="soft" size="sm">
+                  Add to Study backlog
+                </Button>
+              }
+            />
+            <RequirementRow
+              table
+              name="PostgreSQL"
+              readiness="verified"
+              meta="Passed DB-01 · 8.5"
+            />
+          </ul>
         ),
       },
     ],

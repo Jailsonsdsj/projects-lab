@@ -69,6 +69,13 @@ export interface JobSummary {
   updatedAt: string;
 }
 
+/** The skill's Study topic when it's in the backlog ("FE-01", its status, its grade). */
+export interface StudyTopic {
+  topicId: string;
+  status: "not_started" | "in_progress" | "done";
+  grade: number | null;
+}
+
 export interface Job extends Omit<JobSummary, "fit" | "nextUp"> {
   seniority: string;
   language: string;
@@ -77,7 +84,10 @@ export interface Job extends Omit<JobSummary, "fit" | "nextUp"> {
   posting: string;
   fit: Fit | null;
   fitNotes: string;
-  requirements: (Requirement & { readiness: Readiness })[];
+  requirements: (Requirement & {
+    readiness: Readiness;
+    study: StudyTopic | null;
+  })[];
   nextUp: JobSummary["nextUp"];
   notMapped: Requirement[];
   events: JobEvent[];
@@ -133,14 +143,21 @@ const toFit = (row: JobRow): Fit | null =>
         },
       };
 
-/** Verified (Study) and Declared (profile) skills among these, read now. */
+type Sets = {
+  verified: Set<string>;
+  declared: Set<string>;
+  topics: Map<string, StudyTopic>;
+};
+
+/** Verified (Study) and Declared (profile) skills among these, with their Study topics, read now. */
 async function readinessSets(
   db: D1Database,
   study: Study,
   skillIds: readonly string[],
-): Promise<{ verified: Set<string>; declared: Set<string> }> {
+): Promise<Sets> {
   const ids = [...new Set(skillIds)];
-  if (ids.length === 0) return { verified: new Set(), declared: new Set() };
+  if (ids.length === 0)
+    return { verified: new Set(), declared: new Set(), topics: new Map() };
   const [status, declared] = await Promise.all([
     study(db).skillStatus(ids),
     db
@@ -153,6 +170,18 @@ async function readinessSets(
   return {
     verified: new Set(status.filter((s) => s.verified).map((s) => s.skillId)),
     declared: new Set(declared.results.map((d) => d.skillId)),
+    topics: new Map(
+      status.flatMap((s) =>
+        s.topicId && s.topicStatus
+          ? [
+              [
+                s.skillId,
+                { topicId: s.topicId, status: s.topicStatus, grade: s.grade },
+              ] as const,
+            ]
+          : [],
+      ),
+    ),
   };
 }
 
@@ -162,7 +191,7 @@ function build(
   row: JobRow,
   requirements: Requirement[],
   events: JobEvent[],
-  sets: { verified: Set<string>; declared: Set<string> },
+  sets: Sets,
   now: Date,
 ): Built {
   const readiness = jobReadiness(requirements, sets.verified, sets.declared);
@@ -203,7 +232,10 @@ function build(
       posting: row.posting,
       fit,
       fitNotes: row.fitNotes,
-      requirements: readiness.requirements,
+      requirements: readiness.requirements.map((r) => ({
+        ...r,
+        study: (r.skillId && sets.topics.get(r.skillId)) || null,
+      })),
       notMapped: readiness.notMapped,
       events: ordered,
       createdAt: row.createdAt,

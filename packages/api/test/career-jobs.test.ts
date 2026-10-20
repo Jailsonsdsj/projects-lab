@@ -441,3 +441,40 @@ describe("Home's Career card", () => {
     });
   });
 });
+
+describe("what the Job screen shows from Study", () => {
+  it("names each requirement's Study topic, and the areas a gap can go to", async () => {
+    const job = (
+      await ok<{
+        job: { requirements: { skill: string | null; study: unknown }[] };
+      }>(await api(`/jobs/${acme.id}`))
+    ).job;
+    const study = (skill: string) =>
+      job.requirements.find((r) => r.skill === skill)?.study;
+    // LLM evaluation: Done and graded 7.0 in Study. Kubernetes: sent as a gap, Not started.
+    expect(study("LLM evaluation")).toEqual({
+      topicId: expect.stringMatching(/^SE-\d+$/),
+      status: "done",
+      grade: 70,
+    });
+    expect(study("Kubernetes")).toEqual({
+      topicId: expect.stringMatching(/^DO-\d+$/),
+      status: "not_started",
+      grade: null,
+    });
+    expect(study("TypeScript")).toBeNull();
+
+    const { areas } = await ok<{ areas: { prefix: string; name: string }[] }>(
+      await api("/study-areas"),
+    );
+    expect(areas.map((a) => a.prefix)).toEqual([
+      "CS",
+      "FE",
+      "BE",
+      "DB",
+      "DO",
+      "SA",
+      "SE",
+    ]);
+  });
+});

@@ -148,7 +148,17 @@ export const jobResponseSchema = z.object({
       .nullable(),
     fitNotes: z.string(),
     requirements: z.array(
-      requirementSchema.extend({ readiness: z.enum(READINESS) }),
+      requirementSchema.extend({
+        readiness: z.enum(READINESS),
+        /** The skill's Study topic, when it's in the backlog. */
+        study: z
+          .object({
+            topicId: z.string(),
+            status: z.enum(["not_started", "in_progress", "done"]),
+            grade: z.number().int().nullable(),
+          })
+          .nullable(),
+      }),
     ),
     notMapped: z.array(requirementSchema),
     events: z.array(
@@ -219,3 +229,8 @@ export const skillsResponseSchema = z.object({
   ),
 });
 export type SkillsResponse = z.infer<typeof skillsResponseSchema>;
+
+/** GET /api/career/study-areas: the backlog's areas, for "Add to Study backlog". */
+export const studyAreasResponseSchema = z.object({
+  areas: z.array(z.object({ prefix: z.string(), name: z.string() })),
+});

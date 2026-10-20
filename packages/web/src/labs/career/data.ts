@@ -1,14 +1,17 @@
 // Career reads for the web, each parsed with @projects-lab/shared/career's
 // response schemas (the API's tests parse its real output with the same ones).
 import {
+  type JobDetail,
   type JobKit,
   type JobSummary,
   jobKitResponseSchema,
+  jobResponseSchema,
   jobsResponseSchema,
   type ProfileResponse,
   profileResponseSchema,
   type StandardAnswer,
   standardAnswersResponseSchema,
+  studyAreasResponseSchema,
 } from "@projects-lab/shared/career";
 import { apiFetch } from "../../core/api";
 
@@ -45,6 +48,22 @@ export const fetchKit = async (jobId: string, signal: AbortSignal) =>
       signal,
     )
   ).kit;
+
+export const fetchJob = async (jobId: string, signal: AbortSignal) =>
+  (
+    await read(
+      `/api/career/jobs/${encodeURIComponent(jobId)}`,
+      jobResponseSchema,
+      signal,
+    )
+  ).job;
+
+/** The Study backlog's areas, through Career's API (the Study contract). */
+export const fetchStudyAreas = async (signal: AbortSignal) =>
+  (await read("/api/career/study-areas", studyAreasResponseSchema, signal))
+    .areas;
+
+export type { JobDetail };
 
 /** Everything the Profile tab shows and copies, read at once: switching the
  *  "Answers for" job never needs the network, so copying works offline. */

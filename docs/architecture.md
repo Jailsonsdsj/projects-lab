@@ -120,9 +120,12 @@ export interface StudyContract {
   /** Adds topics the backlog lacks (area = a backlog prefix, "FE"); returns the topic ID ("FE-01") for every skill, new or existing. */
   ensureTopics(input: { skillId: string; area: string; priority: 1 | 2 | 3; note: string }[]): Promise<{ skillId: string; topicId: string; created: boolean }[]>;
   /** Verified = a Done topic with grade ≥ 70 (tenths). */
-  skillStatus(skillIds: string[]): Promise<{ skillId: string; verified: boolean; grade: number | null }[]>;
+  /** With the skill's topic ("FE-01") and its status when it's in the backlog (CA-11a). */
+  skillStatus(skillIds: string[]): Promise<{ skillId: string; verified: boolean; grade: number | null; topicId: string | null; topicStatus: "not_started" | "in_progress" | "done" | null }[]>;
   /** Every skill Study has verified, with its grade: what Career offers to declare (A-8; CA-10). */
   verifiedSkills(): Promise<{ skillId: string; grade: number }[]>;
+  /** The backlog's areas in order: where "Add to Study backlog" puts a gap (CA-11a). */
+  areas(): Promise<{ prefix: string; name: string }[]>;
 }
 ```
 
