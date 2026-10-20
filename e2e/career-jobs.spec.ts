@@ -177,3 +177,128 @@ test("opens a job from the list and adds a gap to Study", async ({
   }));
   expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
 });
+
+// CA-11b: Openings and the Search criteria form, inside the Jobs tab.
+test("lists openings, keeps one, and copies a Track prompt", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const copied: string[] = [];
+    Object.assign(window, { __copied: copied });
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: async (text: string) => void copied.push(text) },
+      configurable: true,
+    });
+  });
+  const openings = [
+    {
+      id: "o1",
+      url: "https://jobs.example/o1",
+      company: "Evalco",
+      role: "AI Engineer with a long title that wraps on a phone",
+      lane: "AI engineering",
+      posting: "We need evals.",
+      postedOn: null,
+      rateText: "USD 50/h",
+      why: "Evals-heavy, async",
+      status: "new",
+      jobId: null,
+      stale: false,
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: "o2",
+      url: "https://jobs.example/o2",
+      company: "Oldco",
+      role: "ML Engineer",
+      lane: "AI evaluation",
+      posting: "Old.",
+      postedOn: "2026-08-01",
+      rateText: "",
+      why: "Close to the lane",
+      status: "new",
+      jobId: null,
+      stale: true,
+      createdAt: "2026-08-01T00:00:00.000Z",
+    },
+  ];
+  await page.route("**/api/career/openings", (route) =>
+    route.fulfill({ json: { openings } }),
+  );
+  await page.route("**/api/career/openings/o1", async (route) => {
+    const status = (route.request().postDataJSON() as { status: string })
+      .status;
+    Object.assign(openings[0] as object, { status });
+    await route.fulfill({ json: { opening: openings[0] } });
+  });
+  await page.goto("/career?view=openings");
+
+  const group = page.getByRole("region", { name: "Openings" });
+  await expect(group.getByRole("button")).toHaveCount(2);
+  await expect(
+    group
+      .getByRole("button", { name: /Oldco/ })
+      .getByText("Stale", { exact: true })
+      .locator("visible=true"),
+  ).toHaveCount(1);
+
+  await group.getByRole("button", { name: /Evalco/ }).click();
+  const sheet = page.getByRole("dialog", { name: /Evalco/ });
+  await sheet.getByRole("button", { name: "Track" }).click();
+  const copied = await page.evaluate(
+    () => (window as unknown as { __copied: string[] }).__copied,
+  );
+  expect(copied[0]).toContain("career_add_job (openingId o1)");
+  await sheet.getByRole("button", { name: "Keep" }).click();
+  await expect(sheet).toBeHidden();
+  await expect(
+    group
+      .getByRole("button", { name: /Evalco/ })
+      .getByText("Kept", { exact: true })
+      .locator("visible=true"),
+  ).toHaveCount(1);
+
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+});
+
+test("saves the search criteria", async ({ page }) => {
+  let saved: unknown = null;
+  await page.route("**/api/career/search-criteria", async (route) => {
+    if (route.request().method() === "PUT") {
+      saved = route.request().postDataJSON();
+      return route.fulfill({
+        json: {
+          criteria: {
+            ...(saved as object),
+            updatedAt: "2026-10-20T00:00:00.000Z",
+          },
+        },
+      });
+    }
+    return route.fulfill({ json: { criteria: null } });
+  });
+  await page.goto("/career");
+  await page.getByRole("tab", { name: "Search criteria" }).click();
+  await expect(page).toHaveURL(/view=criteria/);
+  await page.getByLabel("Lanes").fill("AI engineering\nAI evaluation");
+  await page.getByLabel("Max hours a week").fill("20");
+  await page.getByLabel("Max posting age (days)").fill("14");
+  await page.getByLabel(/Rate floor/).fill("35");
+  await page.getByRole("button", { name: "Save criteria" }).click();
+  await expect(page.getByText(/Last saved 2026-10-20/)).toBeVisible();
+  expect(saved).toMatchObject({
+    lanes: ["AI engineering", "AI evaluation"],
+    maxHours: 20,
+    maxAgeDays: 14,
+    rateFloor: { amount: 35, currency: "USD", period: "hour" },
+  });
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+});

@@ -7,6 +7,8 @@ import { FIT_DECISIONS } from "./fit";
 import { EXPERIENCE_KINDS, LINK_KINDS, SKILL_LEVELS } from "./profile";
 import { READINESS, REQUIREMENT_TYPES } from "./readiness";
 import { CURRENCIES, PAY_PERIODS } from "./salary";
+import { saveSearchCriteriaInputSchema } from "./schemas";
+import { OPENING_STATUSES } from "./search";
 
 const skillRef = z.object({ id: z.string(), name: z.string() });
 
@@ -234,3 +236,36 @@ export type SkillsResponse = z.infer<typeof skillsResponseSchema>;
 export const studyAreasResponseSchema = z.object({
   areas: z.array(z.object({ prefix: z.string(), name: z.string() })),
 });
+
+export const openingSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  company: z.string(),
+  role: z.string(),
+  lane: z.string(),
+  posting: z.string(),
+  postedOn: z.string().nullable(),
+  rateText: z.string(),
+  why: z.string(),
+  status: z.enum(OPENING_STATUSES),
+  jobId: z.string().nullable(),
+  stale: z.boolean(),
+  createdAt: z.string(),
+});
+export type Opening = z.infer<typeof openingSchema>;
+
+/** GET /api/career/openings: a page, and where the next one starts. */
+export const openingsResponseSchema = z.object({
+  openings: z.array(openingSchema),
+  nextCursor: z.string().optional(),
+});
+
+/** GET /api/career/search-criteria: null until the owner saves the form. */
+export const searchCriteriaResponseSchema = z.object({
+  criteria: saveSearchCriteriaInputSchema
+    .extend({ updatedAt: z.string() })
+    .nullable(),
+});
+export type SearchCriteria = NonNullable<
+  z.infer<typeof searchCriteriaResponseSchema>["criteria"]
+>;

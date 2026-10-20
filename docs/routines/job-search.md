@@ -28,8 +28,8 @@ the one email at the end. Today's date and the run's time are in America/Recife.
    - Call career_get_search_criteria. If `criteria` is null, send one email to the
      owner (subject "Job search · criteria not set", body: "The weekly job search
      didn't run: search criteria aren't set. Open
-     https://projects-lab.jailson-junior36.workers.dev/career and fill in Jobs →
-     Search criteria.") and stop.
+     https://projects-lab.jailson-junior36.workers.dev/career?view=criteria and
+     fill in the search criteria.") and stop.
    - Call career_list_openings with status "new" for context on what's waiting.
      You don't need every known URL: career_save_openings skips any URL already
      saved (new, kept, dismissed or tracked) and reports it as skipped.
@@ -70,8 +70,8 @@ the one email at the end. Today's date and the run's time are in America/Recife.
    - A short table of the saved openings: company · role · lane · rate · why.
    - "Closest rejects": company · role · the one reason, at most 5.
    - "Closed as silent": company · role, if any.
-   - The link https://projects-lab.jailson-junior36.workers.dev/career (Jobs →
-     Openings) to keep, dismiss or track them.
+   - The link https://projects-lab.jailson-junior36.workers.dev/career?view=openings
+     to keep, dismiss or track them.
    If nothing happened, send nothing.
 
 End with a one-paragraph summary in the run log: how many candidates were read,
