@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import type { ApiLab, LabEnv } from "../../core/lab";
 import { photoRoutes } from "./photo";
 import { profileRoutes } from "./routes";
+import { careerTools } from "./tools";
 
 export function careerLab(_deps: {
   /** Built per request with that request's D1. */
@@ -16,5 +17,5 @@ export function careerLab(_deps: {
   routes.route("/", profileRoutes());
   routes.route("/", photoRoutes());
 
-  return { id: "career", routes, tools: [] };
+  return { id: "career", routes, tools: careerTools };
 }

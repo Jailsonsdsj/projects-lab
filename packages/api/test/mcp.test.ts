@@ -51,6 +51,15 @@ describe("/mcp", () => {
       }
     ).tools;
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "career_declare_skill",
+      "career_get_profile",
+      "career_remove_item",
+      "career_remove_skill",
+      "career_save_education",
+      "career_save_experience",
+      "career_save_fact",
+      "career_set_links",
+      "career_update_person",
       "core_find_skill",
       "core_whoami",
       "study_add_area",
