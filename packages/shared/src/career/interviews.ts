@@ -6,3 +6,5 @@ export type DrillMode = (typeof DRILL_MODES)[number];
 
 /** A drill log entry keeps the two weakest answers. */
 export const DRILL_WEAKEST_MAX = 2;
+/** career_list_drills without a limit: enough recent sessions to see the weak areas. */
+export const DRILLS_DEFAULT_LIMIT = 10;

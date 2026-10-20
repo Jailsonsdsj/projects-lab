@@ -1,10 +1,11 @@
 // Career Lab: mounts at /api/career (profile, photo, jobs, documents, job
-// search and Home's card).
+// search, interviews and Home's card).
 // Reaches Study Lab only through the StudyContract factory it's given at
 // mount time, built per request with that request's D1.
 import { Hono } from "hono";
 import type { ApiLab, LabEnv } from "../../core/lab";
 import { documentRoutes } from "./documents-routes";
+import { interviewRoutes } from "./interviews-routes";
 import type { Study } from "./jobs";
 import { jobRoutes } from "./jobs-routes";
 import { photoRoutes } from "./photo";
@@ -19,6 +20,7 @@ export function careerLab(deps: { study: Study }): ApiLab {
   routes.route("/", profileRoutes());
   routes.route("/", photoRoutes());
   routes.route("/", searchRoutes());
+  routes.route("/", interviewRoutes());
 
   return { id: "career", routes, tools: careerTools(deps.study) };
 }

@@ -1,5 +1,5 @@
 // Career MCP tools: profile (docs/prd/20 § Operations), jobs (21), documents
-// (22) and job search (23). Thin adapters: the shared schema validates, the service does
+// (22), job search (23) and interviews (24). Thin adapters: the shared schema validates, the service does
 // the work, and a refusal is already a ToolError. No SQL here: a test scans tool
 // files. The photo has no tool: no tool takes a file.
 import {
@@ -9,11 +9,16 @@ import {
   getJobInputSchema,
   getProfileInputSchema,
   getSearchCriteriaInputSchema,
+  listAnswersInputSchema,
+  listDrillsInputSchema,
   listJobsInputSchema,
   listOpeningsInputSchema,
+  listStoriesInputSchema,
+  logDrillInputSchema,
   removeItemInputSchema,
   removeJobInputSchema,
   removeSkillInputSchema,
+  saveAnswerInputSchema,
   saveEducationInputSchema,
   saveExperienceInputSchema,
   saveFactInputSchema,
@@ -21,6 +26,7 @@ import {
   saveOpeningsInputSchema,
   saveSelectionInputSchema,
   saveStandardAnswersInputSchema,
+  saveStoryInputSchema,
   sendGapsInputSchema,
   setLinksInputSchema,
   updateJobInputSchema,
@@ -35,6 +41,14 @@ import {
   saveSelection,
   saveStandardAnswers,
 } from "./documents";
+import {
+  listAnswers,
+  listDrills,
+  listStories,
+  logDrill,
+  saveAnswer,
+  saveStory,
+} from "./interviews";
 import {
   addJob,
   getJob,
@@ -319,9 +333,73 @@ const searchTools = [
   }),
 ];
 
+const interviewTools = [
+  defineTool({
+    name: "career_list_stories",
+    kind: "read",
+    description:
+      "Lists the STAR story bank: each story's situation, task, action and result, the facts it rests on, the skills it shows, and `verified` (true only when every fact it cites is verified). Read it before drilling or writing an answer, to reuse a story rather than invent one.",
+    input: listStoriesInputSchema,
+    async run(_input, ctx) {
+      return { stories: await listStories(ctx.db) };
+    },
+  }),
+  defineTool({
+    name: "career_save_story",
+    kind: "write",
+    description:
+      "Adds a STAR story (no `id`) or improves one: title, situation, task, action, result (each at most 600 characters), the experience it happened in, the facts its result rests on (IDs from career_get_profile) and the skills it shows. Never fabricate: the result cites facts, and a story on an unverified fact stays unverified until the owner confirms that fact.",
+    input: saveStoryInputSchema,
+    async run(input, ctx) {
+      return { story: await saveStory(ctx.db, input, new Date()) };
+    },
+  }),
+  defineTool({
+    name: "career_list_answers",
+    kind: "read",
+    description:
+      "Lists interview answers: a job's (with that job's self-introduction as its \"Tell me about yourself\"), the general ones (`general: true`), or all. Each with its text, story, and Drive video when there is one.",
+    input: listAnswersInputSchema,
+    async run(input, ctx) {
+      return listAnswers(ctx.db, input);
+    },
+  }),
+  defineTool({
+    name: "career_save_answer",
+    kind: "write",
+    description:
+      "Adds an answer to a likely question (no `id`) or edits one: question (at most 200 characters), the owner's answer (at most 3,000), the story it uses, and the job it's for (none: general). A video is a Google Drive link the owner pastes (drive.google.com/file/d/<id> or open?id=<id>; null removes it): video never goes anywhere else.",
+    input: saveAnswerInputSchema,
+    async run(input, ctx) {
+      return { answer: await saveAnswer(ctx.db, input, new Date()) };
+    },
+  }),
+  defineTool({
+    name: "career_log_drill",
+    kind: "write",
+    description:
+      "After an interview practice session in this chat, logs it: mode (behavioral: one question at a time, critique against STAR, specificity, a quantified result and individual vs. team credit, then the improved version and a follow-up on the weakest claim, three to five questions; technical: a scoped problem with real follow-ups; negotiation: you play a slightly difficult client on rate and scope, which needs the job's salary range from career_document_brief or the kit: without one, say so and stop), the topic or job, the two weakest answers, and what to fix. Also save new or improved stories and answers, and give one honest overall read: a bad answer is called bad, with why.",
+    input: logDrillInputSchema,
+    async run(input, ctx) {
+      return { drill: await logDrill(ctx.db, input, new Date()) };
+    },
+  }),
+  defineTool({
+    name: "career_list_drills",
+    kind: "read",
+    description:
+      "Lists recent practice sessions, newest first, with their weakest answers and what to fix. Read it before drilling, to start from the weak areas.",
+    input: listDrillsInputSchema,
+    async run(input, ctx) {
+      return { drills: await listDrills(ctx.db, input) };
+    },
+  }),
+];
+
 export const careerTools = (study: Study) => [
   ...profileTools,
   ...jobTools(study),
   ...documentTools(study),
   ...searchTools,
+  ...interviewTools,
 ];

@@ -43,6 +43,12 @@ const CAREER_TOOLS = {
   career_save_openings: "write",
   career_list_openings: "read",
   career_update_opening: "write",
+  career_list_stories: "read",
+  career_save_story: "write",
+  career_list_answers: "read",
+  career_save_answer: "write",
+  career_log_drill: "write",
+  career_list_drills: "read",
 } as const;
 
 describe("tools/list", () => {
@@ -82,6 +88,11 @@ describe("tools/list", () => {
     const save = tools.find((t) => t.name === "career_save_openings");
     expect(save?.description).toMatch(/every criterion holds/);
     expect(save?.description).toMatch(/never LinkedIn/);
+    const drill = tools.find((t) => t.name === "career_log_drill");
+    expect(drill?.description).toMatch(/without one, say so and stop/);
+    expect(drill?.description).toMatch(/a bad answer is called bad/);
+    const story = tools.find((t) => t.name === "career_save_story");
+    expect(story?.description).toMatch(/Never fabricate/);
     // No tool takes the photo: it's the app's only upload.
     expect(tools.some((t) => /photo/.test(t.name))).toBe(false);
   });
