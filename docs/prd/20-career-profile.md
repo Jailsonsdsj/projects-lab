@@ -38,7 +38,7 @@ Each is one service, called by `/api/career` and by the MCP tool. Writes are ide
 | Add / edit / reorder / remove an experience or education | Profile → sheets | `career_save_experience`, `career_save_education`, `career_remove_item` |
 | Add / edit a fact, verify it | Experience sheet | `career_save_fact` (`verified` only by the owner in the app, or by Claude after the owner confirms in the chat) |
 | Declare / update / remove a skill | Skills tab | `career_declare_skill`, `career_remove_skill` |
-| Photo | Profile → photo | App only: `PUT /api/career/photo` with a session (no tool takes a file) |
+| Photo | Profile → photo | App only, with a session (no tool takes a file): `PUT /api/career/photo` (type, 2 MB and the file's first bytes checked), `GET` serves it to the app's `<img>` through the session cookie, `DELETE` removes it |
 
 ## Screens
 
