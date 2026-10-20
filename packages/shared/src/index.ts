@@ -4,6 +4,7 @@
 
 export * from "./contracts/study";
 export * from "./core/auth";
+export * from "./core/backup";
 export * from "./core/bytes";
 export * from "./core/connections";
 export * from "./core/grades";

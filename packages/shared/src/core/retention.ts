@@ -1,6 +1,5 @@
-// How long the platform keeps operational rows (docs/prd/90-services.md, to be
-// written; the windows are the backlog's F-19). The daily Cron Trigger prunes
-// anything older.
+// How long the platform keeps operational rows (docs/prd/90-services.md §
+// Retention; F-19). The daily Cron Trigger prunes anything older.
 
 /** Idempotency claims and stored responses (playbook §8: ~7 days). */
 export const MUTATION_RETENTION_DAYS = 7;

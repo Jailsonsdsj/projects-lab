@@ -1,3 +1,4 @@
+import { backupDue } from "@projects-lab/shared";
 import { useSyncExternalStore } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -10,6 +11,7 @@ import {
   type LabCardState,
   PageTitle,
 } from "../components/ui";
+import { readBackupStatus } from "./BackupCard";
 import { ConnectionsScreen } from "./ConnectionsScreen";
 import {
   type LabDefinition,
@@ -52,10 +54,34 @@ export function HomeScreen() {
           The labs' summaries load again when you're back online.
         </Banner>
       )}
+      <BackupNudge />
       {labs.map((lab) => (
         <HomeCard key={lab.id} lab={lab} />
       ))}
     </div>
+  );
+}
+
+/** Never backed up, or not for BACKUP_NUDGE_DAYS: a quiet reminder. A failed
+ *  check says nothing (the cards already show the failure). */
+function BackupNudge() {
+  const navigate = useNavigate();
+  const { state } = useRead(readBackupStatus);
+  if (state.status !== "loaded") return null;
+  const last = state.data.lastExportedAt;
+  if (!backupDue(last, new Date().toISOString())) return null;
+  return (
+    <Banner
+      tone="info"
+      title={last ? "No backup in a while." : "No backup yet."}
+      action={
+        <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
+          Back up
+        </Button>
+      }
+    >
+      Download one from Settings: everything that's yours, in one file.
+    </Banner>
   );
 }
 

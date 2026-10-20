@@ -59,8 +59,9 @@ test("offline: every screen says so, with Retry", async ({ page, context }) => {
   await noRawError(page);
 
   for (const path of SCREENS) {
-    // Through Settings (it reads nothing) first, so what's checked next comes
-    // from this screen, not the one before.
+    // Through Settings (no Retry there: its backup status just says it
+    // couldn't check) first, so what's checked next comes from this screen,
+    // not the one before.
     await openClientSide(page, "/settings");
     await expect(
       page.getByRole("heading", { level: 1, name: "Settings" }),

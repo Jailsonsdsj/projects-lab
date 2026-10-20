@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { json, mockApi } from "../../test/api";
+import { actionCalls, json, mockApi, NO_BACKUP } from "../../test/api";
 import { fakeToken } from "../../test/session";
 import { createRoutes } from "../app";
 import { sessionToken } from "./session";
@@ -61,6 +61,7 @@ describe("Change passphrase", () => {
     const oldToken = sessionToken();
     const newToken = fakeToken();
     const fetchMock = mockApi({
+      "GET /api/backup": () => json(NO_BACKUP),
       "GET /api/auth/salt": () => json(SALT),
       "POST /api/auth/passphrase": () => json({ token: newToken }),
     });
@@ -75,7 +76,7 @@ describe("Change passphrase", () => {
     expect(sessionToken()).toBe(newToken);
     expect(screen.getByLabelText("Current passphrase")).toHaveValue("");
 
-    const post = sent(fetchMock.mock.calls[1]);
+    const post = sent(actionCalls(fetchMock)[1]);
     expect(post.headers.get("Authorization")).toBe(`Bearer ${oldToken}`);
     expect(post.headers.get(IDEMPOTENCY_KEY_HEADER)).toMatch(/^[0-9a-f-]{36}$/);
     expect(post.body).not.toContain(CURRENT);
@@ -133,7 +134,7 @@ describe("Change passphrase", () => {
 
   it("checks length and confirmation before sending anything", async () => {
     const user = userEvent.setup();
-    const fetchMock = mockApi({});
+    const fetchMock = mockApi({ "GET /api/backup": () => json(NO_BACKUP) });
     openSettings();
     await fill(user, { next: "too short", confirm: "too short" });
     expect(screen.getByLabelText("New passphrase")).toHaveAccessibleDescription(
@@ -146,7 +147,7 @@ describe("Change passphrase", () => {
     expect(
       screen.getByLabelText("Confirm new passphrase"),
     ).toHaveAccessibleDescription("The passphrases don't match.");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(actionCalls(fetchMock)).toEqual([]);
   });
 
   it("still ends the session on a 401 that isn't about the passphrase", async () => {

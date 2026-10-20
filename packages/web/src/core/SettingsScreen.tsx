@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Button, Dialog, PageTitle } from "../components/ui";
+import { BackupCard } from "./BackupCard";
 import { ChangePassphraseCard } from "./ChangePassphraseCard";
 import { signOut } from "./session";
 
-/** Settings (00-platform): change passphrase (F-11) and the Session card. */
+/** Settings (00-platform): change passphrase (F-11), Backup (H-02) and the Session card. */
 export function SettingsScreen() {
   const navigate = useNavigate();
   const [asking, setAsking] = useState(false);
@@ -22,6 +23,7 @@ export function SettingsScreen() {
       <PageTitle title="Settings" />
       <div className="flex flex-col gap-4 px-4 pb-6 tablet:gap-5">
         <ChangePassphraseCard />
+        <BackupCard />
         <section className="card" aria-labelledby="settings-session">
           <h2 id="settings-session">Session</h2>
           <p className="text-sm text-ink-secondary">

@@ -1,6 +1,9 @@
 declare namespace Cloudflare {
   interface Env {
     TEST_MIGRATIONS: import("cloudflare:test").D1Migration[];
+    /** H-02's restore target: an empty database and bucket. */
+    RESTORE_DB: D1Database;
+    RESTORE_FILES: R2Bucket;
   }
 }
 

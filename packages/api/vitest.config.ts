@@ -13,6 +13,9 @@ export default defineConfig({
       return {
         wrangler: { configPath: "./wrangler.jsonc" },
         miniflare: {
+          // H-02: an empty database and bucket for the restore test.
+          d1Databases: ["RESTORE_DB"],
+          r2Buckets: ["RESTORE_FILES"],
           bindings: {
             TEST_MIGRATIONS: migrations,
             // Test-only values; real ones come from .dev.vars or `wrangler secret put`.
