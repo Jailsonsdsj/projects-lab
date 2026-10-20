@@ -1,7 +1,7 @@
 import { labSummaryResponseSchema } from "@projects-lab/shared";
 import { apiFetch } from "../../core/api";
 import type { LabDefinition } from "../../core/lab-registry";
-import { ComingScreen } from "../../core/screens";
+import { DocumentsScreen } from "./DocumentsScreen";
 import { JobScreen } from "./JobScreen";
 import { JobsScreen } from "./JobsScreen";
 import { ProfileScreen } from "./ProfileScreen";
@@ -18,8 +18,6 @@ const home = {
   },
   emptyText: "No jobs tracked yet. Ask Claude to map a posting you like.",
 };
-
-const later = "Career Lab's screens arrive in its own phase.";
 
 export const careerLab: LabDefinition = {
   id: "career",
@@ -54,7 +52,7 @@ export const careerLab: LabDefinition = {
       label: "Documents",
       icon: "file",
       path: "/career/documents",
-      screen: <ComingScreen title="Documents" icon="file" arrives={later} />,
+      screen: <DocumentsScreen />,
     },
   ],
 };
