@@ -32,41 +32,70 @@ export function studyContract(db: D1Database): StudyContract {
     },
 
     async skillStatus(skillIds) {
-      const { results } = await db
-        .prepare(
-          `SELECT t.skill_id AS skillId, t.status,
-                  e.level, e.attempt, e.grade, e.graded_at AS gradedAt
-           FROM learn_topic t
-           LEFT JOIN learn_exam e ON e.topic_id = t.id AND e.grade IS NOT NULL
-           WHERE t.deleted_at IS NULL
-             AND t.skill_id IN (SELECT value FROM json_each(?))`,
+      const rows = await topicRows(
+        db,
+        "t.skill_id IN (SELECT value FROM json_each(?))",
+        JSON.stringify(skillIds),
+      );
+      return skillIds.map((skillId) => statusOf(skillId, rows));
+    },
+
+    async verifiedSkills() {
+      const rows = await topicRows(db, "t.status = 'done'");
+      return [...new Set(rows.map((row) => row.skillId))]
+        .map((skillId) => statusOf(skillId, rows))
+        .filter(
+          (s): s is { skillId: string; verified: true; grade: number } =>
+            s.verified && s.grade !== null,
         )
-        .bind(JSON.stringify(skillIds))
-        .all<{
-          skillId: string;
-          status: "not_started" | "in_progress" | "done";
-          level: "fast_track" | "essential" | "specialized" | null;
-          attempt: number | null;
-          grade: number | null;
-          gradedAt: string | null;
-        }>();
-      return skillIds.map((skillId) => {
-        const rows = results.filter((row) => row.skillId === skillId);
-        if (rows.length === 0) return { skillId, verified: false, grade: null };
-        const { grade } = deriveGrade(
-          rows
-            .filter((row) => row.level !== null && row.attempt !== null)
-            .map((row) => ({
-              level: row.level as "fast_track" | "essential" | "specialized",
-              attempt: row.attempt as number,
-              grade: row.grade,
-              gradedAt: row.gradedAt,
-            })),
-          "UTC",
-        );
-        const status = (rows[0] as (typeof rows)[number]).status;
-        return { skillId, verified: isVerified({ status, grade }), grade };
-      });
+        .map(({ skillId, grade }) => ({ skillId, grade }));
     },
   };
+}
+
+type TopicRow = {
+  skillId: string;
+  status: "not_started" | "in_progress" | "done";
+  level: "fast_track" | "essential" | "specialized" | null;
+  attempt: number | null;
+  grade: number | null;
+  gradedAt: string | null;
+};
+
+/** Live topics (matching `where`) with their graded exams, one row per exam. */
+async function topicRows(
+  db: D1Database,
+  where: string,
+  ...params: unknown[]
+): Promise<TopicRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT t.skill_id AS skillId, t.status,
+              e.level, e.attempt, e.grade, e.graded_at AS gradedAt
+       FROM learn_topic t
+       LEFT JOIN learn_exam e ON e.topic_id = t.id AND e.grade IS NOT NULL
+       WHERE t.deleted_at IS NULL AND ${where}`,
+    )
+    .bind(...params)
+    .all<TopicRow>();
+  return results;
+}
+
+/** A skill's grade (its topic's latest graded exam) and whether it's verified. */
+function statusOf(skillId: string, rows: readonly TopicRow[]) {
+  const own = rows.filter((row) => row.skillId === skillId);
+  if (own.length === 0) return { skillId, verified: false, grade: null };
+  const { grade } = deriveGrade(
+    own
+      .filter((row) => row.level !== null && row.attempt !== null)
+      .map((row) => ({
+        level: row.level as "fast_track" | "essential" | "specialized",
+        attempt: row.attempt as number,
+        grade: row.grade,
+        gradedAt: row.gradedAt,
+      })),
+    "UTC",
+  );
+  const status = (own[0] as TopicRow).status;
+  return { skillId, verified: isVerified({ status, grade }), grade };
 }

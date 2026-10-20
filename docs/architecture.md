@@ -121,6 +121,8 @@ export interface StudyContract {
   ensureTopics(input: { skillId: string; area: string; priority: 1 | 2 | 3; note: string }[]): Promise<{ skillId: string; topicId: string; created: boolean }[]>;
   /** Verified = a Done topic with grade ≥ 70 (tenths). */
   skillStatus(skillIds: string[]): Promise<{ skillId: string; verified: boolean; grade: number | null }[]>;
+  /** Every skill Study has verified, with its grade: what Career offers to declare (A-8; CA-10). */
+  verifiedSkills(): Promise<{ skillId: string; grade: number }[]>;
 }
 ```
 

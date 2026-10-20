@@ -1,6 +1,7 @@
 import type { LabDefinition } from "../../core/lab-registry";
 import { ComingScreen } from "../../core/screens";
 import { ProfileScreen } from "./ProfileScreen";
+import { SkillsScreen } from "./SkillsScreen";
 
 // Until the lab's API exists its summary is honestly "no data yet": null.
 const home = {
@@ -28,7 +29,7 @@ export const careerLab: LabDefinition = {
       label: "Skills",
       icon: "award",
       path: "/career/skills",
-      screen: <ComingScreen title="Skills" icon="award" arrives={later} />,
+      screen: <SkillsScreen />,
     },
     {
       label: "Profile",

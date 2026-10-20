@@ -200,3 +200,22 @@ export const standardAnswersResponseSchema = z.object({
 export type StandardAnswer = z.infer<
   typeof standardAnswersResponseSchema
 >["answers"][number];
+
+/** GET /api/career/skills: declared skills with readiness, and Study's offers (A-8). */
+export const skillsResponseSchema = z.object({
+  skills: z.array(
+    declaredSkillSchema.extend({
+      readiness: z.enum(["verified", "declared"]),
+      /** Study's grade (tenths) when verified. */
+      grade: z.number().int().nullable(),
+    }),
+  ),
+  offers: z.array(
+    z.object({
+      skillId: z.string(),
+      name: z.string(),
+      grade: z.number().int(),
+    }),
+  ),
+});
+export type SkillsResponse = z.infer<typeof skillsResponseSchema>;

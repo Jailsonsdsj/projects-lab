@@ -27,6 +27,7 @@ import {
   updateJob,
   updateRequirement,
 } from "./jobs";
+import { listSkills } from "./skills";
 
 /** The JSON body with a path parameter merged in, validated, then run. */
 function withParam<S extends z.ZodType, R>(
@@ -59,6 +60,11 @@ export function jobRoutes(study: Study) {
   // Home's Career card (00-platform); null with no jobs.
   app.get("/summary", async (c) =>
     c.json(await getHomeSummary(database(c.env), study)),
+  );
+
+  // The Skills tab: declared skills with readiness, and Study's offers.
+  app.get("/skills", async (c) =>
+    c.json(await listSkills(database(c.env), study)),
   );
 
   app.get("/jobs", async (c) => {

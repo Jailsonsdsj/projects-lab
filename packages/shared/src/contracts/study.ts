@@ -21,4 +21,7 @@ export interface StudyContract {
   skillStatus(
     skillIds: string[],
   ): Promise<{ skillId: string; verified: boolean; grade: number | null }[]>;
+  /** Every skill Study has verified, with its grade: what Career offers to
+   *  declare (A-8). The same rule as skillStatus. */
+  verifiedSkills(): Promise<{ skillId: string; grade: number }[]>;
 }
