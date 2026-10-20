@@ -39,6 +39,10 @@ const CAREER_TOOLS = {
   career_save_selection: "write",
   career_save_job_kit: "write",
   career_save_standard_answers: "write",
+  career_get_search_criteria: "read",
+  career_save_openings: "write",
+  career_list_openings: "read",
+  career_update_opening: "write",
 } as const;
 
 describe("tools/list", () => {
@@ -75,6 +79,9 @@ describe("tools/list", () => {
     expect(brief?.description).toMatch(/never send it to a tool/);
     const selection = tools.find((t) => t.name === "career_save_selection");
     expect(selection?.description).toMatch(/never the file/);
+    const save = tools.find((t) => t.name === "career_save_openings");
+    expect(save?.description).toMatch(/every criterion holds/);
+    expect(save?.description).toMatch(/never LinkedIn/);
     // No tool takes the photo: it's the app's only upload.
     expect(tools.some((t) => /photo/.test(t.name))).toBe(false);
   });

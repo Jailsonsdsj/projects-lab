@@ -1,5 +1,5 @@
-// Career MCP tools: profile (docs/prd/20 § Operations), jobs (21) and
-// documents (22). Thin adapters: the shared schema validates, the service does
+// Career MCP tools: profile (docs/prd/20 § Operations), jobs (21), documents
+// (22) and job search (23). Thin adapters: the shared schema validates, the service does
 // the work, and a refusal is already a ToolError. No SQL here: a test scans tool
 // files. The photo has no tool: no tool takes a file.
 import {
@@ -8,7 +8,9 @@ import {
   documentBriefInputSchema,
   getJobInputSchema,
   getProfileInputSchema,
+  getSearchCriteriaInputSchema,
   listJobsInputSchema,
+  listOpeningsInputSchema,
   removeItemInputSchema,
   removeJobInputSchema,
   removeSkillInputSchema,
@@ -16,11 +18,13 @@ import {
   saveExperienceInputSchema,
   saveFactInputSchema,
   saveJobKitInputSchema,
+  saveOpeningsInputSchema,
   saveSelectionInputSchema,
   saveStandardAnswersInputSchema,
   sendGapsInputSchema,
   setLinksInputSchema,
   updateJobInputSchema,
+  updateOpeningInputSchema,
   updatePersonInputSchema,
   updateRequirementInputSchema,
 } from "@projects-lab/shared/career";
@@ -52,6 +56,12 @@ import {
   setLinks,
   updatePerson,
 } from "./profile";
+import {
+  getSearchCriteria,
+  listOpenings,
+  saveOpenings,
+  updateOpening,
+} from "./search";
 
 const profileTools = [
   defineTool({
@@ -266,8 +276,52 @@ const documentTools = (study: Study) => [
   }),
 ];
 
+const searchTools = [
+  defineTool({
+    name: "career_get_search_criteria",
+    kind: "read",
+    description:
+      "Reads the owner's job search criteria: queries, lanes in priority order, accepted work shapes, max hours a week, time zone, rate floor, auto-reject keywords and companies, max posting age, sources. Null until the owner saves them in the app. Only the owner changes them, in the app; never suggest a change as done.",
+    input: getSearchCriteriaInputSchema,
+    async run(_input, ctx) {
+      return { criteria: await getSearchCriteria(ctx.db) };
+    },
+  }),
+  defineTool({
+    name: "career_save_openings",
+    kind: "write",
+    description:
+      "Saves openings that passed triage (up to 20 a call): keep one only if every criterion holds (shape, hours, time zone, a lane, no auto-reject match, within max age, rate at or above the floor when posted). Public, fetchable sources only: never LinkedIn or a site that forbids automated access. Each with its URL, company, role, lane, an excerpt of the posting (at most 4,000 characters), posted date, posted rate and why it's worth a look. A URL already saved, even dismissed, is skipped.",
+    input: saveOpeningsInputSchema,
+    async run(input, ctx) {
+      return saveOpenings(ctx.db, input, new Date());
+    },
+  }),
+  defineTool({
+    name: "career_list_openings",
+    kind: "read",
+    description:
+      "Lists saved openings, new first, then kept, tracked, dismissed: each with its lane, rate, why, status, its job when tracked, and `stale` for a new one 30 days old. Read it before searching so a seen opening isn't resurfaced. Filter by status.",
+    input: listOpeningsInputSchema,
+    async run(input, ctx) {
+      return { openings: await listOpenings(ctx.db, input, new Date()) };
+    },
+  }),
+  defineTool({
+    name: "career_update_opening",
+    kind: "write",
+    description:
+      "Keeps or dismisses an opening when the owner says so. To track one, map it with career_add_job and its `openingId` instead; a tracked opening follows its job.",
+    input: updateOpeningInputSchema,
+    async run(input, ctx) {
+      return { opening: await updateOpening(ctx.db, input, new Date()) };
+    },
+  }),
+];
+
 export const careerTools = (study: Study) => [
   ...profileTools,
   ...jobTools(study),
   ...documentTools(study),
+  ...searchTools,
 ];

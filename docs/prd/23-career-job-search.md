@@ -22,7 +22,7 @@ One record, read by the routine at the start of every run.
 
 ## The routine (SP-03)
 
-A Claude Code routine (claude.ai/code/routines) with the **Projects-Lab and Gmail connectors attached to the routine** (a routine doesn't inherit account connectors: SP-03), on a weekly schedule (Monday 08:00 America/Recife, `0 11 * * 1` UTC) the owner can change on the routine. Each run:
+A Claude Code routine (claude.ai/code/routines) with the **Projects-Lab and Gmail connectors attached to the routine** (a routine doesn't inherit account connectors: SP-03), on a weekly schedule (Monday 08:00 America/Recife, `0 11 * * 1` UTC) the owner can change on the routine. Its setup and verbatim prompt are in [`docs/routines/job-search.md`](../routines/job-search.md). Each run:
 
 1. `career_get_search_criteria`; `career_list_openings` (so a seen opening isn't resurfaced; matched by URL).
 2. Search the sources with the queries; read each candidate.
