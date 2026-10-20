@@ -26,7 +26,7 @@ After writing, Claude saves what it used with `career_save_selection { jobId, it
 
 ## Layout (returned by the brief)
 
-One column, the owner's name and links at the top, sections in this order: summary, experience (facts as bullets), education, skills, languages; a font named (so every surface renders the same: SP-02 saw one PDF switch fonts mid-title), margins, and the filename `<Name>__<company>__<kind>.<pdf|docx>`. PDF by default, DOCX when the form asks for Word. Claude builds the file in its own sandbox (SP-02: every surface can hand it to the owner).
+One column, the owner's name and links at the top, sections in this order: summary, experience (facts as bullets), education, skills, languages; one font named (Helvetica in a PDF, a standard font with nothing to embed; Arial in a DOCX) so every surface renders the same (SP-02 saw one PDF switch fonts mid-title), 2 cm margins, and the filename `<Name>__<company>__<kind>.<pdf|docx>`. PDF by default, DOCX when the form asks for Word. Claude builds the file in its own sandbox (SP-02: every surface can hand it to the owner).
 
 ## Per job: what the app keeps (A-7)
 
@@ -34,7 +34,7 @@ One column, the owner's name and links at the top, sections in this order: summa
 |---|---|
 | **Selected items** | The fact, experience, education and skill IDs the last document used, and the variant (`ai`, `frontend`, …) |
 | **Self-introduction** (R2-11) | The spoken "tell me about yourself" for this role, text, at most 1,500 characters |
-| **Salary range** | Minimum and maximum as **integers in whole currency units** (no floats), currency (ISO code), period (`hour`, `month`, `year`); what the owner will ask for this job |
+| **Salary range** | Minimum and maximum as **integers in whole currency units** (no floats), currency (ISO code: BRL, USD, EUR, GBP, CAD, AUD, CHF until CA-00 extends it), period (`hour`, `month`, `year`); what the owner will ask for this job |
 | **Form answers** | Question and answer pairs for the application form ("Why this company?"), each answer at most 2,000 characters |
 
 Claude writes them with `career_save_job_kit` (intro, range, answers) after the owner agrees on them in the chat; the owner edits them in the app.

@@ -33,11 +33,11 @@ A job's readiness is the share of its **required** skills that are Verified or D
 | Compensation | 15 | Against the owner's rate anchors (`22` salary ranges); unposted scores 7 |
 | Signal quality | 15 | Scope clarity, credibility, realistic expectations, no red flags |
 
-**75+ apply · 55–74 apply only with spare capacity, saying why · below 55 skip.** Claude also records the gaps that will be asked about (with the honest framing), two questions to ask the client, and red flags. The thresholds and the refusal rules are what CA-00 refines with the owner.
+**75+ apply · 55–74 apply only with spare capacity, saying why · below 55 skip.** Claude gives the five dimension scores; the total and the decision are computed from them (`scoreFit` in `shared/career`) and stored, so a total that isn't the sum can't be saved. Claude also records the gaps that will be asked about (with the honest framing), two questions to ask the client, and red flags. The thresholds and the refusal rules are what CA-00 refines with the owner.
 
 ## Applications
 
-Statuses: `evaluated` → `applied` → `interviewing` → `offer` / `rejected` / `withdrawn`; `closed_silent` for an application with no answer after 3 weeks (marked by Claude in a review or by the owner). Each change keeps its date. A job can be tracked without applying (`evaluated` only).
+Statuses: `evaluated` → `applied` → `interviewing` → `offer` / `rejected` / `withdrawn`; `closed_silent` for an application still `applied` with no answer after 3 weeks (an `interviewing` one waits on the owner too, so it isn't closed) (marked by Claude in a review or by the owner). Each change keeps its date. A job can be tracked without applying (`evaluated` only).
 
 ## Operations
 
