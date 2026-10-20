@@ -4,6 +4,13 @@
 // answers replace what they're given. Storage is shared by the tests in this
 // file, so they run in order on one profile and one job.
 import { SELF } from "cloudflare:test";
+import {
+  jobKitResponseSchema,
+  jobResponseSchema,
+  jobsResponseSchema,
+  profileResponseSchema,
+  standardAnswersResponseSchema,
+} from "@projects-lab/shared/career";
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "./db";
 import {
@@ -407,5 +414,18 @@ describe("over MCP", () => {
     expect(await audit("career_save_selection")).toEqual([1, 0]);
     expect(await audit("career_save_job_kit")).toEqual([1]);
     expect(await audit("career_save_standard_answers")).toEqual([1]);
+  });
+});
+
+// The web parses these reads with the shared schemas: the real output must fit.
+describe("responses the web reads", () => {
+  it("parse with @projects-lab/shared/career's schemas", async () => {
+    profileResponseSchema.parse(await ok(await api("/profile")));
+    jobsResponseSchema.parse(await ok(await api("/jobs")));
+    jobResponseSchema.parse(await ok(await api(`/jobs/${ids.job}`)));
+    jobKitResponseSchema.parse(await ok(await api(`/jobs/${ids.job}/kit`)));
+    standardAnswersResponseSchema.parse(
+      await ok(await api("/standard-answers")),
+    );
   });
 });

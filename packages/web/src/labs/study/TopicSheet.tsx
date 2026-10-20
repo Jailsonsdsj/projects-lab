@@ -22,13 +22,13 @@ import {
   Group,
   ListRow,
   linkClick,
+  Select,
   Sheet,
   Textarea,
 } from "../../components/ui";
 import { apiFetch } from "../../core/api";
 import { failureKind } from "../../core/failure";
 import { examTitle, localDay } from "./ExamViewer";
-import { Select } from "./Select";
 
 const LEVELS: [TopicLevel, string][] = [
   ["unset", "Not chosen"],

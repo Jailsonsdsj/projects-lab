@@ -15,6 +15,7 @@ import {
   type ButtonVariant,
   Checkbox,
   Chip,
+  CopyField,
   Dialog,
   EmptyState,
   ErrorState,
@@ -33,6 +34,7 @@ import {
   PageTitle,
   ProgressBar,
   Prose,
+  Select,
   Sheet,
   SideRail,
   Skeleton,
@@ -714,6 +716,69 @@ export const CATALOG: readonly CatalogEntry[] = [
     ],
   },
   {
+    name: "CopyField",
+    summary:
+      "A value to paste into a form: label, value, Copy. Copied holds for --duration-copied-hold, then Copy again.",
+    examples: [
+      {
+        label: "short",
+        node: <CopyField label="Email" value="sam.rivera@example.com" />,
+      },
+      {
+        label: "mono (a URL)",
+        node: (
+          <CopyField
+            label="LinkedIn URL"
+            value="https://www.linkedin.com/in/sam-rivera"
+            mono
+          />
+        ),
+      },
+      {
+        label: "long (an answer); press Copy for Copied",
+        node: (
+          <CopyField
+            label="Why this company?"
+            long
+            value="Acme builds the scheduling tools my last two teams relied on, and its platform team is working on the problem I enjoy most."
+          />
+        ),
+      },
+    ],
+  },
+  {
+    name: "Select",
+    summary:
+      "A labelled native <select> in a Field with the bundle's chevron; the platform's picker on iPhone and iPad.",
+    examples: [
+      { label: "default", node: <SelectExample /> },
+      {
+        label: "invalid",
+        node: (
+          <Select
+            label="Area"
+            value="FE"
+            options={[["FE", "Frontend"]]}
+            onChange={noop}
+            error="Pick an area"
+          />
+        ),
+      },
+      {
+        label: "disabled",
+        node: (
+          <Select
+            label="Level"
+            value="essential"
+            options={[["essential", "Essential"]]}
+            onChange={noop}
+            disabled
+          />
+        ),
+      },
+    ],
+  },
+  {
     name: "StatCard",
     summary:
       "One figure with its label: value, unit, note, and room for a bar.",
@@ -1051,3 +1116,18 @@ export const CATALOG: readonly CatalogEntry[] = [
     ],
   },
 ];
+
+function SelectExample() {
+  const [value, setValue] = useState("acme");
+  return (
+    <Select
+      label="Answers for"
+      value={value}
+      options={[
+        ["acme", "Acme · Senior Full-Stack Engineer"],
+        ["globex", "Globex · Frontend Platform Engineer"],
+      ]}
+      onChange={setValue}
+    />
+  );
+}

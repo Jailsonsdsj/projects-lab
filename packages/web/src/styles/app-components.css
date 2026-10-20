@@ -474,3 +474,8 @@ dialog.is-closing::backdrop {
   font-size: var(--text-sm);
   color: var(--color-ink-muted);
 }
+
+/* CopyField: the bundle sets a mono value (a URL) a size down, inline. */
+.copy__value--mono {
+  font-size: var(--text-sm);
+}

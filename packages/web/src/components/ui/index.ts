@@ -10,6 +10,7 @@ export {
 } from "./Button";
 export { Checkbox, type CheckboxProps } from "./Checkbox";
 export { Chip, type ChipProps } from "./Chip";
+export { CopyField, type CopyFieldProps } from "./CopyField";
 export { cssDurationMs } from "./css-duration";
 export { cx } from "./cx";
 export { Dialog, type DialogProps } from "./Dialog";
@@ -57,6 +58,7 @@ export {
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { Prose, type ProseProps } from "./Prose";
 export { headingIds, headingSlug } from "./prose-slug";
+export { Select } from "./Select";
 export { Sheet, type SheetProps } from "./Sheet";
 export { SideRail, type SideRailProps } from "./SideRail";
 export { Skeleton, type SkeletonProps } from "./Skeleton";

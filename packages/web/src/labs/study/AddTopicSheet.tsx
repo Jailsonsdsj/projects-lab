@@ -16,10 +16,9 @@ import {
   type Priority,
 } from "@projects-lab/shared/study";
 import { useEffect, useState } from "react";
-import { Banner, Button, Input, Sheet } from "../../components/ui";
+import { Banner, Button, Input, Select, Sheet } from "../../components/ui";
 import { apiFetch } from "../../core/api";
 import { failureKind } from "../../core/failure";
-import { Select } from "./Select";
 
 const NEW_AREA = "+new";
 const LEVELS: ["" | CourseLevel, string][] = [

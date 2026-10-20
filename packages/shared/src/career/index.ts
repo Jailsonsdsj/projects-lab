@@ -8,6 +8,7 @@ export * from "./fit";
 export * from "./interviews";
 export * from "./profile";
 export * from "./readiness";
+export * from "./responses";
 export * from "./salary";
 export * from "./schemas";
 export * from "./search";
