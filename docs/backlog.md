@@ -12,7 +12,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 | Spikes | 3 | 3 | Done |
 | 1 Design system | 16 | 16 | Done |
 | 2 Study Lab | 16 | 18 | In progress |
-| 3 Career Lab | 0 | 18 | Ready (PRDs `20`–`24` approved, refine in CA-00) |
+| 3 Career Lab | 0 | 17 | Ready (PRDs `20`–`24` approved, refine in CA-00) |
 | Hardening | 0 | 5 | — |
 | Go-Live | 0 | 5 | — |
 
