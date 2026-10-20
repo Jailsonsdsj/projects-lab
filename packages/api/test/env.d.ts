@@ -11,3 +11,9 @@ interface ImportMeta {
     options: { eager: true; query: "?raw"; import: "default" },
   ): Record<string, T>;
 }
+
+/** A fixture's text, imported with Vite's ?raw (the resume import test). */
+declare module "*.md?raw" {
+  const text: string;
+  export default text;
+}

@@ -1,7 +1,6 @@
 // Grades (docs/prd/12-study-exams.md): integer tenths 0–100, shown with one
 // decimal. A topic's grade and Finished date are its most recently graded
 // exam's, at any level, derived at read time.
-import { isGradeTenths } from "../core/grades";
 import type { CourseLevel } from "./backlog";
 
 export {

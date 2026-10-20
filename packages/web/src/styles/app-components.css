@@ -500,10 +500,6 @@ dialog.is-closing::backdrop {
   align-items: center;
   list-style: none;
 }
-.req + .req,
-.treq + .treq {
-  border-top: var(--border-thin) solid var(--color-border);
-}
 .req {
   gap: var(--space-1) var(--space-3);
   padding: calc(var(--space-3) + var(--border-thick)) var(--space-3)
@@ -545,4 +541,9 @@ dialog.is-closing::backdrop {
   display: flex;
   align-items: center;
   gap: calc(var(--space-2) + var(--border-thick));
+}
+/* After the base rules: a row under another gets the divider. */
+.req + .req,
+.treq + .treq {
+  border-top: var(--border-thin) solid var(--color-border);
 }
