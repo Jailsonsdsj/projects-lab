@@ -74,7 +74,7 @@ const KITS = {
   globex: kit("globex"),
 };
 
-function api(over: Record<string, () => Response> = {}) {
+function api(over: Record<string, (init?: RequestInit) => Response> = {}) {
   return mockApi({
     "GET /api/career/profile": () => json(PROFILE),
     "GET /api/career/standard-answers": () =>
@@ -126,9 +126,9 @@ describe("Profile copy panel", () => {
       "Why this company?",
     ]);
     expect(screen.getByText("USD 40–60 / hour")).toBeInTheDocument();
-    expect(
-      screen.getByText("https://www.linkedin.com/in/sam-rivera"),
-    ).toHaveClass("mono");
+    expect(document.querySelector(".copy__value.mono")).toHaveTextContent(
+      "https://www.linkedin.com/in/sam-rivera",
+    );
     // No photo: initials.
     expect(screen.getByRole("img", { name: "Sam Rivera" })).toHaveTextContent(
       "SR",
@@ -185,7 +185,11 @@ describe("Profile copy panel", () => {
     });
     openProfile();
     const img = await screen.findByRole("img", { name: "Sam Rivera" });
-    expect(img).toHaveAttribute("src", "/api/career/photo");
+    // The person's updatedAt busts the cache after an upload.
+    expect(img).toHaveAttribute(
+      "src",
+      `/api/career/photo?v=${encodeURIComponent("2026-10-20T00:00:00.000Z")}`,
+    );
   });
 
   it("hides the job picker with no jobs", async () => {
@@ -221,5 +225,270 @@ describe("Profile copy panel", () => {
       within(main.closest(".empty") as HTMLElement).getByRole("button"),
     ).toBe(main);
     expect(screen.queryByText("Your profile is empty")).not.toBeInTheDocument();
+  });
+});
+
+const FULL: ProfileResponse = {
+  ...PROFILE,
+  experiences: [
+    {
+      id: "x1",
+      organization: "Acme",
+      title: "Engineer",
+      kind: "contract",
+      start: "2023-04",
+      end: null,
+      location: "Remote",
+      summary: "",
+      position: 0,
+      facts: [
+        {
+          id: "f1",
+          text: "Built the eval harness",
+          verified: true,
+          position: 0,
+          skills: [{ id: "s1", name: "LLM evaluation" }],
+        },
+        {
+          id: "f2",
+          text: "Cut eval runtime by 40%",
+          verified: false,
+          position: 1,
+          skills: [],
+        },
+      ],
+    },
+  ],
+  education: [
+    {
+      id: "e1",
+      institution: "UFPE",
+      degree: "BSc",
+      field: "CS",
+      start: "2015",
+      end: "2019",
+      notes: "",
+      position: 0,
+      facts: [],
+    },
+  ],
+};
+
+describe("Profile records", () => {
+  it("lists experiences with their facts, unverified ones badged", async () => {
+    api({ "GET /api/career/profile": () => json(FULL) });
+    openProfile();
+    const acme = await screen.findByRole("region", { name: "Engineer · Acme" });
+    const rows = within(acme).getAllByRole("button");
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringContaining("2023-04 – now · Remote"),
+      expect.stringContaining("Built the eval harness"),
+      expect.stringContaining("Cut eval runtime by 40%"),
+      "Add a fact",
+    ]);
+    expect(
+      within(rows[2] as HTMLElement).getByText("Unverified"),
+    ).toBeInTheDocument();
+    expect(
+      within(rows[1] as HTMLElement).queryByText("Unverified"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: "BSc · UFPE" })).getByText(
+        "2015 – 2019 · CS",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("verifies a fact in its sheet, with an Idempotency-Key, then reads again", async () => {
+    let reads = 0;
+    let sent: { headers: Headers; body: unknown } | null = null;
+    api({
+      "GET /api/career/profile": () => {
+        reads++;
+        return json(FULL);
+      },
+      "POST /api/career/facts": (init) => {
+        sent = {
+          headers: new Headers(init?.headers),
+          body: JSON.parse(String(init?.body)),
+        };
+        return json({ fact: {} });
+      },
+    });
+    openProfile();
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Cut eval runtime/ }),
+    );
+    const sheet = await screen.findByRole("dialog", { name: "Fact" });
+    await userEvent.click(
+      within(sheet).getByRole("checkbox", { name: /Verified/ }),
+    );
+    await userEvent.click(within(sheet).getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
+    expect(sent).toMatchObject({
+      body: {
+        id: "f2",
+        experienceId: "x1",
+        text: "Cut eval runtime by 40%",
+        verified: true,
+      },
+    });
+    expect(
+      (sent as unknown as { headers: Headers }).headers.get("Idempotency-Key"),
+    ).toMatch(/^[0-9a-f-]{36}$/);
+    await vi.waitFor(() => expect(reads).toBe(2));
+  });
+
+  it("checks an experience's dates before sending, and shows the API's refusal", async () => {
+    let posts = 0;
+    api({
+      "GET /api/career/profile": () => json(FULL),
+      "POST /api/career/experiences": () => {
+        posts++;
+        return json(
+          {
+            error: "bad_request",
+            message: "The experience ends 2024, before 2025: give its end too",
+          },
+          { status: 400 },
+        );
+      },
+    });
+    openProfile();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Add experience" }),
+    );
+    const sheet = await screen.findByRole("dialog", {
+      name: "Add an experience",
+    });
+    await userEvent.type(within(sheet).getByLabelText("Title"), "Researcher");
+    await userEvent.type(within(sheet).getByLabelText("Organization"), "Lab");
+    await userEvent.type(within(sheet).getByLabelText("Start"), "2023-04");
+    await userEvent.type(within(sheet).getByLabelText(/End/), "2023-03");
+    await userEvent.click(within(sheet).getByRole("button", { name: "Add" }));
+    expect(
+      within(sheet).getByText("The end is before the start."),
+    ).toBeInTheDocument();
+    expect(posts).toBe(0);
+
+    await userEvent.clear(within(sheet).getByLabelText(/End/));
+    await userEvent.click(within(sheet).getByRole("button", { name: "Add" }));
+    expect(
+      await within(sheet).findByText(/ends 2024, before 2025/),
+    ).toBeInTheDocument();
+  });
+
+  it("removes an experience after confirming", async () => {
+    let removed = false;
+    api({
+      "GET /api/career/profile": () => json(FULL),
+      "DELETE /api/career/items/experience/x1": () => {
+        removed = true;
+        return new Response(null, { status: 204 });
+      },
+    });
+    openProfile();
+    await userEvent.click(
+      await screen.findByRole("button", { name: /2023-04 – now/ }),
+    );
+    const sheet = await screen.findByRole("dialog", { name: "Experience" });
+    await userEvent.click(
+      within(sheet).getByRole("button", { name: "Remove" }),
+    );
+    const confirm = await screen.findByRole("dialog", {
+      name: "Remove this experience?",
+    });
+    expect(removed).toBe(false);
+    await userEvent.click(
+      within(confirm).getByRole("button", { name: "Remove" }),
+    );
+    expect(await screen.findByText("Removed")).toBeInTheDocument();
+    expect(removed).toBe(true);
+  });
+
+  it("replaces the links from their sheet, https only", async () => {
+    let body: unknown = null;
+    api({
+      "GET /api/career/profile": () => json(FULL),
+      "PUT /api/career/links": (init) => {
+        body = JSON.parse(String(init?.body));
+        return json({ links: [] });
+      },
+    });
+    openProfile();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Edit links" }),
+    );
+    const sheet = await screen.findByRole("dialog", { name: "Links" });
+    await userEvent.click(
+      within(sheet).getByRole("button", { name: "Add a link" }),
+    );
+    const second = within(sheet).getByRole("group", { name: "Link 2" });
+    await userEvent.selectOptions(
+      within(second).getByLabelText("Kind"),
+      "github",
+    );
+    await userEvent.type(
+      within(second).getByLabelText("URL"),
+      "http://github.com/sam",
+    );
+    await userEvent.click(within(sheet).getByRole("button", { name: "Save" }));
+    expect(within(second).getByText("An https:// link.")).toBeInTheDocument();
+    expect(body).toBeNull();
+    await userEvent.clear(within(second).getByLabelText("URL"));
+    await userEvent.type(
+      within(second).getByLabelText("URL"),
+      "https://github.com/sam",
+    );
+    await userEvent.click(within(sheet).getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved");
+    expect(body).toEqual({
+      links: [
+        { kind: "linkedin", label: "LinkedIn URL", url: PROFILE.links[0]?.url },
+        { kind: "github", label: "GitHub", url: "https://github.com/sam" },
+      ],
+    });
+  });
+
+  it("uploads a photo after checking its type and size", async () => {
+    let put: { type: string | null; size: number } | null = null;
+    api({
+      "GET /api/career/profile": () => json(FULL),
+      "PUT /api/career/photo": (init) => {
+        put = {
+          type: new Headers(init?.headers).get("Content-Type"),
+          size: (init?.body as Blob | undefined)?.size ?? 0,
+        };
+        return json({ photo: { type: "image/png" } });
+      },
+    });
+    openProfile();
+    const input = (await screen.findByLabelText(
+      "Photo file",
+    )) as HTMLInputElement;
+    await userEvent.upload(
+      input,
+      new File(["gif"], "a.gif", { type: "image/gif" }),
+      {
+        applyAccept: false,
+      },
+    );
+    expect(
+      await screen.findByText("A photo is JPEG, PNG or WebP."),
+    ).toBeInTheDocument();
+    const big = new File([new Uint8Array(2 * 1024 * 1024 + 1)], "big.png", {
+      type: "image/png",
+    });
+    await userEvent.upload(input, big);
+    expect(
+      await screen.findByText("A photo is at most 2 MB."),
+    ).toBeInTheDocument();
+    expect(put).toBeNull();
+    await userEvent.upload(
+      input,
+      new File(["png"], "me.png", { type: "image/png" }),
+    );
+    expect(await screen.findByText("Photo updated")).toBeInTheDocument();
+    expect(put).toEqual({ type: "image/png", size: 3 });
   });
 });
