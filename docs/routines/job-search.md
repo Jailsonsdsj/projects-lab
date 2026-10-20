@@ -30,8 +30,9 @@ the one email at the end. Today's date and the run's time are in America/Recife.
      didn't run: search criteria aren't set. Open
      https://projects-lab.jailson-junior36.workers.dev/career and fill in Jobs →
      Search criteria.") and stop.
-   - Call career_list_openings (no filter). Every URL in it is known: never save
-     or report it again, whatever its status.
+   - Call career_list_openings with status "new" for context on what's waiting.
+     You don't need every known URL: career_save_openings skips any URL already
+     saved (new, kept, dismissed or tracked) and reports it as skipped.
 
 2. Search.
    - For each query in `queries`, search the public sources in `sources`

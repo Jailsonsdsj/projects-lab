@@ -1,8 +1,11 @@
 // Career job search services (docs/prd/23-career-job-search.md): the search
 // criteria (written only by the app's form, read by the weekly routine) and the
 // openings the routine saves. Tracking an opening goes through addJob (CA-04a).
+
+import { LIST_LIMIT_DEFAULT } from "@projects-lab/shared";
 import {
   isStale,
+  type listOpeningsInputSchema,
   type OpeningStatus,
   type saveOpeningsInputSchema,
   type saveSearchCriteriaInputSchema,
@@ -162,24 +165,69 @@ export async function saveOpenings(
   return { saved, skipped };
 }
 
-const ORDER = `CASE status WHEN 'new' THEN 0 WHEN 'kept' THEN 1 WHEN 'tracked' THEN 2 ELSE 3 END`;
+const RANK = `CASE status WHEN 'new' THEN 0 WHEN 'kept' THEN 1 WHEN 'tracked' THEN 2 ELSE 3 END`;
 
-/** New first, then kept, tracked, dismissed; newest first within each. */
+const RANKED_SQL = OPENING_SQL.replace(
+  "\n  FROM career_opening",
+  `, ${RANK} AS rank FROM career_opening`,
+);
+
+/** `<rank>|<createdAt>|<id>` of the last row returned: where the next page starts. */
+const encodeCursor = (o: Omit<Opening, "stale"> & { rank: number }) =>
+  `${o.rank}|${o.createdAt}|${o.id}`;
+
+function decodeCursor(cursor: string): [number, string, string] {
+  const [rank, createdAt, id] = cursor.split("|");
+  if (!rank || !createdAt || !id || !/^[0-3]$/.test(rank))
+    throw new ToolError(
+      "bad_request",
+      "Not a cursor from this list: pass back nextCursor as given",
+    );
+  return [Number(rank), createdAt, id];
+}
+
+/**
+ * New first, then kept, tracked, dismissed; newest first within each. Openings
+ * grow every week, so the list pages: `limit` (default 50) rows, and
+ * `nextCursor` while there are more.
+ */
 export async function listOpenings(
   db: D1Database,
-  { status }: { status?: OpeningStatus },
+  input: z.infer<typeof listOpeningsInputSchema>,
   now: Date,
-): Promise<Opening[]> {
-  const query = status
-    ? db
-        .prepare(`${OPENING_SQL} WHERE status = ? ORDER BY created_at DESC`)
-        .bind(status)
-    : db.prepare(`${OPENING_SQL} ORDER BY ${ORDER}, created_at DESC`);
-  const { results } = await query.all<Omit<Opening, "stale">>();
-  return results.map((opening) => ({
-    ...opening,
-    stale: isStale(opening, now.toISOString()),
-  }));
+): Promise<{ openings: Opening[]; nextCursor?: string }> {
+  const limit = input.limit ?? LIST_LIMIT_DEFAULT;
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (input.status) {
+    where.push("status = ?");
+    params.push(input.status);
+  }
+  if (input.cursor) {
+    const [rank, createdAt, id] = decodeCursor(input.cursor);
+    where.push(
+      `(${RANK} > ? OR (${RANK} = ? AND (created_at < ? OR (created_at = ? AND id < ?))))`,
+    );
+    params.push(rank, rank, createdAt, createdAt, id);
+  }
+  const { results } = await db
+    .prepare(
+      `${RANKED_SQL}${where.length ? ` WHERE ${where.join(" AND ")}` : ""}
+       ORDER BY rank, created_at DESC, id DESC LIMIT ?`,
+    )
+    .bind(...params, limit + 1)
+    .all<Omit<Opening, "stale"> & { rank: number }>();
+  const page = results.slice(0, limit);
+  const last = page.at(-1);
+  return {
+    openings: page.map(({ rank: _, ...opening }) => ({
+      ...opening,
+      stale: isStale(opening, now.toISOString()),
+    })),
+    ...(results.length > limit && last
+      ? { nextCursor: encodeCursor(last) }
+      : {}),
+  };
 }
 
 /** Keep or dismiss. A tracked opening follows its job instead. */

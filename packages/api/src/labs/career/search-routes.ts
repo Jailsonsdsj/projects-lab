@@ -35,13 +35,20 @@ export function searchRoutes() {
   );
 
   app.get("/openings", async (c) => {
+    const limit = c.req.query("limit");
     const parsed = listOpeningsInputSchema.safeParse({
       status: c.req.query("status"),
+      limit: limit === undefined ? undefined : Number(limit),
+      cursor: c.req.query("cursor"),
     });
     if (!parsed.success) return invalid(c, parsed.error);
-    return c.json({
-      openings: await listOpenings(database(c.env), parsed.data, new Date()),
-    });
+    try {
+      return c.json(
+        await listOpenings(database(c.env), parsed.data, new Date()),
+      );
+    } catch (error) {
+      return refused(c, error);
+    }
   });
 
   app.patch(

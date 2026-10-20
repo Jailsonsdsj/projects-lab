@@ -46,7 +46,7 @@ The routine also marks applications (`21`) with no answer for 3 weeks as `closed
 |---|---|---|
 | Edit the criteria | Jobs → Search criteria | `career_get_search_criteria` (read only for Claude) |
 | Save openings | — | `career_save_openings` (batch; a known URL is skipped) |
-| List openings | Jobs → Openings | `career_list_openings` |
+| List openings | Jobs → Openings | `career_list_openings` (pages: `limit`, default 50, and `cursor`, since openings grow every week; CA-08) |
 | Keep / dismiss | Openings | `career_update_opening` |
 | Track as a job | Opening → Track (Claude maps it) | `career_add_job { openingId, … }` (`21`) |
 

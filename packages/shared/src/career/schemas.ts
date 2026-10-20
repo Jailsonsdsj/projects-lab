@@ -3,6 +3,7 @@
 // named in LONG_TOOL_STRINGS (core/tool-strings.ts). No tool takes file
 // content: the photo is the app's only upload, and documents are never stored.
 import { z } from "zod";
+import { cursorSchema, listLimitSchema } from "../core/lists";
 import { APPLICATION_STATUSES, JOB_NOTE_MAX_LENGTH } from "./applications";
 import { DOCUMENT_KINDS, SELECTION_ITEM_KINDS } from "./brief";
 import { driveFileId } from "./drive";
@@ -447,8 +448,11 @@ export const saveOpeningsInputSchema = z.object({
     ),
 });
 
+/** Openings grow every week, so the list pages (02-integration). */
 export const listOpeningsInputSchema = z.object({
   status: z.enum(OPENING_STATUSES).optional(),
+  limit: listLimitSchema.optional(),
+  cursor: cursorSchema.optional(),
 });
 
 /** Keep or dismiss; tracking goes through career_add_job { openingId }. */

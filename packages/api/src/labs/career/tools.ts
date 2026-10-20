@@ -315,10 +315,10 @@ const searchTools = [
     name: "career_list_openings",
     kind: "read",
     description:
-      "Lists saved openings, new first, then kept, tracked, dismissed: each with its lane, rate, why, status, its job when tracked, and `stale` for a new one 30 days old. Read it before searching so a seen opening isn't resurfaced. Filter by status.",
+      "Lists saved openings, new first, then kept, tracked, dismissed: each with its lane, rate, why, status, its job when tracked, and `stale` for a new one 30 days old. Filter by status. Pages: `limit` rows (default 50, at most 200), and `nextCursor` while there are more; pass it back as `cursor`.",
     input: listOpeningsInputSchema,
     async run(input, ctx) {
-      return { openings: await listOpenings(ctx.db, input, new Date()) };
+      return listOpenings(ctx.db, input, new Date());
     },
   }),
   defineTool({

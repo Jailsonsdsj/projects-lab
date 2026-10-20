@@ -9,6 +9,7 @@ export * from "./core/connections";
 export * from "./core/idempotency";
 export * from "./core/kdf";
 export * from "./core/lab";
+export * from "./core/lists";
 export * from "./core/oauth";
 export * from "./core/pwa";
 export * from "./core/retention";

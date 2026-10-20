@@ -242,3 +242,62 @@ describe("openings", () => {
     expect(list.filter((o) => o.stale)).toHaveLength(1);
   });
 });
+
+describe("paging", () => {
+  it("pages through every opening in the same order, by its cursor", async () => {
+    await callTool(token, "career_save_openings", {
+      openings: [5, 6, 7, 8, 9].map((n) => opening(n)),
+    });
+    const whole = await ok<{ openings: Opening[]; nextCursor?: string }>(
+      await api("/openings?limit=200"),
+    );
+    expect(whole.nextCursor).toBeUndefined();
+    expect(whole.openings).toHaveLength(9);
+
+    const paged: string[] = [];
+    let cursor: string | undefined;
+    let pages = 0;
+    do {
+      const page = await ok<{ openings: Opening[]; nextCursor?: string }>(
+        await api(
+          `/openings?limit=2${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+        ),
+      );
+      paged.push(...page.openings.map((o) => o.id));
+      cursor = page.nextCursor;
+      pages++;
+    } while (cursor && pages < 10);
+    expect(pages).toBe(5);
+    expect(paged).toEqual(whole.openings.map((o) => o.id));
+
+    const viaTool = await callTool(token, "career_list_openings", {
+      status: "new",
+      limit: 3,
+    });
+    expect(viaTool.value.openings).toHaveLength(3);
+    expect(
+      viaTool.value.openings.every((o: Opening) => o.status === "new"),
+    ).toBe(true);
+    const rest = await callTool(token, "career_list_openings", {
+      status: "new",
+      limit: 3,
+      cursor: viaTool.value.nextCursor,
+    });
+    expect(rest.value.openings).toHaveLength(3);
+    expect(rest.value.nextCursor).toBeUndefined();
+  });
+
+  it("refuses a limit over 200 and a cursor it didn't hand out", async () => {
+    expect((await api("/openings?limit=201")).status).toBe(400);
+    expect((await api("/openings?limit=0")).status).toBe(400);
+    const forged = await api(
+      `/openings?cursor=${encodeURIComponent("x|2026-01-01T00:00:00.000Z|abc")}`,
+    );
+    expect(forged.status).toBe(400);
+    const bad = await api("/openings?cursor=nonsense");
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { message: string }).message).toMatch(
+      /nextCursor/,
+    );
+  });
+});
