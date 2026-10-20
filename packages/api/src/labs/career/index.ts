@@ -15,5 +15,5 @@ export function careerLab(deps: { study: Study }): ApiLab {
   routes.route("/", profileRoutes());
   routes.route("/", photoRoutes());
 
-  return { id: "career", routes, tools: careerTools };
+  return { id: "career", routes, tools: careerTools(deps.study) };
 }
