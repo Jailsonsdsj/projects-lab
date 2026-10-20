@@ -13,7 +13,7 @@ A read tool. Claude calls it before writing any document for a job; it's the onl
 - **The job's saved selection**, if a document was made before (A-7), so a second version starts from the first.
 - **The writing rules** (below) and **the layout** (below), as text.
 
-After writing, Claude saves what it used with `career_save_selection { jobId, items: [{ kind, id }], variant }`: the IDs only, never the file.
+After writing, Claude saves what it used with `career_save_selection { jobId, items: [{ kind, id }], variant }`: the IDs only, never the file. Every item must be live, and a fact verified: an unverified one is confirmed with the owner and saved verified first (CA-05), so no document rests on an unconfirmed claim even if a step is skipped.
 
 ## Writing rules (returned by the brief; career-os `/tailor-resume`)
 

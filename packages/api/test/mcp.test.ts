@@ -53,6 +53,7 @@ describe("/mcp", () => {
     expect(tools.map((t) => t.name).sort()).toEqual([
       "career_add_job",
       "career_declare_skill",
+      "career_document_brief",
       "career_get_job",
       "career_get_profile",
       "career_list_jobs",
@@ -62,6 +63,9 @@ describe("/mcp", () => {
       "career_save_education",
       "career_save_experience",
       "career_save_fact",
+      "career_save_job_kit",
+      "career_save_selection",
+      "career_save_standard_answers",
       "career_send_gaps",
       "career_set_links",
       "career_update_job",

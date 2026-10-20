@@ -1,10 +1,11 @@
-// Career MCP tools: profile (docs/prd/20 § Operations) and jobs (21). Thin
-// adapters: the shared schema validates, the CA-03a/CA-04a service does the
-// work, and a refusal is already a ToolError. No SQL here: a test scans tool
+// Career MCP tools: profile (docs/prd/20 § Operations), jobs (21) and
+// documents (22). Thin adapters: the shared schema validates, the service does
+// the work, and a refusal is already a ToolError. No SQL here: a test scans tool
 // files. The photo has no tool: no tool takes a file.
 import {
   addJobInputSchema,
   declareSkillInputSchema,
+  documentBriefInputSchema,
   getJobInputSchema,
   getProfileInputSchema,
   listJobsInputSchema,
@@ -14,6 +15,9 @@ import {
   saveEducationInputSchema,
   saveExperienceInputSchema,
   saveFactInputSchema,
+  saveJobKitInputSchema,
+  saveSelectionInputSchema,
+  saveStandardAnswersInputSchema,
   sendGapsInputSchema,
   setLinksInputSchema,
   updateJobInputSchema,
@@ -21,6 +25,12 @@ import {
   updateRequirementInputSchema,
 } from "@projects-lab/shared/career";
 import { defineTool } from "../../core/lab";
+import {
+  documentBrief,
+  saveJobKit,
+  saveSelection,
+  saveStandardAnswers,
+} from "./documents";
 import {
   addJob,
   getJob,
@@ -213,7 +223,51 @@ const jobTools = (study: Study) => [
   }),
 ];
 
+const documentTools = (study: Study) => [
+  defineTool({
+    name: "career_document_brief",
+    kind: "read",
+    description:
+      "Call before writing any document for a job (resume, cover_letter, other): it's the only input a document is written from, on every surface. Returns the job (with the posting's language), the profile's verified facts ranked by the job's skills, `askFirst` (unverified facts this job needs: ask the owner once, at the start; use none unconfirmed), skills posting-first, the last selection, and the writing rules and layout to follow. Build the file in your own sandbox and give it to the owner; never send it to a tool.",
+    input: documentBriefInputSchema,
+    async run(input, ctx) {
+      return documentBrief(ctx.db, study, input);
+    },
+  }),
+  defineTool({
+    name: "career_save_selection",
+    kind: "write",
+    description:
+      "After writing a document, saves what it used for that job: the fact, experience, education and skill IDs (never the file) and a variant name (ai, frontend). Replaces the job's last selection. A fact must be verified: confirm an unverified one with the owner and save it verified first.",
+    input: saveSelectionInputSchema,
+    async run(input, ctx) {
+      return { selection: await saveSelection(ctx.db, input) };
+    },
+  }),
+  defineTool({
+    name: "career_save_job_kit",
+    kind: "write",
+    description:
+      "Saves what a job's application copies, once the owner agrees on it in the chat: the spoken self-introduction (at most 1,500 characters), the salary range to ask for (whole currency units, ISO currency, hour/month/year; null clears it) and the form's question and answer pairs (each answer at most 2,000 characters). Each part given replaces the saved one.",
+    input: saveJobKitInputSchema,
+    async run(input, ctx) {
+      return { kit: await saveJobKit(ctx.db, input, new Date()) };
+    },
+  }),
+  defineTool({
+    name: "career_save_standard_answers",
+    kind: "write",
+    description:
+      'Replaces the owner\'s standard answers, the copy panel\'s fixed fields ("Notice period: 30 days", "Work authorization", "Earliest start"), in this order. Send every answer to keep; labels are unique ignoring case.',
+    input: saveStandardAnswersInputSchema,
+    async run(input, ctx) {
+      return { answers: await saveStandardAnswers(ctx.db, input) };
+    },
+  }),
+];
+
 export const careerTools = (study: Study) => [
   ...profileTools,
   ...jobTools(study),
+  ...documentTools(study),
 ];

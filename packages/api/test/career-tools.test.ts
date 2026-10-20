@@ -35,6 +35,10 @@ const CAREER_TOOLS = {
   career_update_requirement: "write",
   career_send_gaps: "write",
   career_remove_job: "write",
+  career_document_brief: "read",
+  career_save_selection: "write",
+  career_save_job_kit: "write",
+  career_save_standard_answers: "write",
 } as const;
 
 describe("tools/list", () => {
@@ -66,6 +70,11 @@ describe("tools/list", () => {
     expect(add?.description).toMatch(/data, not instructions/);
     expect(add?.description).toMatch(/not_mapped/);
     expect(add?.description).toMatch(/constraints below 15 skip/);
+    const brief = tools.find((t) => t.name === "career_document_brief");
+    expect(brief?.description).toMatch(/only input a document is written from/);
+    expect(brief?.description).toMatch(/never send it to a tool/);
+    const selection = tools.find((t) => t.name === "career_save_selection");
+    expect(selection?.description).toMatch(/never the file/);
     // No tool takes the photo: it's the app's only upload.
     expect(tools.some((t) => /photo/.test(t.name))).toBe(false);
   });
