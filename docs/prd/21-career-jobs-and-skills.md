@@ -61,7 +61,9 @@ Statuses: `evaluated` → `applied` → `interviewing` → `offer` / `rejected` 
 
 K-9 to K-14: requirement type, fit score range and decision, application statuses and their dates, a requirement's skill from the registry, no hard delete of a job.
 
-## Decisions (proposed; the owner settles them in CA-00)
+## Decisions
+
+Approved by the owner on 2026-10-19 as proposed, **flagged to refine later** (CA-00: job filters, refusal rules, thresholds):
 
 1. **One requirement → one skill** (or none: not mapped); split and merge as `job-mapper` does.
 2. **Gaps go to Study only when the owner asks** ("Add gaps to Study"), not automatically on every job.

@@ -65,7 +65,9 @@ There are no stored documents, so the tab is each job's **application kit**: the
 
 K-15 to K-19: selection items exist and belong to the profile, salary minimum ≤ maximum with a known currency and period, text lengths, standard answer labels unique.
 
-## Decisions (proposed; the owner settles them in CA-00)
+## Decisions
+
+Approved by the owner on 2026-10-19 as proposed, **flagged to refine later** (CA-00: job filters, refusal rules, thresholds):
 
 1. **The brief is the only input a document is written from**, and it carries the rules and the layout, so no surface needs its own skill (§6.6).
 2. **Unverified facts are returned apart** (`ask_first`), never mixed in.

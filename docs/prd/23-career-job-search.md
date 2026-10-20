@@ -59,7 +59,9 @@ The routine also marks applications (`21`) with no answer for 3 weeks as `closed
 
 K-20 to K-23: one criteria row, hours and floor non-negative integers, opening statuses and URL uniqueness, a tracked opening points at its job.
 
-## Decisions (proposed; the owner settles them in CA-00)
+## Decisions
+
+Approved by the owner on 2026-10-19 as proposed, **flagged to refine later** (CA-00: job filters, refusal rules, thresholds):
 
 1. **Weekly on Monday morning**, changeable on the routine.
 2. **Criteria live in the app** and the routine only reads them (R2-9); Claude never changes them on its own.

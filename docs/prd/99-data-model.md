@@ -204,7 +204,7 @@ Every column above without `?` is `NOT NULL`.
 
 ## Career Lab
 
-_Draft (2026-10-19) from `20`–`24`; their decisions are proposed, settled in CA-00._
+_From `20`–`24` (decisions approved 2026-10-19, flagged to refine in CA-00)._
 
 ```sql
 -- The owner's person record: exactly one row (K-1). Contact details live here.

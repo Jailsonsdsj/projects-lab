@@ -39,7 +39,9 @@ After a session Claude saves: new or improved stories (`career_save_story`), ans
 
 K-24 to K-28: STAR field lengths, a story's facts exist, an answer's Drive file ID format, an answer's job and story exist, drill modes.
 
-## Decisions (proposed; the owner settles them in CA-00)
+## Decisions
+
+Approved by the owner on 2026-10-19 as proposed, **flagged to refine later** (CA-00: job filters, refusal rules, thresholds):
 
 1. **Stories are their own records**, linked to facts, and an answer points at the story it uses.
 2. **Drive videos are links, embedded with Drive's player**; no Google API (R2-13).

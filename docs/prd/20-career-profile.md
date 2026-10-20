@@ -50,7 +50,9 @@ Each is one service, called by `/api/career` and by the MCP tool. Writes are ide
 
 K-1 to K-8 in `99-data-model.md` § Career Lab: one person row, link kinds and URLs, photo key and type, date formats and order, fact length and verified as 0/1, one declaration per skill, levels, no hard delete of facts a job's selection still references.
 
-## Decisions (proposed; the owner settles them in CA-00)
+## Decisions
+
+Approved by the owner on 2026-10-19 as proposed, **flagged to refine later** (CA-00: job filters, refusal rules, thresholds):
 
 1. **Facts are the unit documents select**, each with a `verified` flag; an experience's summary is never used as a claim on its own.
 2. **Unverified facts are excluded** from documents until confirmed, and listed in the brief.
