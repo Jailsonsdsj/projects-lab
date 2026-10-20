@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -131,6 +131,21 @@ describe("Home", () => {
       "aria-busy",
       "true",
     );
+  });
+
+  it("says it's offline above the cards, and not once back online", async () => {
+    mockApi({
+      "GET /api/study/summary": () => json(null),
+      "GET /api/career/summary": () => json(null),
+    });
+    const onLine = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    renderHome();
+    expect(await screen.findByText("You're offline.")).toBeInTheDocument();
+    onLine.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(screen.queryByText("You're offline.")).not.toBeInTheDocument();
   });
 
   it("opens the lab from its card without leaving the app", async () => {

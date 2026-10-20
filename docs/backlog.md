@@ -13,7 +13,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 | 1 Design system | 16 | 16 | Done |
 | 2 Study Lab | 16 | 18 | In progress |
 | 3 Career Lab | 20 | 24 | In progress |
-| Hardening | 0 | 5 | — |
+| Hardening | 1 | 5 | In progress |
 | Go-Live | 0 | 5 | — |
 
 _Post-launch and TD are tracked separately and excluded from the totals._
@@ -146,7 +146,7 @@ Detailed 2026-10-19 from PRDs `20`–`24` (decisions approved by the owner, flag
 
 | ID | Task | Size | Model | Load | Done when |
 |---|---|---|---|---|---|
-| H-01 | Offline vs server error states across every lab screen | M | Sonnet | `docs/design-system.md` | Airplane mode shows the offline state on every screen; no screen shows a stack trace |
+| H-01 | Offline vs server error states across every lab screen | M | Sonnet | `docs/design-system.md` | ✅ 2026-10-20. **Sweep** `e2e/failure-states.spec.ts` at the four widths over every screen that reads (16: Study Backlog, Courses, Grades, a course, an exam; Career Jobs with Openings and Search criteria, a job, Skills, Profile, Documents, Interviews with Stories and Practice; Connections). **Offline:** the app loads online, the browser goes offline, then each screen opens client-side (as a link would, no page load), each time after Settings (which reads nothing) with no Retry on screen, so the check reads the new screen, not the last one's; each says it's offline with Retry. **Server down:** every `/api` request answers 500; each screen and Home show their error with Retry and never the word offline. Neither ever shows a raw error (`TypeError`, `Uncaught`, `at fn (`, `[object Object]`…). **Found and fixed:** Home had no offline state: its cards showed "Couldn't load the summary" (a comment pointed at a banner D-05 never added). `HomeScreen` now shows an offline Banner from the browser's own online state (`useOnline`, `useSyncExternalStore` on `online`/`offline`), gone when back online; Home test +1. Every other screen already read through `ReadView`. Web 253, e2e 204. **Break-tested, 4 of 4 caught** (no Home banner, offline read as a server error, a failure rendering nothing, Skills reading a 500 as empty) |
 | H-02 | Backup/export (D1 + R2) and restore; updates `user.last_exported_at` on the server | L | Opus | `docs/prd/90-services.md` | A restore into an empty local DB reproduces every row and file; `last_exported_at` lives nowhere in `localStorage` |
 | H-03 | E2E journey 1: log in → add a backlog topic → read a course | M | Sonnet | `e2e/` | Passes 3 runs in a row |
 | H-04 | E2E journey 2: map a job → gap lands in the Study backlog → readiness updates | M | Sonnet | `e2e/` | Passes 3 runs in a row |

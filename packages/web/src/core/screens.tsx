@@ -1,5 +1,7 @@
+import { useSyncExternalStore } from "react";
 import { useNavigate } from "react-router";
 import {
+  Banner,
   Button,
   EmptyState,
   ErrorState,
@@ -20,14 +22,36 @@ import { SettingsScreen } from "./SettingsScreen";
 
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five"];
 
+/** The browser's own idea of being online, kept current by its events. */
+function useOnline(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("online", onChange);
+      window.addEventListener("offline", onChange);
+      return () => {
+        window.removeEventListener("online", onChange);
+        window.removeEventListener("offline", onChange);
+      };
+    },
+    () => navigator.onLine,
+  );
+}
+
 /** Home (00-platform): one card per lab, each loading its own summary so one
- *  lab failing never blanks another. */
+ *  lab failing never blanks another. Offline, a banner says why the cards
+ *  can't load (LabCard has no offline variant); they read again online. */
 export function HomeScreen() {
   const labs = labsOnly(useLabs());
   const count = COUNT_WORDS[labs.length] ?? String(labs.length);
+  const online = useOnline();
   return (
     <div className="home">
       <PageTitle title="Home" subtitle={`Your ${count} labs`} />
+      {!online && (
+        <Banner tone="offline" title="You're offline.">
+          The labs' summaries load again when you're back online.
+        </Banner>
+      )}
       {labs.map((lab) => (
         <HomeCard key={lab.id} lab={lab} />
       ))}
@@ -43,8 +67,8 @@ function HomeCard({ lab }: { lab: LabDefinition }) {
 function HomeCardLoader({ lab, home }: { lab: LabDefinition; home: LabHome }) {
   const navigate = useNavigate();
   const { state: read, retry } = useRead(home.load);
-  // LabCard has no offline variant: offline shows as the error card until the
-  // Banner arrives (D-05).
+  // LabCard has no offline variant: offline shows as the error card, under
+  // HomeScreen's offline banner.
   const state: LabCardState =
     read.status === "loaded"
       ? { status: "loaded", data: read.data }
