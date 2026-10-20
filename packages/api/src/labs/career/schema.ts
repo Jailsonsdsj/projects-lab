@@ -4,16 +4,27 @@
 // triggers in their own custom migration. Every column a CHECK references is
 // NOT NULL; the allowed values and limits come from @projects-lab/shared/career.
 import {
+  ANSWER_MAX_LENGTH,
   APPLICATION_STATUSES,
+  DRILL_MODES,
+  DRILL_WEAKEST_MAX,
   EXPERIENCE_KINDS,
   FACT_MAX_LENGTH,
   FIT_NOTES_MAX_LENGTH,
+  FORM_ANSWER_MAX_LENGTH,
+  INTRO_MAX_LENGTH,
   JOB_NOTE_MAX_LENGTH,
   LINK_KINDS,
+  OPENING_POSTING_MAX_LENGTH,
+  OPENING_STATUSES,
   POSTING_MAX_LENGTH,
+  QUESTION_MAX_LENGTH,
   REQUIREMENT_MAX_LENGTH,
   REQUIREMENT_TYPES,
+  SELECTION_ITEM_KINDS,
   SKILL_LEVELS,
+  STANDARD_ANSWER_MAX_LENGTH,
+  STAR_PART_MAX_LENGTH,
   SUMMARY_MAX_LENGTH,
 } from "@projects-lab/shared/career";
 import { type SQL, sql } from "drizzle-orm";
@@ -24,6 +35,7 @@ import {
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { skill } from "../../db/schema";
 
@@ -307,6 +319,300 @@ export const careerJobEvent = sqliteTable(
     check(
       "career_job_event_note_length",
       sql`length(${t.note}) <= ${sqlNumber(JOB_NOTE_MAX_LENGTH)}`,
+    ),
+  ],
+);
+
+// --- Documents (22) ---
+
+/** What a job's last document was made from: IDs only, never the file (A-7). */
+export const careerJobItem = sqliteTable(
+  "career_job_item",
+  {
+    jobId: text("job_id")
+      .notNull()
+      .references(() => careerJob.id),
+    // The item exists in its kind's table (K-15, a trigger).
+    itemKind: text("item_kind").notNull(),
+    itemId: text("item_id").notNull(),
+    variant: text("variant").notNull(),
+    position: integer("position").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.jobId, t.itemKind, t.itemId] }),
+    // K-15
+    check(
+      "career_job_item_kind_allowed",
+      sql`${t.itemKind} IN (${sqlList(SELECTION_ITEM_KINDS)})`,
+    ),
+    check(
+      "career_job_item_variant_length",
+      sql`length(${t.variant}) BETWEEN 1 AND 30`,
+    ),
+    check("career_job_item_position_min", position(t.position)),
+  ],
+);
+
+/** What a job's application copies: intro and salary range (A-7). */
+export const careerJobKit = sqliteTable(
+  "career_job_kit",
+  {
+    jobId: text("job_id")
+      .primaryKey()
+      .references(() => careerJob.id),
+    intro: text("intro").notNull().default(""),
+    // Whole currency units with a currency and a period, all set or none (K-16, triggers).
+    salaryMin: integer("salary_min"),
+    salaryMax: integer("salary_max"),
+    salaryCurrency: text("salary_currency"),
+    salaryPeriod: text("salary_period"),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    // K-17
+    check(
+      "career_job_kit_intro_length",
+      sql`length(${t.intro}) <= ${sqlNumber(INTRO_MAX_LENGTH)}`,
+    ),
+  ],
+);
+
+export const careerFormAnswer = sqliteTable(
+  "career_form_answer",
+  {
+    id: text("id").primaryKey(),
+    jobId: text("job_id")
+      .notNull()
+      .references(() => careerJob.id),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    position: integer("position").notNull(),
+  },
+  (t) => [
+    index("career_form_answer_job").on(t.jobId),
+    // K-17
+    check(
+      "career_form_answer_question_length",
+      sql`length(trim(${t.question})) > 0 AND length(${t.question}) <= ${sqlNumber(QUESTION_MAX_LENGTH)}`,
+    ),
+    check(
+      "career_form_answer_answer_length",
+      sql`length(trim(${t.answer})) > 0 AND length(${t.answer}) <= ${sqlNumber(FORM_ANSWER_MAX_LENGTH)}`,
+    ),
+    check("career_form_answer_position_min", position(t.position)),
+  ],
+);
+
+/** "Notice period: 30 days": the copy panel's fixed answers. */
+export const careerStandardAnswer = sqliteTable(
+  "career_standard_answer",
+  {
+    id: text("id").primaryKey(),
+    label: text("label").notNull(),
+    value: text("value").notNull(),
+    position: integer("position").notNull(),
+  },
+  (t) => [
+    // K-18
+    uniqueIndex("career_standard_answer_label_nocase").on(
+      sql`${t.label} COLLATE NOCASE`,
+    ),
+    check(
+      "career_standard_answer_label_not_blank",
+      sql`length(trim(${t.label})) > 0`,
+    ),
+    // K-19
+    check(
+      "career_standard_answer_value_length",
+      sql`length(${t.value}) <= ${sqlNumber(STANDARD_ANSWER_MAX_LENGTH)}`,
+    ),
+    check("career_standard_answer_position_min", position(t.position)),
+  ],
+);
+
+// --- Job search (23) ---
+
+/** The routine reads it at every run; only the app's form writes it. One row (K-20). */
+export const careerSearchCriteria = sqliteTable(
+  "career_search_criteria",
+  {
+    id: text("id").primaryKey(),
+    queriesJson: text("queries_json").notNull().default("[]"),
+    lanesJson: text("lanes_json").notNull().default("[]"),
+    shapesJson: text("shapes_json").notNull().default("[]"),
+    autoRejectJson: text("auto_reject_json").notNull().default("[]"),
+    sourcesJson: text("sources_json").notNull().default("[]"),
+    maxHours: integer("max_hours").notNull(),
+    timezoneNote: text("timezone_note").notNull().default(""),
+    // Set together, the floor an integer >= 0 (K-21, triggers: nullable).
+    rateFloor: integer("rate_floor"),
+    rateCurrency: text("rate_currency"),
+    ratePeriod: text("rate_period"),
+    maxAgeDays: integer("max_age_days").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    // K-20
+    check("career_search_criteria_one_row", sql`${t.id} = 'criteria'`),
+    check(
+      "career_search_criteria_lists",
+      sql`${jsonArray(t.queriesJson)} AND ${jsonArray(t.lanesJson)} AND ${jsonArray(t.shapesJson)} AND ${jsonArray(t.autoRejectJson)} AND ${jsonArray(t.sourcesJson)}`,
+    ),
+    // K-21
+    check(
+      "career_search_criteria_max_hours",
+      sql`typeof(${t.maxHours}) = 'integer' AND ${t.maxHours} >= 0`,
+    ),
+    check(
+      "career_search_criteria_max_age",
+      sql`typeof(${t.maxAgeDays}) = 'integer' AND ${t.maxAgeDays} >= 1`,
+    ),
+  ],
+);
+
+/** What the routine found. A tracked one points at its job (K-23, a trigger). */
+export const careerOpening = sqliteTable(
+  "career_opening",
+  {
+    id: text("id").primaryKey(),
+    url: text("url").notNull(),
+    company: text("company").notNull(),
+    role: text("role").notNull(),
+    lane: text("lane").notNull(),
+    // An excerpt: the routine saves many at once.
+    posting: text("posting").notNull(),
+    postedOn: text("posted_on"),
+    rateText: text("rate_text").notNull().default(""),
+    why: text("why").notNull(),
+    status: text("status").notNull().default("new"),
+    jobId: text("job_id").references(() => careerJob.id),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    // K-22
+    uniqueIndex("career_opening_url_unique").on(t.url),
+    check("career_opening_url_https", sql`${t.url} GLOB 'https://?*'`),
+    check(
+      "career_opening_status_allowed",
+      sql`${t.status} IN (${sqlList(OPENING_STATUSES)})`,
+    ),
+    check(
+      "career_opening_posting_length",
+      sql`length(${t.posting}) <= ${sqlNumber(OPENING_POSTING_MAX_LENGTH)}`,
+    ),
+    index("career_opening_status").on(t.status),
+  ],
+);
+
+// --- Interviews (24) ---
+
+/** A STAR story: reusable evidence, resting on facts. */
+export const careerStory = sqliteTable(
+  "career_story",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    situation: text("situation").notNull(),
+    task: text("task").notNull(),
+    action: text("action").notNull(),
+    result: text("result").notNull(),
+    experienceId: text("experience_id").references(() => careerExperience.id),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    // K-24
+    check(
+      "career_story_parts_length",
+      sql`length(${t.situation}) <= ${sqlNumber(STAR_PART_MAX_LENGTH)} AND length(${t.task}) <= ${sqlNumber(STAR_PART_MAX_LENGTH)} AND length(${t.action}) <= ${sqlNumber(STAR_PART_MAX_LENGTH)} AND length(${t.result}) <= ${sqlNumber(STAR_PART_MAX_LENGTH)}`,
+    ),
+    check("career_story_title_not_blank", sql`length(trim(${t.title})) > 0`),
+  ],
+);
+
+// K-25: a story's facts exist.
+export const careerStoryFact = sqliteTable(
+  "career_story_fact",
+  {
+    storyId: text("story_id")
+      .notNull()
+      .references(() => careerStory.id),
+    factId: text("fact_id")
+      .notNull()
+      .references(() => careerFact.id),
+  },
+  (t) => [
+    primaryKey({ columns: [t.storyId, t.factId] }),
+    index("career_story_fact_fact").on(t.factId),
+  ],
+);
+
+export const careerStorySkill = sqliteTable(
+  "career_story_skill",
+  {
+    storyId: text("story_id")
+      .notNull()
+      .references(() => careerStory.id),
+    skillId: text("skill_id")
+      .notNull()
+      .references(() => skill.id),
+  },
+  (t) => [
+    primaryKey({ columns: [t.storyId, t.skillId] }),
+    index("career_story_skill_skill").on(t.skillId),
+  ],
+);
+
+/** A question and the owner's answer, with a Drive video when there is one (R2-13). */
+export const careerAnswer = sqliteTable(
+  "career_answer",
+  {
+    id: text("id").primaryKey(),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    // Drive's file ID only (K-26, a trigger: nullable). Video never goes to R2.
+    driveFileId: text("drive_file_id"),
+    // K-27
+    storyId: text("story_id").references(() => careerStory.id),
+    jobId: text("job_id").references(() => careerJob.id),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    index("career_answer_job").on(t.jobId),
+    check(
+      "career_answer_question_length",
+      sql`length(trim(${t.question})) > 0 AND length(${t.question}) <= ${sqlNumber(QUESTION_MAX_LENGTH)}`,
+    ),
+    check(
+      "career_answer_answer_length",
+      sql`length(trim(${t.answer})) > 0 AND length(${t.answer}) <= ${sqlNumber(ANSWER_MAX_LENGTH)}`,
+    ),
+  ],
+);
+
+/** A practice session in a Claude chat: what to fix next time. */
+export const careerDrill = sqliteTable(
+  "career_drill",
+  {
+    id: text("id").primaryKey(),
+    at: text("at").notNull(),
+    mode: text("mode").notNull(),
+    topic: text("topic").notNull(),
+    weakestJson: text("weakest_json").notNull().default("[]"),
+    fix: text("fix").notNull(),
+  },
+  (t) => [
+    index("career_drill_at").on(t.at),
+    // K-28
+    check(
+      "career_drill_mode_allowed",
+      sql`${t.mode} IN (${sqlList(DRILL_MODES)})`,
+    ),
+    check(
+      "career_drill_weakest",
+      sql`${jsonArray(t.weakestJson)} AND json_array_length(${t.weakestJson}) <= ${sqlNumber(DRILL_WEAKEST_MAX)}`,
     ),
   ],
 );

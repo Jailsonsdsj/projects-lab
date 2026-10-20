@@ -1,0 +1,2771 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "d928fdad-5a7f-4e9e-96f9-c01f0a3e40eb",
+  "prevId": "1e54dc6a-ba7f-4a1a-9375-60eb33d8cb23",
+  "tables": {
+    "auth_attempt": {
+      "name": "auth_attempt",
+      "columns": {
+        "ip_hash": {
+          "name": "ip_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "auth_attempt_ip_hash_window_start_pk": {
+          "columns": [
+            "ip_hash",
+            "window_start"
+          ],
+          "name": "auth_attempt_ip_hash_window_start_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "auth_attempt_count_min": {
+          "name": "auth_attempt_count_min",
+          "value": "\"auth_attempt\".\"count\" >= 1"
+        }
+      }
+    },
+    "github_cache": {
+      "name": "github_cache",
+      "columns": {
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "etag": {
+          "name": "etag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "body_json": {
+          "name": "body_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "mcp_call": {
+      "name": "mcp_call",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tool": {
+          "name": "tool",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "client_name": {
+          "name": "client_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ok": {
+          "name": "ok",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "mcp_call_tool_prefix": {
+          "name": "mcp_call_tool_prefix",
+          "value": "(\"mcp_call\".\"tool\" GLOB 'core_?*' OR \"mcp_call\".\"tool\" GLOB 'study_?*' OR \"mcp_call\".\"tool\" GLOB 'career_?*') AND \"mcp_call\".\"tool\" NOT GLOB '*[^a-z_]*'"
+        },
+        "mcp_call_ok_bool": {
+          "name": "mcp_call_ok_bool",
+          "value": "\"mcp_call\".\"ok\" IN (0, 1)"
+        }
+      }
+    },
+    "mutation": {
+      "name": "mutation",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "response_json": {
+          "name": "response_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "skill": {
+      "name": "skill",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "aliases_json": {
+          "name": "aliases_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "skill_name_nocase": {
+          "name": "skill_name_nocase",
+          "columns": [
+            "\"name\" COLLATE NOCASE"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "skill_name_not_blank": {
+          "name": "skill_name_not_blank",
+          "value": "length(trim(\"skill\".\"name\")) > 0"
+        },
+        "skill_aliases_json_array": {
+          "name": "skill_aliases_json_array",
+          "value": "json_valid(\"skill\".\"aliases_json\") AND json_type(\"skill\".\"aliases_json\") = 'array'"
+        }
+      }
+    },
+    "user": {
+      "name": "user",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "auth_key_hash": {
+          "name": "auth_key_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kdf_salt": {
+          "name": "kdf_salt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kdf_iterations": {
+          "name": "kdf_iterations",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_exported_at": {
+          "name": "last_exported_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "session_version": {
+          "name": "session_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "learn_area": {
+      "name": "learn_area",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prefix": {
+          "name": "prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "next_seq": {
+          "name": "next_seq",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learn_area_prefix_unique": {
+          "name": "learn_area_prefix_unique",
+          "columns": [
+            "prefix"
+          ],
+          "isUnique": true
+        },
+        "learn_area_name_nocase": {
+          "name": "learn_area_name_nocase",
+          "columns": [
+            "\"name\" COLLATE NOCASE"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "learn_area_prefix_format": {
+          "name": "learn_area_prefix_format",
+          "value": "length(\"learn_area\".\"prefix\") = 2 AND \"learn_area\".\"prefix\" NOT GLOB '*[^A-Z]*'"
+        },
+        "learn_area_name_not_blank": {
+          "name": "learn_area_name_not_blank",
+          "value": "length(trim(\"learn_area\".\"name\")) > 0"
+        },
+        "learn_area_next_seq_min": {
+          "name": "learn_area_next_seq_min",
+          "value": "typeof(\"learn_area\".\"next_seq\") = 'integer' AND \"learn_area\".\"next_seq\" >= 1"
+        }
+      }
+    },
+    "learn_course": {
+      "name": "learn_course",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "topic_id": {
+          "name": "topic_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "module": {
+          "name": "module",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learn_course_topic": {
+          "name": "learn_course_topic",
+          "columns": [
+            "topic_id"
+          ],
+          "isUnique": false
+        },
+        "learn_course_path_unique": {
+          "name": "learn_course_path_unique",
+          "columns": [
+            "path"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "learn_course_topic_id_learn_topic_id_fk": {
+          "name": "learn_course_topic_id_learn_topic_id_fk",
+          "tableFrom": "learn_course",
+          "tableTo": "learn_topic",
+          "columnsFrom": [
+            "topic_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "learn_course_level_allowed": {
+          "name": "learn_course_level_allowed",
+          "value": "\"learn_course\".\"level\" IN ('fast_track', 'essential', 'specialized')"
+        },
+        "learn_course_module_range": {
+          "name": "learn_course_module_range",
+          "value": "typeof(\"learn_course\".\"module\") = 'integer' AND \"learn_course\".\"module\" BETWEEN 1 AND 4 AND (\"learn_course\".\"level\" = 'specialized' OR \"learn_course\".\"module\" = 1)"
+        },
+        "learn_course_path_layout": {
+          "name": "learn_course_path_layout",
+          "value": "\"learn_course\".\"path\" GLOB 'Study Lab/*.md'"
+        }
+      }
+    },
+    "learn_exam": {
+      "name": "learn_exam",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "topic_id": {
+          "name": "topic_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attempt": {
+          "name": "attempt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "md_path": {
+          "name": "md_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pdf_path": {
+          "name": "pdf_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "grade": {
+          "name": "grade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "graded_at": {
+          "name": "graded_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learn_exam_attempt_unique": {
+          "name": "learn_exam_attempt_unique",
+          "columns": [
+            "topic_id",
+            "level",
+            "attempt"
+          ],
+          "isUnique": true
+        },
+        "learn_exam_md_path_unique": {
+          "name": "learn_exam_md_path_unique",
+          "columns": [
+            "md_path"
+          ],
+          "isUnique": true
+        },
+        "learn_exam_pdf_path_unique": {
+          "name": "learn_exam_pdf_path_unique",
+          "columns": [
+            "pdf_path"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "learn_exam_topic_id_learn_topic_id_fk": {
+          "name": "learn_exam_topic_id_learn_topic_id_fk",
+          "tableFrom": "learn_exam",
+          "tableTo": "learn_topic",
+          "columnsFrom": [
+            "topic_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "learn_exam_attempt_min": {
+          "name": "learn_exam_attempt_min",
+          "value": "typeof(\"learn_exam\".\"attempt\") = 'integer' AND \"learn_exam\".\"attempt\" >= 1"
+        },
+        "learn_exam_path_layout": {
+          "name": "learn_exam_path_layout",
+          "value": "\"learn_exam\".\"md_path\" GLOB 'Study Lab/*.md' AND \"learn_exam\".\"pdf_path\" GLOB 'Study Lab/*.pdf'"
+        },
+        "learn_exam_level_allowed": {
+          "name": "learn_exam_level_allowed",
+          "value": "\"learn_exam\".\"level\" IN ('fast_track', 'essential', 'specialized')"
+        }
+      }
+    },
+    "learn_topic": {
+      "name": "learn_topic",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "area_id": {
+          "name": "area_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'unset'"
+        },
+        "priority": {
+          "name": "priority",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 2
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'not_started'"
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "started_on": {
+          "name": "started_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learn_topic_code_unique": {
+          "name": "learn_topic_code_unique",
+          "columns": [
+            "code"
+          ],
+          "isUnique": true
+        },
+        "learn_topic_skill_unique": {
+          "name": "learn_topic_skill_unique",
+          "columns": [
+            "skill_id"
+          ],
+          "isUnique": true
+        },
+        "learn_topic_area": {
+          "name": "learn_topic_area",
+          "columns": [
+            "area_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "learn_topic_area_id_learn_area_id_fk": {
+          "name": "learn_topic_area_id_learn_area_id_fk",
+          "tableFrom": "learn_topic",
+          "tableTo": "learn_area",
+          "columnsFrom": [
+            "area_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "learn_topic_skill_id_skill_id_fk": {
+          "name": "learn_topic_skill_id_skill_id_fk",
+          "tableFrom": "learn_topic",
+          "tableTo": "skill",
+          "columnsFrom": [
+            "skill_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "learn_topic_level_allowed": {
+          "name": "learn_topic_level_allowed",
+          "value": "\"learn_topic\".\"level\" IN ('unset', 'fast_track', 'essential', 'specialized')"
+        },
+        "learn_topic_priority_range": {
+          "name": "learn_topic_priority_range",
+          "value": "typeof(\"learn_topic\".\"priority\") = 'integer' AND \"learn_topic\".\"priority\" BETWEEN 1 AND 3"
+        },
+        "learn_topic_status_allowed": {
+          "name": "learn_topic_status_allowed",
+          "value": "\"learn_topic\".\"status\" IN ('in_progress', 'not_started', 'done')"
+        },
+        "learn_topic_note_length": {
+          "name": "learn_topic_note_length",
+          "value": "length(\"learn_topic\".\"note\") <= 120"
+        }
+      }
+    },
+    "career_answer": {
+      "name": "career_answer",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "question": {
+          "name": "question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "answer": {
+          "name": "answer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "drive_file_id": {
+          "name": "drive_file_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "story_id": {
+          "name": "story_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_answer_job": {
+          "name": "career_answer_job",
+          "columns": [
+            "job_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_answer_story_id_career_story_id_fk": {
+          "name": "career_answer_story_id_career_story_id_fk",
+          "tableFrom": "career_answer",
+          "tableTo": "career_story",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "career_answer_job_id_career_job_id_fk": {
+          "name": "career_answer_job_id_career_job_id_fk",
+          "tableFrom": "career_answer",
+          "tableTo": "career_job",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_answer_question_length": {
+          "name": "career_answer_question_length",
+          "value": "length(trim(\"career_answer\".\"question\")) > 0 AND length(\"career_answer\".\"question\") <= 200"
+        },
+        "career_answer_answer_length": {
+          "name": "career_answer_answer_length",
+          "value": "length(trim(\"career_answer\".\"answer\")) > 0 AND length(\"career_answer\".\"answer\") <= 3000"
+        }
+      }
+    },
+    "career_declared_skill": {
+      "name": "career_declared_skill",
+      "columns": {
+        "skill_id": {
+          "name": "skill_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "years": {
+          "name": "years",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "career_declared_skill_skill_id_skill_id_fk": {
+          "name": "career_declared_skill_skill_id_skill_id_fk",
+          "tableFrom": "career_declared_skill",
+          "tableTo": "skill",
+          "columnsFrom": [
+            "skill_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_declared_skill_level_allowed": {
+          "name": "career_declared_skill_level_allowed",
+          "value": "\"career_declared_skill\".\"level\" IN ('familiar', 'working', 'strong')"
+        }
+      }
+    },
+    "career_drill": {
+      "name": "career_drill",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "at": {
+          "name": "at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mode": {
+          "name": "mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "topic": {
+          "name": "topic",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weakest_json": {
+          "name": "weakest_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "fix": {
+          "name": "fix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_drill_at": {
+          "name": "career_drill_at",
+          "columns": [
+            "at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_drill_mode_allowed": {
+          "name": "career_drill_mode_allowed",
+          "value": "\"career_drill\".\"mode\" IN ('behavioral', 'technical', 'negotiation')"
+        },
+        "career_drill_weakest": {
+          "name": "career_drill_weakest",
+          "value": "json_valid(\"career_drill\".\"weakest_json\") AND json_type(\"career_drill\".\"weakest_json\") = 'array' AND json_array_length(\"career_drill\".\"weakest_json\") <= 2"
+        }
+      }
+    },
+    "career_education": {
+      "name": "career_education",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "institution": {
+          "name": "institution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "degree": {
+          "name": "degree",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "field": {
+          "name": "field",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "start_on": {
+          "name": "start_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "end_on": {
+          "name": "end_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_education_start_format": {
+          "name": "career_education_start_format",
+          "value": "(\"career_education\".\"start_on\" GLOB '[0-9][0-9][0-9][0-9]' OR (\"career_education\".\"start_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]' AND substr(\"career_education\".\"start_on\", 6, 2) BETWEEN '01' AND '12'))"
+        },
+        "career_education_position_min": {
+          "name": "career_education_position_min",
+          "value": "typeof(\"career_education\".\"position\") = 'integer' AND \"career_education\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_experience": {
+      "name": "career_experience",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization": {
+          "name": "organization",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "start_on": {
+          "name": "start_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "end_on": {
+          "name": "end_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_experience_kind_allowed": {
+          "name": "career_experience_kind_allowed",
+          "value": "\"career_experience\".\"kind\" IN ('job', 'contract', 'research', 'project')"
+        },
+        "career_experience_start_format": {
+          "name": "career_experience_start_format",
+          "value": "(\"career_experience\".\"start_on\" GLOB '[0-9][0-9][0-9][0-9]' OR (\"career_experience\".\"start_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]' AND substr(\"career_experience\".\"start_on\", 6, 2) BETWEEN '01' AND '12'))"
+        },
+        "career_experience_summary_length": {
+          "name": "career_experience_summary_length",
+          "value": "length(\"career_experience\".\"summary\") <= 600"
+        },
+        "career_experience_position_min": {
+          "name": "career_experience_position_min",
+          "value": "typeof(\"career_experience\".\"position\") = 'integer' AND \"career_experience\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_fact": {
+      "name": "career_fact",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "experience_id": {
+          "name": "experience_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "education_id": {
+          "name": "education_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "verified": {
+          "name": "verified",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_fact_experience": {
+          "name": "career_fact_experience",
+          "columns": [
+            "experience_id"
+          ],
+          "isUnique": false
+        },
+        "career_fact_education": {
+          "name": "career_fact_education",
+          "columns": [
+            "education_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_fact_experience_id_career_experience_id_fk": {
+          "name": "career_fact_experience_id_career_experience_id_fk",
+          "tableFrom": "career_fact",
+          "tableTo": "career_experience",
+          "columnsFrom": [
+            "experience_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "career_fact_education_id_career_education_id_fk": {
+          "name": "career_fact_education_id_career_education_id_fk",
+          "tableFrom": "career_fact",
+          "tableTo": "career_education",
+          "columnsFrom": [
+            "education_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_fact_text_length": {
+          "name": "career_fact_text_length",
+          "value": "length(trim(\"career_fact\".\"text\")) > 0 AND length(\"career_fact\".\"text\") <= 300"
+        },
+        "career_fact_verified_bool": {
+          "name": "career_fact_verified_bool",
+          "value": "typeof(\"career_fact\".\"verified\") = 'integer' AND \"career_fact\".\"verified\" IN (0, 1)"
+        },
+        "career_fact_position_min": {
+          "name": "career_fact_position_min",
+          "value": "typeof(\"career_fact\".\"position\") = 'integer' AND \"career_fact\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_fact_skill": {
+      "name": "career_fact_skill",
+      "columns": {
+        "fact_id": {
+          "name": "fact_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_fact_skill_skill": {
+          "name": "career_fact_skill_skill",
+          "columns": [
+            "skill_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_fact_skill_fact_id_career_fact_id_fk": {
+          "name": "career_fact_skill_fact_id_career_fact_id_fk",
+          "tableFrom": "career_fact_skill",
+          "tableTo": "career_fact",
+          "columnsFrom": [
+            "fact_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "career_fact_skill_skill_id_skill_id_fk": {
+          "name": "career_fact_skill_skill_id_skill_id_fk",
+          "tableFrom": "career_fact_skill",
+          "tableTo": "skill",
+          "columnsFrom": [
+            "skill_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "career_fact_skill_fact_id_skill_id_pk": {
+          "columns": [
+            "fact_id",
+            "skill_id"
+          ],
+          "name": "career_fact_skill_fact_id_skill_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "career_form_answer": {
+      "name": "career_form_answer",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "question": {
+          "name": "question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "answer": {
+          "name": "answer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_form_answer_job": {
+          "name": "career_form_answer_job",
+          "columns": [
+            "job_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_form_answer_job_id_career_job_id_fk": {
+          "name": "career_form_answer_job_id_career_job_id_fk",
+          "tableFrom": "career_form_answer",
+          "tableTo": "career_job",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_form_answer_question_length": {
+          "name": "career_form_answer_question_length",
+          "value": "length(trim(\"career_form_answer\".\"question\")) > 0 AND length(\"career_form_answer\".\"question\") <= 200"
+        },
+        "career_form_answer_answer_length": {
+          "name": "career_form_answer_answer_length",
+          "value": "length(trim(\"career_form_answer\".\"answer\")) > 0 AND length(\"career_form_answer\".\"answer\") <= 2000"
+        },
+        "career_form_answer_position_min": {
+          "name": "career_form_answer_position_min",
+          "value": "typeof(\"career_form_answer\".\"position\") = 'integer' AND \"career_form_answer\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_job": {
+      "name": "career_job",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "company": {
+          "name": "company",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "seniority": {
+          "name": "seniority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "work_shape": {
+          "name": "work_shape",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "posting": {
+          "name": "posting",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fit_total": {
+          "name": "fit_total",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fit_constraints": {
+          "name": "fit_constraints",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fit_skills": {
+          "name": "fit_skills",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fit_growth": {
+          "name": "fit_growth",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fit_pay": {
+          "name": "fit_pay",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fit_signal": {
+          "name": "fit_signal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "decision": {
+          "name": "decision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fit_notes": {
+          "name": "fit_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_job_posting_length": {
+          "name": "career_job_posting_length",
+          "value": "length(trim(\"career_job\".\"posting\")) > 0 AND length(\"career_job\".\"posting\") <= 20000"
+        },
+        "career_job_fit_notes_length": {
+          "name": "career_job_fit_notes_length",
+          "value": "length(\"career_job\".\"fit_notes\") <= 2000"
+        }
+      }
+    },
+    "career_job_event": {
+      "name": "career_job_event",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "at": {
+          "name": "at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        }
+      },
+      "indexes": {
+        "career_job_event_job": {
+          "name": "career_job_event_job",
+          "columns": [
+            "job_id",
+            "at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_job_event_job_id_career_job_id_fk": {
+          "name": "career_job_event_job_id_career_job_id_fk",
+          "tableFrom": "career_job_event",
+          "tableTo": "career_job",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_job_event_status_allowed": {
+          "name": "career_job_event_status_allowed",
+          "value": "\"career_job_event\".\"status\" IN ('evaluated', 'applied', 'interviewing', 'offer', 'rejected', 'withdrawn', 'closed_silent')"
+        },
+        "career_job_event_note_length": {
+          "name": "career_job_event_note_length",
+          "value": "length(\"career_job_event\".\"note\") <= 500"
+        }
+      }
+    },
+    "career_job_item": {
+      "name": "career_job_item",
+      "columns": {
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "item_kind": {
+          "name": "item_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "variant": {
+          "name": "variant",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "career_job_item_job_id_career_job_id_fk": {
+          "name": "career_job_item_job_id_career_job_id_fk",
+          "tableFrom": "career_job_item",
+          "tableTo": "career_job",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "career_job_item_job_id_item_kind_item_id_pk": {
+          "columns": [
+            "job_id",
+            "item_kind",
+            "item_id"
+          ],
+          "name": "career_job_item_job_id_item_kind_item_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_job_item_kind_allowed": {
+          "name": "career_job_item_kind_allowed",
+          "value": "\"career_job_item\".\"item_kind\" IN ('fact', 'experience', 'education', 'skill')"
+        },
+        "career_job_item_variant_length": {
+          "name": "career_job_item_variant_length",
+          "value": "length(\"career_job_item\".\"variant\") BETWEEN 1 AND 30"
+        },
+        "career_job_item_position_min": {
+          "name": "career_job_item_position_min",
+          "value": "typeof(\"career_job_item\".\"position\") = 'integer' AND \"career_job_item\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_job_kit": {
+      "name": "career_job_kit",
+      "columns": {
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "salary_min": {
+          "name": "salary_min",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "salary_max": {
+          "name": "salary_max",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "salary_currency": {
+          "name": "salary_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "salary_period": {
+          "name": "salary_period",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "career_job_kit_job_id_career_job_id_fk": {
+          "name": "career_job_kit_job_id_career_job_id_fk",
+          "tableFrom": "career_job_kit",
+          "tableTo": "career_job",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_job_kit_intro_length": {
+          "name": "career_job_kit_intro_length",
+          "value": "length(\"career_job_kit\".\"intro\") <= 1500"
+        }
+      }
+    },
+    "career_link": {
+      "name": "career_link",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_link_kind_allowed": {
+          "name": "career_link_kind_allowed",
+          "value": "\"career_link\".\"kind\" IN ('linkedin', 'github', 'portfolio', 'scholar', 'other')"
+        },
+        "career_link_url_https": {
+          "name": "career_link_url_https",
+          "value": "\"career_link\".\"url\" GLOB 'https://?*'"
+        },
+        "career_link_position_min": {
+          "name": "career_link_position_min",
+          "value": "typeof(\"career_link\".\"position\") = 'integer' AND \"career_link\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_opening": {
+      "name": "career_opening",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "company": {
+          "name": "company",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lane": {
+          "name": "lane",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "posting": {
+          "name": "posting",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "posted_on": {
+          "name": "posted_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rate_text": {
+          "name": "rate_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "why": {
+          "name": "why",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'new'"
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_opening_url_unique": {
+          "name": "career_opening_url_unique",
+          "columns": [
+            "url"
+          ],
+          "isUnique": true
+        },
+        "career_opening_status": {
+          "name": "career_opening_status",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_opening_job_id_career_job_id_fk": {
+          "name": "career_opening_job_id_career_job_id_fk",
+          "tableFrom": "career_opening",
+          "tableTo": "career_job",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_opening_url_https": {
+          "name": "career_opening_url_https",
+          "value": "\"career_opening\".\"url\" GLOB 'https://?*'"
+        },
+        "career_opening_status_allowed": {
+          "name": "career_opening_status_allowed",
+          "value": "\"career_opening\".\"status\" IN ('new', 'kept', 'dismissed', 'tracked')"
+        },
+        "career_opening_posting_length": {
+          "name": "career_opening_posting_length",
+          "value": "length(\"career_opening\".\"posting\") <= 4000"
+        }
+      }
+    },
+    "career_person": {
+      "name": "career_person",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "headline": {
+          "name": "headline",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "languages_json": {
+          "name": "languages_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "photo_key": {
+          "name": "photo_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "photo_type": {
+          "name": "photo_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_person_one_row": {
+          "name": "career_person_one_row",
+          "value": "\"career_person\".\"id\" = 'person'"
+        },
+        "career_person_summary_length": {
+          "name": "career_person_summary_length",
+          "value": "length(\"career_person\".\"summary\") <= 600"
+        },
+        "career_person_languages_array": {
+          "name": "career_person_languages_array",
+          "value": "json_valid(\"career_person\".\"languages_json\") AND json_type(\"career_person\".\"languages_json\") = 'array'"
+        }
+      }
+    },
+    "career_requirement": {
+      "name": "career_requirement",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_requirement_job": {
+          "name": "career_requirement_job",
+          "columns": [
+            "job_id"
+          ],
+          "isUnique": false
+        },
+        "career_requirement_skill": {
+          "name": "career_requirement_skill",
+          "columns": [
+            "skill_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_requirement_job_id_career_job_id_fk": {
+          "name": "career_requirement_job_id_career_job_id_fk",
+          "tableFrom": "career_requirement",
+          "tableTo": "career_job",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "career_requirement_skill_id_skill_id_fk": {
+          "name": "career_requirement_skill_id_skill_id_fk",
+          "tableFrom": "career_requirement",
+          "tableTo": "skill",
+          "columnsFrom": [
+            "skill_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_requirement_type_allowed": {
+          "name": "career_requirement_type_allowed",
+          "value": "\"career_requirement\".\"type\" IN ('required', 'nice', 'not_mapped')"
+        },
+        "career_requirement_text_length": {
+          "name": "career_requirement_text_length",
+          "value": "length(trim(\"career_requirement\".\"text\")) > 0 AND length(\"career_requirement\".\"text\") <= 120"
+        },
+        "career_requirement_position_min": {
+          "name": "career_requirement_position_min",
+          "value": "typeof(\"career_requirement\".\"position\") = 'integer' AND \"career_requirement\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_search_criteria": {
+      "name": "career_search_criteria",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "queries_json": {
+          "name": "queries_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "lanes_json": {
+          "name": "lanes_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "shapes_json": {
+          "name": "shapes_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "auto_reject_json": {
+          "name": "auto_reject_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "sources_json": {
+          "name": "sources_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "max_hours": {
+          "name": "max_hours",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "timezone_note": {
+          "name": "timezone_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "rate_floor": {
+          "name": "rate_floor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rate_currency": {
+          "name": "rate_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rate_period": {
+          "name": "rate_period",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "max_age_days": {
+          "name": "max_age_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_search_criteria_one_row": {
+          "name": "career_search_criteria_one_row",
+          "value": "\"career_search_criteria\".\"id\" = 'criteria'"
+        },
+        "career_search_criteria_lists": {
+          "name": "career_search_criteria_lists",
+          "value": "json_valid(\"career_search_criteria\".\"queries_json\") AND json_type(\"career_search_criteria\".\"queries_json\") = 'array' AND json_valid(\"career_search_criteria\".\"lanes_json\") AND json_type(\"career_search_criteria\".\"lanes_json\") = 'array' AND json_valid(\"career_search_criteria\".\"shapes_json\") AND json_type(\"career_search_criteria\".\"shapes_json\") = 'array' AND json_valid(\"career_search_criteria\".\"auto_reject_json\") AND json_type(\"career_search_criteria\".\"auto_reject_json\") = 'array' AND json_valid(\"career_search_criteria\".\"sources_json\") AND json_type(\"career_search_criteria\".\"sources_json\") = 'array'"
+        },
+        "career_search_criteria_max_hours": {
+          "name": "career_search_criteria_max_hours",
+          "value": "typeof(\"career_search_criteria\".\"max_hours\") = 'integer' AND \"career_search_criteria\".\"max_hours\" >= 0"
+        },
+        "career_search_criteria_max_age": {
+          "name": "career_search_criteria_max_age",
+          "value": "typeof(\"career_search_criteria\".\"max_age_days\") = 'integer' AND \"career_search_criteria\".\"max_age_days\" >= 1"
+        }
+      }
+    },
+    "career_standard_answer": {
+      "name": "career_standard_answer",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_standard_answer_label_nocase": {
+          "name": "career_standard_answer_label_nocase",
+          "columns": [
+            "\"label\" COLLATE NOCASE"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_standard_answer_label_not_blank": {
+          "name": "career_standard_answer_label_not_blank",
+          "value": "length(trim(\"career_standard_answer\".\"label\")) > 0"
+        },
+        "career_standard_answer_value_length": {
+          "name": "career_standard_answer_value_length",
+          "value": "length(\"career_standard_answer\".\"value\") <= 300"
+        },
+        "career_standard_answer_position_min": {
+          "name": "career_standard_answer_position_min",
+          "value": "typeof(\"career_standard_answer\".\"position\") = 'integer' AND \"career_standard_answer\".\"position\" >= 0"
+        }
+      }
+    },
+    "career_story": {
+      "name": "career_story",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "situation": {
+          "name": "situation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "task": {
+          "name": "task",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result": {
+          "name": "result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "experience_id": {
+          "name": "experience_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "career_story_experience_id_career_experience_id_fk": {
+          "name": "career_story_experience_id_career_experience_id_fk",
+          "tableFrom": "career_story",
+          "tableTo": "career_experience",
+          "columnsFrom": [
+            "experience_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "career_story_parts_length": {
+          "name": "career_story_parts_length",
+          "value": "length(\"career_story\".\"situation\") <= 600 AND length(\"career_story\".\"task\") <= 600 AND length(\"career_story\".\"action\") <= 600 AND length(\"career_story\".\"result\") <= 600"
+        },
+        "career_story_title_not_blank": {
+          "name": "career_story_title_not_blank",
+          "value": "length(trim(\"career_story\".\"title\")) > 0"
+        }
+      }
+    },
+    "career_story_fact": {
+      "name": "career_story_fact",
+      "columns": {
+        "story_id": {
+          "name": "story_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fact_id": {
+          "name": "fact_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_story_fact_fact": {
+          "name": "career_story_fact_fact",
+          "columns": [
+            "fact_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_story_fact_story_id_career_story_id_fk": {
+          "name": "career_story_fact_story_id_career_story_id_fk",
+          "tableFrom": "career_story_fact",
+          "tableTo": "career_story",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "career_story_fact_fact_id_career_fact_id_fk": {
+          "name": "career_story_fact_fact_id_career_fact_id_fk",
+          "tableFrom": "career_story_fact",
+          "tableTo": "career_fact",
+          "columnsFrom": [
+            "fact_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "career_story_fact_story_id_fact_id_pk": {
+          "columns": [
+            "story_id",
+            "fact_id"
+          ],
+          "name": "career_story_fact_story_id_fact_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "career_story_skill": {
+      "name": "career_story_skill",
+      "columns": {
+        "story_id": {
+          "name": "story_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "career_story_skill_skill": {
+          "name": "career_story_skill_skill",
+          "columns": [
+            "skill_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "career_story_skill_story_id_career_story_id_fk": {
+          "name": "career_story_skill_story_id_career_story_id_fk",
+          "tableFrom": "career_story_skill",
+          "tableTo": "career_story",
+          "columnsFrom": [
+            "story_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "career_story_skill_skill_id_skill_id_fk": {
+          "name": "career_story_skill_skill_id_skill_id_fk",
+          "tableFrom": "career_story_skill",
+          "tableTo": "skill",
+          "columnsFrom": [
+            "skill_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "career_story_skill_story_id_skill_id_pk": {
+          "columns": [
+            "story_id",
+            "skill_id"
+          ],
+          "name": "career_story_skill_story_id_skill_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {
+      "skill_name_nocase": {
+        "columns": {
+          "\"name\" COLLATE NOCASE": {
+            "isExpression": true
+          }
+        }
+      },
+      "learn_area_name_nocase": {
+        "columns": {
+          "\"name\" COLLATE NOCASE": {
+            "isExpression": true
+          }
+        }
+      },
+      "career_standard_answer_label_nocase": {
+        "columns": {
+          "\"label\" COLLATE NOCASE": {
+            "isExpression": true
+          }
+        }
+      }
+    }
+  }
+}

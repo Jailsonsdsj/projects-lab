@@ -40,5 +40,8 @@ describe("Drive links", () => {
       `https://drive.google.com/file/d/${ID}/preview`,
     );
     expect(() => drivePreviewUrl("../x")).toThrow(RangeError);
+    expect(drivePreviewUrl("a".repeat(100))).toMatch(/\/preview$/);
+    expect(() => drivePreviewUrl("a".repeat(101))).toThrow(RangeError);
+    expect(() => drivePreviewUrl("a".repeat(9))).toThrow(RangeError);
   });
 });

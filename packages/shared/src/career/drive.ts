@@ -1,8 +1,8 @@
 // Interview videos are Google Drive links, never R2 (docs/prd/24, R2-13).
 // Only two link shapes are accepted; the app stores the file ID alone.
 
-/** The K-26 trigger checks the same shape (GLOB on these characters, 10..128). */
-export const DRIVE_FILE_ID = /^[A-Za-z0-9_-]{10,128}$/;
+/** K-26: the trigger checks the same shape (these characters, 10..100). */
+export const DRIVE_FILE_ID = /^[A-Za-z0-9_-]{10,100}$/;
 
 const FILE_PATH = /^\/file\/d\/([^/]+)(?:\/.*)?$/;
 

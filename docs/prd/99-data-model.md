@@ -342,14 +342,14 @@ Every column above without `?` is `NOT NULL`.
 | K-12 | Events of a job are never edited or deleted (the history is append-only) | `BEFORE UPDATE` and `BEFORE DELETE` triggers |
 | K-13 | A requirement's skill exists in the registry | FK to `skill` |
 | K-14 | A job is never hard-deleted | `BEFORE DELETE` trigger |
-| K-15 | A selection item's kind is one of the list and its item exists | `CHECK`; trigger for existence |
+| K-15 | A selection item's kind is one of the list and its item exists and isn't removed (a fact removed later stays cited, K-8) | `CHECK`; trigger for existence |
 | K-16 | A salary range's minimum and maximum are integers with minimum ≤ maximum, set with a currency and a period from the list | Triggers (nullable) |
 | K-17 | Intro and form-answer lengths | `CHECK` |
 | K-18 | Standard answer labels are unique ignoring case | Unique index `COLLATE NOCASE` |
 | K-19 | A standard answer's value is at most 300 characters | `CHECK` |
 | K-20 | There is at most one criteria row | `CHECK (id = 'criteria')` |
 | K-21 | `max_hours` ≥ 0 and `max_age_days` ≥ 1 integers; the rate floor, currency and period set together | `CHECK`; trigger for the floor |
-| K-22 | An opening's URL is unique and its status one of the list | Unique index; `CHECK` |
+| K-22 | An opening's URL is unique and `https://`, its status one of the list | Unique index; `CHECK` |
 | K-23 | An opening has a job exactly when it's tracked | Trigger |
 | K-24 | Each STAR part is at most 600 characters | `CHECK` |
 | K-25 | A story's facts exist | FK |
