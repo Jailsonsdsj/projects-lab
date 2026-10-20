@@ -2,6 +2,7 @@
 // a real OAuth token, the JSON-RPC a client sends, the platform tools.
 
 import { SELF } from "cloudflare:test";
+import { unboundedToolStrings } from "@projects-lab/shared";
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "./db";
 import { callTool, mcp, seedOwner, signInClaude } from "./oauth-flow";
@@ -119,31 +120,16 @@ describe("/mcp", () => {
 });
 
 describe("no tool accepts file content as an argument", () => {
-  it("every string any tool takes is short (≤ 1000) or one of a fixed list", async () => {
+  it("every string any tool takes is short (≤ 1000), a named long field (≤ 20,000) or one of a fixed list", async () => {
     const { message } = await mcp(token, "tools/list");
     const tools = (
       (message?.result ?? { tools: [] }) as {
         tools: { name: string; inputSchema: unknown }[];
       }
     ).tools;
-    const unbounded: string[] = [];
-    const walk = (schema: unknown, where: string) => {
-      if (!schema || typeof schema !== "object") return;
-      const s = schema as Record<string, unknown>;
-      if (
-        s.type === "string" &&
-        !Array.isArray(s.enum) &&
-        !(typeof s.maxLength === "number" && s.maxLength <= 1000)
-      )
-        unbounded.push(where);
-      for (const [key, value] of Object.entries(s.properties ?? {}))
-        walk(value, `${where}.${key}`);
-      if (s.items) walk(s.items, `${where}[]`);
-      for (const branch of ["anyOf", "oneOf", "allOf"] as const)
-        for (const [i, sub] of ((s[branch] as unknown[]) ?? []).entries())
-          walk(sub, `${where}|${i}`);
-    };
-    for (const tool of tools) walk(tool.inputSchema, tool.name);
+    const unbounded = tools.flatMap((tool) =>
+      unboundedToolStrings(tool.inputSchema, tool.name),
+    );
     expect(tools.length).toBeGreaterThanOrEqual(2);
     expect(unbounded).toEqual([]);
   });

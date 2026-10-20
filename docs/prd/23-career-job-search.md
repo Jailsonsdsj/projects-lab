@@ -27,7 +27,7 @@ A Claude Code routine (claude.ai/code/routines) with the **Projects-Lab and Gmai
 1. `career_get_search_criteria`; `career_list_openings` (so a seen opening isn't resurfaced; matched by URL).
 2. Search the sources with the queries; read each candidate.
 3. **Triage**: keep it only if every criterion holds (shape, hours, time zone, lane, not auto-rejected, within max age, rate at or above the floor when posted). Note the closest rejects with the one reason each failed.
-4. `career_save_openings`: the kept ones (company, role, lane, URL, posting text, posted date, rate if posted, why it's worth a look).
+4. `career_save_openings`: the kept ones (company, role, lane, URL, an excerpt of the posting of at most 4,000 characters, posted date, rate if posted, why it's worth a look), at most 20 a call.
 5. Send the digest with Gmail to the owner: the kept openings as a short table (company · role · lane · rate · why), the closest rejects, and a link to the app's Openings. No digest is sent for a run that kept nothing and rejected nothing close.
 
 The routine never applies, never tailors a document and never contacts anyone: scanning only (career-os: mixing sourcing with application work is how the routine stops happening).

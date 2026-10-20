@@ -22,6 +22,8 @@ export const FIT_MAX: Record<FitDimension, number> = {
 export const FIT_PAY_UNPOSTED = 7;
 export const FIT_APPLY_MIN = 75;
 export const FIT_MAYBE_MIN = 55;
+/** Gaps to expect, questions to ask, red flags. */
+export const FIT_NOTES_MAX_LENGTH = 2_000;
 /** Below this on constraints it's a skip, whatever the total. */
 export const FIT_CONSTRAINTS_FLOOR = 15;
 

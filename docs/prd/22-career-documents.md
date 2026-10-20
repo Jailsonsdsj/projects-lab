@@ -13,7 +13,7 @@ A read tool. Claude calls it before writing any document for a job; it's the onl
 - **The job's saved selection**, if a document was made before (A-7), so a second version starts from the first.
 - **The writing rules** (below) and **the layout** (below), as text.
 
-After writing, Claude saves what it used with `career_save_selection { jobId, itemIds, variant }`: the IDs only, never the file.
+After writing, Claude saves what it used with `career_save_selection { jobId, items: [{ kind, id }], variant }`: the IDs only, never the file.
 
 ## Writing rules (returned by the brief; career-os `/tailor-resume`)
 
@@ -57,7 +57,7 @@ There are no stored documents, so the tab is each job's **application kit**: the
 | Tool | Kind | Input | Returns |
 |---|---|---|---|
 | `career_document_brief` | read | `{ jobId, kind }` | Job, fitting items, `ask_first`, saved selection, rules, layout |
-| `career_save_selection` | write | `{ jobId, itemIds, variant }` | `{ jobId, selection }` |
+| `career_save_selection` | write | `{ jobId, items: [{ kind, id }], variant }` | `{ jobId, selection }` |
 | `career_save_job_kit` | write | `{ jobId, intro?, salary?, answers? }` | `{ jobId, kit }` |
 | `career_save_standard_answers` | write | `{ answers: [{ label, value }] }` | `{ answers }` |
 

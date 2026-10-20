@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toJSONSchema, type ZodType } from "zod";
+import { unboundedToolStrings } from "../core/tool-strings";
 import {
   addAreaInputSchema,
   addTopicsInputSchema,
@@ -209,8 +210,8 @@ describe("other inputs", () => {
   });
 });
 
-// The MCP tool-string rule (02-integration): every string a tool takes is
-// bounded (≤ 1000) or an enum, so no tool can carry file content.
+// The MCP tool-string rule (02-integration, core/tool-strings.ts): every
+// string a tool takes is bounded or an enum, so no tool can carry file content.
 describe("every study_* input is bounded", () => {
   const schemas = {
     listBacklogInputSchema,
@@ -227,22 +228,9 @@ describe("every study_* input is bounded", () => {
   };
 
   it("has no unbounded string anywhere in its JSON Schema", () => {
-    const unbounded: string[] = [];
-    const walk = (node: unknown, where: string) => {
-      if (!node || typeof node !== "object") return;
-      const s = node as Record<string, unknown>;
-      if (
-        s.type === "string" &&
-        !Array.isArray(s.enum) &&
-        !(typeof s.maxLength === "number" && s.maxLength <= 1000)
-      )
-        unbounded.push(where);
-      for (const [key, value] of Object.entries(s.properties ?? {}))
-        walk(value, `${where}.${key}`);
-      if (s.items) walk(s.items, `${where}[]`);
-    };
-    for (const [name, schema] of Object.entries(schemas))
-      walk(toJSONSchema(schema, { io: "input" }), name);
+    const unbounded = Object.entries(schemas).flatMap(([name, schema]) =>
+      unboundedToolStrings(toJSONSchema(schema, { io: "input" }), name),
+    );
     expect(unbounded).toEqual([]);
   });
 });
