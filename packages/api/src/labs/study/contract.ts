@@ -2,7 +2,11 @@
 // needs the database: Career gets `studyContract` at mount time and calls it
 // with its request's D1. The only way Career reaches Study Lab.
 import type { StudyContract } from "@projects-lab/shared";
-import { deriveGrade, isVerified } from "@projects-lab/shared/study";
+import {
+  deriveGrade,
+  isVerified,
+  NOTE_MAX_LENGTH,
+} from "@projects-lab/shared/study";
 import { addTopics } from "./backlog";
 
 export function studyContract(db: D1Database): StudyContract {
@@ -14,7 +18,8 @@ export function studyContract(db: D1Database): StudyContract {
           skillId,
           area,
           priority,
-          note,
+          // Study's note limit is Study's: a caller's longer note is cut, not refused.
+          note: note.slice(0, NOTE_MAX_LENGTH),
         })),
         new Date(),
         "UTC",

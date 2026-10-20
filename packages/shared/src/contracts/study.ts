@@ -7,6 +7,7 @@ export interface StudyContract {
    * Adds topics the backlog lacks; returns the topic ID ("FE-01") for every
    * skill, new or existing. `area` is a backlog area prefix ("FE"): a topic's
    * code carries it. A removed topic is restored; an existing one is unchanged.
+   * `note` is cut to Study's note length (120).
    */
   ensureTopics(
     input: {
