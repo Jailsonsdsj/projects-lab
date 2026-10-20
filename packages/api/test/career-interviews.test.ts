@@ -3,6 +3,11 @@
 // verified (derived, never stored), only Drive links become videos, and the
 // drill log keeps the weak spots. Storage is shared; tests run in order.
 import { SELF } from "cloudflare:test";
+import {
+  answersResponseSchema,
+  drillsResponseSchema,
+  storiesResponseSchema,
+} from "@projects-lab/shared/career";
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "./db";
 import {
@@ -326,5 +331,17 @@ describe("over MCP", () => {
     expect(await audit("career_save_answer")).toEqual([1]);
     expect(await audit("career_log_drill")).toEqual([1]);
     expect(await audit("career_list_drills")).toEqual([]);
+  });
+});
+
+// The web parses these reads with the shared schemas: the real output must fit.
+describe("responses the web reads", () => {
+  it("parse with @projects-lab/shared/career's schemas", async () => {
+    answersResponseSchema.parse(await ok(await api("/answers")));
+    answersResponseSchema.parse(
+      await ok(await api(`/answers?jobId=${ids.job}`)),
+    );
+    storiesResponseSchema.parse(await ok(await api("/stories")));
+    drillsResponseSchema.parse(await ok(await api("/drills?limit=50")));
   });
 });

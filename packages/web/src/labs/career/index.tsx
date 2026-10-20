@@ -2,6 +2,7 @@ import { labSummaryResponseSchema } from "@projects-lab/shared";
 import { apiFetch } from "../../core/api";
 import type { LabDefinition } from "../../core/lab-registry";
 import { DocumentsScreen } from "./DocumentsScreen";
+import { InterviewsScreen } from "./InterviewsScreen";
 import { JobScreen } from "./JobScreen";
 import { JobsScreen } from "./JobsScreen";
 import { ProfileScreen } from "./ProfileScreen";
@@ -53,6 +54,12 @@ export const careerLab: LabDefinition = {
       icon: "file",
       path: "/career/documents",
       screen: <DocumentsScreen />,
+    },
+    {
+      label: "Interviews",
+      icon: "lightbulb",
+      path: "/career/interviews",
+      screen: <InterviewsScreen />,
     },
   ],
 };

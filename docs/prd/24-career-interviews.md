@@ -32,7 +32,7 @@ After a session Claude saves: new or improved stories (`career_save_story`), ans
 
 ## Screens
 
-- **Interviews** (inside Career; a fifth tab or a section of the Job screen, decided in CA-00): Answers grouped by job then general, each with text and, if any, the embedded Drive player; Stories with their skills and verified state; Practice as a dated list with the weak answers to fix.
+- **Interviews** (`/career/interviews`, Career's fifth tab, CA-13; views Answers, Stories, Practice in `?view=`): Answers grouped by job then general, each with text and, if any, the embedded Drive player; Stories with their skills and verified state; Practice as a dated list with the weak answers to fix.
 - States per `00-platform`; the Drive player shows a message, not a blank box, when it can't load.
 
 ## Invariants (merged into `99-data-model.md`)
@@ -48,7 +48,7 @@ Approved by the owner on 2026-10-19 as proposed, **flagged to refine later** (CA
 3. **Only `drive.google.com/file/d/<id>` and `open?id=<id>` links** are accepted.
 4. **Drills happen in Claude**; the app keeps their log and shows the weak areas.
 5. **Negotiation drills need a salary range** on the job.
-6. **Where Interviews lives** (its own tab or inside each job) is CA-00's call; the routes in `00-platform` list four Career tabs today.
+6. **Interviews is a fifth Career tab** (`/career/interviews`: Answers, Stories, Practice), built that way in CA-13 because a tab is easier to reach on a phone than a section inside each job; CA-00 may still move it.
 
 ---
 

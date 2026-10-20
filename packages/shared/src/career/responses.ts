@@ -4,6 +4,7 @@
 import { z } from "zod";
 import { APPLICATION_STATUSES } from "./applications";
 import { FIT_DECISIONS } from "./fit";
+import { DRILL_MODES } from "./interviews";
 import { EXPERIENCE_KINDS, LINK_KINDS, SKILL_LEVELS } from "./profile";
 import { READINESS, REQUIREMENT_TYPES } from "./readiness";
 import { CURRENCIES, PAY_PERIODS } from "./salary";
@@ -269,3 +270,53 @@ export const searchCriteriaResponseSchema = z.object({
 export type SearchCriteria = NonNullable<
   z.infer<typeof searchCriteriaResponseSchema>["criteria"]
 >;
+
+export const storySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  situation: z.string(),
+  task: z.string(),
+  action: z.string(),
+  result: z.string(),
+  experienceId: z.string().nullable(),
+  facts: z.array(
+    z.object({ id: z.string(), text: z.string(), verified: z.boolean() }),
+  ),
+  skills: z.array(skillRef),
+  /** Derived: every fact it cites is live and verified. */
+  verified: z.boolean(),
+  updatedAt: z.string(),
+});
+export type Story = z.infer<typeof storySchema>;
+/** GET /api/career/stories */
+export const storiesResponseSchema = z.object({
+  stories: z.array(storySchema),
+});
+
+export const answerSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  answer: z.string(),
+  video: z.object({ fileId: z.string(), previewUrl: z.string() }).nullable(),
+  storyId: z.string().nullable(),
+  jobId: z.string().nullable(),
+  updatedAt: z.string(),
+});
+export type Answer = z.infer<typeof answerSchema>;
+/** GET /api/career/answers (with `intro` when asked for one job). */
+export const answersResponseSchema = z.object({
+  answers: z.array(answerSchema),
+  intro: z.string().optional(),
+});
+
+export const drillSchema = z.object({
+  id: z.string(),
+  at: z.string(),
+  mode: z.enum(DRILL_MODES),
+  topic: z.string(),
+  weakest: z.array(z.string()),
+  fix: z.string(),
+});
+export type Drill = z.infer<typeof drillSchema>;
+/** GET /api/career/drills */
+export const drillsResponseSchema = z.object({ drills: z.array(drillSchema) });
