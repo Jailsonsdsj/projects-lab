@@ -23,6 +23,18 @@ One web app that hosts **labs**: modules that each run one kind of productive wo
 |---|---|---|---|---|
 | Exams in the app | Writes an exam (questions and a hidden key) from a course; grades open and code answers | Sonnet 5.5 (`AI_MODEL`) | You, with "Take the test" | ST-13 |
 
+**The client** (`api/src/core/ai.ts`, AI-02): `askForJson` sends one Messages API request with plain `fetch` (`anthropic-version` `ANTHROPIC_VERSION`), forces a single tool whose input schema is the caller's Zod schema, and parses the tool's input with that schema before returning it. It waits at most `AI_TIMEOUT_MS` and **never retries**. Failures are `AiError`s, each with a message saying what to do:
+
+| Code | When | Route status |
+|---|---|---|
+| `ai_key_missing` | `ANTHROPIC_API_KEY` unset (read outside any `try`) | 502 |
+| `ai_key_invalid` | The API answers 401 or 403 | 502 |
+| `ai_rate_limited` | 429; `Retry-After` passed on | 503 |
+| `ai_overloaded` | 529, any 5xx, or the API unreachable | 503 |
+| `ai_timeout` | No answer within `AI_TIMEOUT_MS` | 504 |
+| `ai_refused` | Any other 4xx (the API's own message included) | 502 |
+| `ai_bad_reply` | Cut off at the token limit, no tool call, or the input doesn't fit the schema | 502 |
+
 ---
 
 ## 2. System context
