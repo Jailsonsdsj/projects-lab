@@ -125,7 +125,20 @@ test("takes the test: the form, generating, the new exam", async ({ page }) => {
   await noHorizontalScroll(page);
 
   await form.getByRole("button", { name: "Generate" }).click();
-  await expect(form.getByRole("status")).toContainText("Writing your exam…");
+  // The whole screen waits: a tap on the form (its button, always on screen in
+  // the sheet's footer) lands on the overlay instead.
+  const busy = page.getByRole("dialog", { name: "Writing your exam…" });
+  await expect(busy).toBeVisible();
+  const button = await form
+    .getByRole("button", { name: "Writing your exam" })
+    .boundingBox();
+  const hit = await page.evaluate(
+    ({ x, y }) => document.elementFromPoint(x, y)?.closest("dialog")?.className,
+    { x: (button?.x ?? 0) + 8, y: (button?.y ?? 0) + 8 },
+  );
+  expect(hit).toBe("busy");
+  await page.keyboard.press("Escape");
+  await expect(busy).toBeVisible();
   await expect(page).toHaveURL(/\/study\/exams\/new-exam$/);
   expect(sent).toEqual([
     { questions: 4, mix: { MC: 2, TF: 1, OPEN: 1, CODE: 0, CODE_MC: 0 } },

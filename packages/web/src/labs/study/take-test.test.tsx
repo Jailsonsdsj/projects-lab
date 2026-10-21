@@ -227,6 +227,67 @@ describe("Take the test", () => {
     expect(sent).toEqual([]);
   });
 
+  it("covers the whole screen while the exam is written, ignoring Escape, until it arrives", async () => {
+    tablet();
+    let arrive: (response: Response) => void = () => {};
+    api(
+      () =>
+        new Promise<Response>((resolve) => {
+          arrive = resolve;
+        }) as unknown as Response,
+    );
+    const user = userEvent.setup();
+    const router = open();
+    const form = await openForm(user);
+    await user.click(within(form).getByRole("button", { name: "Generate" }));
+    const busy = await screen.findByRole("dialog", {
+      name: "Writing your exam…",
+    });
+    expect(busy).toHaveAttribute("open");
+    expect(busy).toHaveTextContent("This can take up to a minute.");
+    // Escape asks a modal to close: this one stays.
+    const cancel = new Event("cancel", { cancelable: true });
+    busy.dispatchEvent(cancel);
+    expect(cancel.defaultPrevented).toBe(true);
+    expect(busy).toHaveAttribute("open");
+
+    arrive(
+      json({
+        exam: {
+          examId: "new-exam",
+          topicId: "CS-01",
+          level: "fast_track",
+          attempt: 4,
+          title: "Big-O",
+          questions: [],
+        },
+      }),
+    );
+    await vi.waitFor(() =>
+      expect(router.state.location.pathname).toBe("/study/exams/new-exam"),
+    );
+  });
+
+  it("lifts the overlay when writing fails", async () => {
+    tablet();
+    api(() =>
+      json(
+        { error: "ai_overloaded", message: "The AI service is busy." },
+        { status: 503 },
+      ),
+    );
+    const user = userEvent.setup();
+    open();
+    const form = await openForm(user);
+    await user.click(within(form).getByRole("button", { name: "Generate" }));
+    expect(
+      await within(form).findByText("Couldn't write the exam."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Writing your exam…" }),
+    ).toBeNull();
+  });
+
   it("says why it couldn't write the exam, keeps the choices, and retries with the same key", async () => {
     tablet();
     let fail = true;

@@ -10,6 +10,7 @@ import {
   Banner,
   type BannerTone,
   BottomTabs,
+  BusyOverlay,
   Button,
   type ButtonTone,
   type ButtonVariant,
@@ -165,6 +166,27 @@ function TabsDemo() {
         { id: "archived", label: "Archived", disabled: true },
       ]}
     />
+  );
+}
+
+function BusyOverlayDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        variant="outline"
+        tone="neutral"
+        onClick={() => {
+          setOpen(true);
+          setTimeout(() => setOpen(false), 3000);
+        }}
+      >
+        Show for 3 seconds
+      </Button>
+      <BusyOverlay open={open} title="Writing your exam…">
+        This can take up to a minute. Keep this screen open.
+      </BusyOverlay>
+    </>
   );
 }
 
@@ -597,6 +619,12 @@ export const CATALOG: readonly CatalogEntry[] = [
     inline: true,
     summary: "Bottom sheet on a native modal dialog.",
     examples: [{ label: "open / close", node: <SheetDemo /> }],
+  },
+  {
+    name: "BusyOverlay",
+    summary:
+      "A wait nothing may interrupt: a full-screen modal over everything, sheets included, a spinner and what's happening on a surface. Escape is ignored.",
+    examples: [{ label: "open for 3 s", node: <BusyOverlayDemo /> }],
   },
   {
     name: "Dialog",

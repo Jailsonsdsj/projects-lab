@@ -201,7 +201,9 @@ test("answers each type, keeps the draft, submits and shows the results", async 
     "1 question is not answered and will score 0.",
   );
   await confirm.getByRole("button", { name: "Submit" }).click();
-  await expect(page.getByRole("status")).toContainText("Grading your answers…");
+  await expect(
+    page.getByRole("dialog", { name: "Grading your answers…" }),
+  ).toBeVisible();
 
   const grade = page.getByRole("region", { name: "Grade" });
   await expect(grade).toContainText("6.3 / 10");
