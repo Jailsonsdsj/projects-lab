@@ -18,6 +18,7 @@
     "seed": "bash scripts/seed.sh",
     "provision": "tsx scripts/provision.ts",
     "design:extract": "tsx scripts/design-extract.ts",
+    "claude:dev": "claude --strict-mcp-config --mcp-config mcp.dev.json",
     "e2e": "playwright test -c e2e/playwright.config.ts",
     "e2e:journeys": "playwright test -c e2e/journeys/playwright.config.ts",
     "lint:tokens": "bash scripts/check-tokens.sh --self-test && bash scripts/check-tokens.sh"

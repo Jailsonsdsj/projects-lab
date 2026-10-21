@@ -277,6 +277,7 @@ Agents Claude can use here: `explore` (find where code lives), `reviewer` (revie
 | `pnpm lint` | Biome, plus the boundary, workflow, KDF, token and user-guide checks |
 | `pnpm lint:tokens` | Only the design-token check (no literal colours or sizes) |
 | `pnpm format` | Formats with Biome |
+| `pnpm claude:dev` | Starts Claude Code connected only to the local app (`mcp.dev.json`), with every production connector left out |
 | `pnpm e2e` | Browser tests in WebKit at four widths, against a mocked API |
 | `pnpm e2e:journeys` | End-to-end journeys on the real local stack (Worker, D1 and the built app) |
 | `pnpm verify:triggers` | Checks every database rule on a throwaway local database |
@@ -321,12 +322,41 @@ The local app has its own database and owner: your production passphrase doesn't
 
 The component gallery for every UI state is at `/dev/ui` in development.
 
+A local tab shows an **amber icon** and a title starting with **"Dev ·"** (on `localhost` or an IP address); production keeps the dark icon.
+
+### Testing in the dev environment
+
+Everything below runs against your local Worker and database. Nothing reaches production, as long as you start Claude with `pnpm claude:dev`.
+
+**1. Run the app.** `pnpm dev`, then sign in at `http://localhost:5173` with `projects-lab-dev`. Test every screen there. To try it on your phone or tablet, run `pnpm --filter web dev --host` and open the address it prints (same Wi-Fi). The tab still shows the dev icon.
+
+**2. Connect Claude Code to the local app only.**
+
+1. Build the web app once (the Worker serves it for the sign-in page): `pnpm --filter web build`.
+2. In this repository, `pnpm claude:dev`. It loads only `mcp.dev.json` (`projects-lab-dev` at `http://localhost:8787/mcp`) and leaves out every other connector: the production `projects-lab` server, and claude.ai's Projects Lab, Gmail and Drive.
+3. In the session, `/mcp` → `projects-lab-dev` → **Authenticate**. The browser opens the local sign-in page (dev icon): sign in with `projects-lab-dev` and **Allow**.
+4. Ask Claude to run `core_whoami`: the owner is `seed-user`. Then run `/mcp`; only `projects-lab-dev` is listed. If you see `projects-lab` or `claude.ai Projects Lab`, you started Claude the normal way: quit and use `pnpm claude:dev`.
+
+**3. Run the flows.** In that session, everything in [Workflows](#workflows) that needs only the connector: add topics and read the backlog, plan with `/roadmap`, map a job and send its gaps, write a resume or cover letter, practise an interview, update the profile. Check each result in the app at `localhost:5173`.
+
+**4. Courses and exams (`/learn`, `/final-exam`).** These push files to GitHub, and `study-materials` is the production content. Use a test copy:
+
+1. On GitHub, create a private repository `study-materials-dev` (yours to do).
+2. Clone it next to the real one: `git clone https://github.com/Jailsonsdsj/study-materials.git ../study-materials-dev`, then in it `git remote set-url origin https://github.com/Jailsonsdsj/study-materials-dev.git` and `git push -u origin main`.
+3. In `packages/api/.dev.vars`: `STUDY_MATERIALS_REPO=Jailsonsdsj/study-materials-dev`, and a `GITHUB_TOKEN` with read access to it. Restart `pnpm dev`.
+4. In `../study-materials-dev`, start Claude with the dev config: `claude --strict-mcp-config --mcp-config ../projects-lab/mcp.dev.json`, authenticate as in step 2, then `/add`, `/learn`, `/final-exam`, answer and grade. Courses push to the test repository, and the local app reads them from there.
+
+**5. The weekly job search.** The routine runs in Anthropic's cloud, which can't reach your machine, so it only ever uses production. To test the scan locally, paste the routine's prompt ([`routines/job-search.md`](routines/job-search.md)) into a `pnpm claude:dev` session and say "skip the email": Gmail isn't loaded there, so nothing is sent. Then review Jobs → Openings locally.
+
+**Not testable locally:** claude.ai, the desktop app and the phone app run in the cloud and can't reach `localhost`; test those surfaces in production. To start over with an empty local database, stop `pnpm dev` and run `pnpm seed`.
+
 ## Troubleshooting
 
 | You see | Do this |
 |---|---|
 | "Session expired" on the login screen | Sign in again |
 | Too many attempts at sign-in | Wait for the 15-minute window to end |
+| A dev Claude session shows production tools (`projects-lab`, `claude.ai Projects Lab`) | It was started the normal way: quit and start it with `pnpm claude:dev` |
 | Locally, lab screens show errors while Connections and Settings work | The local database is missing newer migrations: restart `pnpm dev` (it applies them), or reset with `pnpm seed` |
 | Locally, sign-in fails with the right passphrase (`projects-lab-dev`) | `packages/api/.dev.vars` is missing or has no `TOKEN_SIGNING_KEY`: create it (see [Local setup](#local-setup)) and restart `pnpm dev` |
 | Sign-in says there's no owner (`not_provisioned`) | The owner wasn't created: `pnpm provision` (`--remote` in production) |
