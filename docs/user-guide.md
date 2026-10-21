@@ -314,8 +314,10 @@ Claude never runs these; they're yours:
 ### Local setup
 
 1. `pnpm install`.
-2. `cp packages/api/.dev.vars.example packages/api/.dev.vars` and fill in `TOKEN_SIGNING_KEY`, `GITHUB_TOKEN` (read-only on `study-materials`) and `PUBLIC_ORIGIN`.
+2. `cp packages/api/.dev.vars.example packages/api/.dev.vars` and fill in `TOKEN_SIGNING_KEY` (any long random string: `openssl rand -base64 32`), `GITHUB_TOKEN` (read-only on `study-materials`; only courses and exams need it) and `PUBLIC_ORIGIN`. Restart `pnpm dev` after any change to this file.
 3. `pnpm seed`, then `pnpm dev`, and sign in with `projects-lab-dev`.
+
+The local app has its own database and owner: your production passphrase doesn't work there, and `projects-lab-dev` doesn't work in production.
 
 The component gallery for every UI state is at `/dev/ui` in development.
 
@@ -325,6 +327,7 @@ The component gallery for every UI state is at `/dev/ui` in development.
 |---|---|
 | "Session expired" on the login screen | Sign in again |
 | Too many attempts at sign-in | Wait for the 15-minute window to end |
+| Locally, sign-in fails with the right passphrase (`projects-lab-dev`) | `packages/api/.dev.vars` is missing or has no `TOKEN_SIGNING_KEY`: create it (see [Local setup](#local-setup)) and restart `pnpm dev` |
 | Sign-in says there's no owner (`not_provisioned`) | The owner wasn't created: `pnpm provision` (`--remote` in production) |
 | "You're offline" | Reconnect and tap **Retry**; opened screens show their saved copy |
 | A course says to open it online first | Open it once online; then it reads offline |
