@@ -256,10 +256,11 @@ describe("submitting", () => {
     expect(ai()).toHaveLength(1);
     const request = JSON.parse(ai()[0]?.body ?? "{}");
     expect(request.system).toContain(RULES_TEXT);
-    expect(request.tool_choice).toEqual({
-      type: "tool",
-      name: "grade_answers",
-    });
+    expect(request.tool_choice).toEqual({ type: "auto" });
+    expect(request.system).toContain(
+      "Answer only by calling the grade_answers tool, exactly once",
+    );
+    expect(request.tools[0].name).toBe("grade_answers");
     expect(request.messages[0].content).toContain(
       "Question 3 (OPEN) — grade it",
     );

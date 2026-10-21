@@ -1,7 +1,7 @@
 // The one Anthropic API client (AI-02; docs/architecture.md §1). Only the AI
 // integrations listed there call it. Plain fetch to the Messages API, no SDK.
-// A call asks for JSON in one shape: the model must answer through a single
-// tool whose input schema is the caller's Zod schema, and the reply is parsed
+// A call asks for JSON in one shape: the model is offered a single tool whose
+// input schema is the caller's Zod schema and told to answer only through it, and the reply is parsed
 // with that schema before anyone uses it. Never retried here: each call is
 // billed, and the owner decides whether to try again.
 import {
@@ -89,7 +89,7 @@ export async function askForJson<Schema extends ZodObject>(
       body: JSON.stringify({
         model: AI_MODEL,
         max_tokens: request.maxTokens,
-        system: request.system,
+        system: `${request.system}\n\nAnswer only by calling the ${request.tool.name} tool, exactly once, with no other text.`,
         messages: [{ role: "user", content: request.prompt }],
         tools: [
           {
@@ -98,7 +98,10 @@ export async function askForJson<Schema extends ZodObject>(
             input_schema: inputSchema,
           },
         ],
-        tool_choice: { type: "tool", name: request.tool.name },
+        // "auto": Sonnet 5.5 refuses a forced tool ("tool" or "any"). The
+        // system prompt asks for the one tool call; a reply without it is
+        // refused below (ai_bad_reply).
+        tool_choice: { type: "auto" },
       }),
       signal: AbortSignal.timeout(AI_TIMEOUT_MS),
     });
