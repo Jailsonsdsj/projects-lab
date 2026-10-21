@@ -88,19 +88,23 @@ describe("Exam viewer", () => {
     expect(await screen.findByText("Awaiting grade")).toBeInTheDocument();
   });
 
-  it("offers no PDF for an exam made in the app", async () => {
+  it("offers no PDF for an exam made in the app, and says it's to answer", async () => {
     api(() =>
       json({
-        exam: { ...exam({ pdfPath: null, source: "app" }), pdf: null },
+        exam: {
+          ...exam({
+            pdfPath: null,
+            source: "app",
+            grade: null,
+            gradedAt: null,
+          }),
+          pdf: null,
+        },
       }),
     );
     open();
-    expect(
-      await screen.findByRole("heading", {
-        level: 1,
-        name: "Final exam · Big-O Notation",
-      }),
-    ).toBeInTheDocument();
+    // The answer form is app-exam.test.tsx's: here, the frame around it.
+    expect(await screen.findByText("To answer")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open the PDF" })).toBeNull();
   });
 

@@ -58,6 +58,11 @@ export {
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { Prose, type ProseProps } from "./Prose";
 export { type HeadingLevel, headingIds, headingSlug } from "./prose-slug";
+export {
+  RadioGroup,
+  type RadioGroupProps,
+  type RadioOption,
+} from "./RadioGroup";
 export { ReadinessMeter, type ReadinessMeterProps } from "./ReadinessMeter";
 export {
   type Readiness,

@@ -37,6 +37,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `Input` | `.input` | Text input in a Field | `icon`, `search`, `action` (trailing button) + input props | default, filled, required, invalid, disabled, *hover, focus* |
 | `Textarea` | `.input--multiline` | Multi-line input in a Field | textarea props | default, invalid, disabled |
 | `Chip` | `.chip` | Filter toggle | `pressed` (aria-pressed), `count` | off, on, disabled, *hover, pressed* |
+| `RadioGroup` | `.radio-group`, `.radio` (app-components.css) | One choice among a few: native radios in a fieldset (arrows move, the legend names it), round boxes like Checkbox's | `label`, `name`, `value`, `options`, `onChange`, `inline`, `hideLabel`, `disabled` | unchecked, checked, inline, disabled, *hover, focus* |
 | `Checkbox` | `.check` | A `--size-touch` row around a `--size-checkbox` box | `mixed`, `invalid` + input props | unchecked, checked, mixed, invalid, disabled, *pressed, focus* |
 | `Badge` | `.badge` | Status label; semantic tones carry an icon | `tone` neutral · accent · success · warning · danger · info · verified · declared · gap · todo · doing · done · p1 · p2 · p3; `size` sm · md; `mono` | per tone |
 | `Tabs` | `.tabs` / `.tab` | ARIA tabs, one tab stop | `items` (label, count, disabled), `value`, `onChange` | selected, disabled, *hover, focus*; arrows, Home, End |

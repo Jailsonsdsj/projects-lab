@@ -34,6 +34,7 @@ import {
   PageTitle,
   ProgressBar,
   Prose,
+  RadioGroup,
   ReadinessMeter,
   RequirementRow,
   Select,
@@ -473,6 +474,62 @@ export const CATALOG: readonly CatalogEntry[] = [
           <Chip pressed={false} disabled>
             Archived
           </Chip>
+        ),
+      },
+    ],
+  },
+  {
+    name: "RadioGroup",
+    summary:
+      "One choice among a few: native radios in a fieldset, --size-touch rows, round boxes.",
+    examples: [
+      {
+        label: "a choice",
+        node: (
+          <RadioGroup
+            label="What is the cost of binary search?"
+            name="catalog-mc"
+            value="B"
+            options={[
+              { value: "A", label: "A) O(1)" },
+              { value: "B", label: "B) O(log n)" },
+              { value: "C", label: "C) O(n)" },
+            ]}
+            onChange={() => {}}
+          />
+        ),
+      },
+      {
+        label: "inline, unanswered",
+        node: (
+          <RadioGroup
+            label="I. O(2n) is O(n)."
+            name="catalog-tf"
+            value={null}
+            inline
+            options={[
+              { value: "true", label: "True" },
+              { value: "false", label: "False" },
+            ]}
+            onChange={() => {}}
+          />
+        ),
+      },
+      {
+        label: "disabled",
+        node: (
+          <RadioGroup
+            label="Submitted"
+            name="catalog-disabled"
+            value="false"
+            inline
+            disabled
+            options={[
+              { value: "true", label: "True" },
+              { value: "false", label: "False" },
+            ]}
+            onChange={() => {}}
+          />
         ),
       },
     ],

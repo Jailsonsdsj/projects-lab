@@ -62,11 +62,14 @@ Courses Claude recorded, grouped by area, in progress first. Tap one to read it.
 **Reader** (`/study/courses/:courseId`): full screen, one lesson per page with previous and next, diagrams, and **Show answer key** per lesson so answers stay hidden while you study. A course you've opened once reads offline.
 
 - **Outline** ("In this lesson", the lessons, the course): on phone, the list button opens it as a sheet. On tablet and desktop it's a column on the left; the **sidebar button** at the top left (as in Preview) hides it so the text uses the whole width, and shows it again. The reader remembers your choice on that device. Its **Exams** section lists this course's attempts: the grade, "Awaiting grade" (a Claude Code exam not graded yet) or "To answer" (an exam made in the app).
-- **Take the test** (the header's button on tablet, the medal icon on phone, and at the end of the last page): the app writes a final exam for this course. Choose the number of questions (1–20, 10 by default) and, optionally, how many of each type (the counts must add up), which lessons to cover, and a focus. **Generate** takes up to a minute; the exam is saved beside the course in `study-materials` and opens. Each exam is written by the AI and billed to your Anthropic API account. Answering it on the page and its grading come with the next update (ST-13e2).
+- **Take the test** (the header's button on tablet, the medal icon on phone, and at the end of the last page): the app writes a final exam for this course. Choose the number of questions (1–20, 10 by default) and, optionally, how many of each type (the counts must add up), which lessons to cover, and a focus. **Generate** takes up to a minute; the exam is saved beside the course in `study-materials` and opens. Each exam is written by the AI and billed to your Anthropic API account.
 
 #### Grades — `/study/grades`
 
-Graded exams, newest first, with the average grade of Done topics. Tap an exam to open it (`/study/exams/:examId`): its questions, the results once graded, and **Open the PDF**.
+Graded exams, newest first, with the average grade of Done topics. Tap an exam to open it (`/study/exams/:examId`).
+
+- **A Claude Code exam** shows its questions, the results once graded, and **Open the PDF**.
+- **An exam made in the app** opens as a form: choices for multiple choice, True or False for each statement, a text box for open questions, a field for each blank in code. Your answers save themselves a moment after each change ("Saved") and come back when you reopen the exam; offline they save once you're back. **Submit answers** asks to confirm (and how many are unanswered, which score 0), then grades: multiple choice and true or false against the key, open and code answers by the AI. You see the grade, each question with your answer, the correct one, the points and feedback, and below 7.0 the review suggestions (also added to the topic's note). The exam file in `study-materials` gets the same Results. Submitting needs a connection; if grading fails, your answers stay saved.
 
 ### Career Lab
 
@@ -160,7 +163,7 @@ Courses are made only in a Claude Code session opened in the `study-materials` r
 
 #### Take the final exam in the app — "Take the test"
 
-Open the course, tap **Take the test**, choose the questions and **Generate**. The app writes the exam with the AI (the same exam rules Claude Code follows), saves it beside the course and opens it; it shares attempt numbers with Claude Code exams. Answering and grading in the app come with ST-13e2.
+Open the course, tap **Take the test**, choose the questions and **Generate**. The app writes the exam with the AI (the same exam rules Claude Code follows), saves it beside the course and opens it; it shares attempt numbers with Claude Code exams. Answer it on the page and **Submit answers**: the grade is recorded like any other (the topic becomes Done; 7.0 or more makes the skill **Verified**). An unanswered app exam shows "To answer" in the course's Exams and the topic sheet.
 
 #### Take the final exam — `/final-exam` (Claude Code, in `study-materials`)
 

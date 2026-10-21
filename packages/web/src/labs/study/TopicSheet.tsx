@@ -92,7 +92,9 @@ function Attempts({ topicId }: { topicId: string }) {
             title={examTitle(exam)}
             meta={
               exam.grade === null || exam.gradedAt === null
-                ? "Awaiting grade"
+                ? exam.source === "app"
+                  ? "To answer"
+                  : "Awaiting grade"
                 : `Graded ${localDay(exam.gradedAt)}`
             }
             value={exam.grade === null ? undefined : formatGrade(exam.grade)}

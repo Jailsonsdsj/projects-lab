@@ -7,7 +7,7 @@ import {
   examReadResponseSchema,
   formatGrade,
 } from "@projects-lab/shared/study";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
   Badge,
@@ -21,6 +21,7 @@ import {
 } from "../../components/ui";
 import { apiFetch } from "../../core/api";
 import { ReadView } from "../../core/ReadView";
+import { AppExam } from "./AppExam";
 
 const LEVEL: Record<ExamRead["level"], string> = {
   fast_track: "Fast track",
@@ -42,6 +43,8 @@ const contentUrl = (file: { sha: string; name: string }) =>
 type Loaded = { exam: ExamRead; markdown: string } | { missing: string };
 
 function Exam({ exam, markdown }: { exam: ExamRead; markdown: string }) {
+  // Graded on this page (an app exam): the header shows it at once.
+  const [gradedHere, setGradedHere] = useState<number | null>(null);
   const navigate = useNavigate();
   const tablet = useMinWidth("--breakpoint-tablet");
   const back = () => {
@@ -76,9 +79,13 @@ function Exam({ exam, markdown }: { exam: ExamRead; markdown: string }) {
           </Badge>
           <span>{exam.skill}</span>
           <span aria-hidden="true">·</span>
-          {exam.grade === null || exam.gradedAt === null ? (
+          {gradedHere !== null ? (
+            <span>
+              Grade <b className="mono">{formatGrade(gradedHere)}</b> · today
+            </span>
+          ) : exam.grade === null || exam.gradedAt === null ? (
             <Badge size="sm" tone="todo">
-              Awaiting grade
+              {exam.source === "app" ? "To answer" : "Awaiting grade"}
             </Badge>
           ) : (
             <span>
@@ -97,7 +104,12 @@ function Exam({ exam, markdown }: { exam: ExamRead; markdown: string }) {
             Open the PDF
           </a>
         )}
-        <Prose markdown={markdown} large={tablet} />
+        {/* Made in the app: answered and graded here (ST-13e2). */}
+        {exam.source === "app" ? (
+          <AppExam examId={exam.examId} onGraded={setGradedHere} />
+        ) : (
+          <Prose markdown={markdown} large={tablet} />
+        )}
       </main>
     </>
   );
