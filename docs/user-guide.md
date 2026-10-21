@@ -314,11 +314,11 @@ Run the `.ts` scripts with `pnpm tsx scripts/<name>.ts …`. Their output goes t
 
 ### Owner-only steps
 
-Claude never runs these; they're yours:
+Claude never runs these; they're yours. `wrangler` isn't installed globally: run it as `npx wrangler …` from `packages/api` (`npx wrangler login` once, if it says you're not logged in), and add `--env=""` so it targets the production Worker, not `preview`.
 
 - `pnpm provision --remote` (create the production owner).
 - Any `--remote` command: `wrangler d1 execute … --remote` for imports and restores, `wrangler d1 time-travel restore`.
-- `wrangler secret put TOKEN_SIGNING_KEY` / `GITHUB_TOKEN` / `GITHUB_WRITE_TOKEN` / `ANTHROPIC_API_KEY` (create the API key at console.anthropic.com and set a monthly spend limit there).
+- `npx wrangler secret put <NAME> --env=""` for `TOKEN_SIGNING_KEY`, `GITHUB_TOKEN`, `GITHUB_WRITE_TOKEN` and `ANTHROPIC_API_KEY` (paste the value when asked; create the API key at console.anthropic.com and set a monthly spend limit there). `npx wrangler secret list --env=""` shows which are set, never their values.
 - Merging `developer` into `main` (that deploys).
 - Creating and changing routines at claude.ai/code/routines.
 
