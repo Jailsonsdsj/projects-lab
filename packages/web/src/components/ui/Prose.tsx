@@ -1,11 +1,9 @@
 import type { Element, ElementContent } from "hast";
 import {
-  Children,
   createContext,
   type ReactNode,
   useContext,
   useEffect,
-  useId,
   useState,
 } from "react";
 import Markdown, { type Components } from "react-markdown";
@@ -17,6 +15,16 @@ import { Icon } from "./Icon";
 import type { IconName } from "./icons";
 import { highlight } from "./prose-highlight";
 import { MermaidDiagram } from "./prose-mermaid";
+import {
+  type QuickCheckAnswer,
+  QuickCheckContext,
+  Quiz,
+  QuizOption,
+  QuizOptions,
+  QuizStatement,
+  QuizStatements,
+  QuizStem,
+} from "./prose-quiz";
 import { type CalloutKind, remarkCourse } from "./prose-remark";
 import { type HeadingLevel, rehypeHeadingIds } from "./prose-slug";
 
@@ -35,6 +43,9 @@ export interface ProseProps {
    *  is an in-app path handed to `onNavigate`. Without it, links are as written. */
   resolveLink?: (href: string) => string;
   onNavigate?: (path: string) => void;
+  /** The page's quick-check answers by question number: each question then
+   *  checks itself when answered. */
+  answers?: Record<number, QuickCheckAnswer>;
   className?: string;
 }
 
@@ -100,22 +111,34 @@ export function Prose({
   headingLevels,
   resolveLink,
   onNavigate,
+  answers,
   className,
 }: ProseProps) {
   return (
     <ImageContext.Provider value={resolveImage}>
       <LinkContext.Provider value={{ resolveLink, onNavigate }}>
-        <article className={cx("prose", large && "prose--lg", className)}>
-          <Markdown
-            remarkPlugins={[remarkGfm, remarkCourse]}
-            rehypePlugins={[[rehypeHeadingIds, { levels: headingLevels }]]}
-            components={COMPONENTS}
-          >
-            {markdown}
-          </Markdown>
-        </article>
+        <QuickCheckContext.Provider value={{ answers, render: explanation }}>
+          <article className={cx("prose", large && "prose--lg", className)}>
+            <Markdown
+              remarkPlugins={[remarkGfm, remarkCourse]}
+              rehypePlugins={[[rehypeHeadingIds, { levels: headingLevels }]]}
+              components={COMPONENTS}
+            >
+              {markdown}
+            </Markdown>
+          </article>
+        </QuickCheckContext.Provider>
       </LinkContext.Provider>
     </ImageContext.Provider>
+  );
+}
+
+/** An answer key's explanation, in the same Markdown (no heading ids). */
+function explanation(markdown: string) {
+  return (
+    <Markdown remarkPlugins={[remarkGfm]} components={COMPONENTS}>
+      {markdown}
+    </Markdown>
   );
 }
 
@@ -216,66 +239,6 @@ function Callout({
   );
 }
 
-interface QuizState {
-  name: string;
-  stemId: string;
-  selected: string | null;
-  select: (letter: string) => void;
-}
-const QuizContext = createContext<QuizState | null>(null);
-
-/** A multiple-choice quick-check question. Checking answers arrives with the
- *  Study Lab, which owns the answer key. */
-function Quiz({ children }: { children?: ReactNode }) {
-  const id = useId();
-  const [selected, select] = useState<string | null>(null);
-  const [stem, ...options] = Children.toArray(children);
-  const stemId = `${id}-q`;
-  return (
-    <QuizContext.Provider value={{ name: id, stemId, selected, select }}>
-      <section className="quiz" aria-labelledby={stemId}>
-        <span className="kicker">Quick check</span>
-        {stem}
-        <div className="quiz__opts" role="radiogroup" aria-labelledby={stemId}>
-          {options}
-        </div>
-      </section>
-    </QuizContext.Provider>
-  );
-}
-
-function QuizStem({ children }: { children?: ReactNode }) {
-  const quiz = useContext(QuizContext);
-  return (
-    <p className="quiz__q" id={quiz?.stemId}>
-      {children}
-    </p>
-  );
-}
-
-function QuizOption({
-  letter,
-  children,
-}: {
-  letter: string;
-  children?: ReactNode;
-}) {
-  const quiz = useContext(QuizContext);
-  const checked = quiz?.selected === letter;
-  return (
-    <label className={cx("quiz__opt", checked && "is-selected")}>
-      <input
-        type="radio"
-        name={quiz?.name}
-        checked={checked}
-        onChange={() => quiz?.select(letter)}
-      />
-      <span className="quiz__letter">{letter}</span>
-      <span>{children}</span>
-    </label>
-  );
-}
-
 /** Right-aligned GFM columns are numbers: the bundle sets them in mono (`.num`). */
 function cell(tag: "th" | "td") {
   return function Cell({
@@ -306,5 +269,8 @@ const COMPONENTS = {
   "x-callout": Callout,
   "x-quiz": Quiz,
   "x-quiz-stem": QuizStem,
+  "x-quiz-options": QuizOptions,
   "x-quiz-option": QuizOption,
+  "x-quiz-statements": QuizStatements,
+  "x-quiz-statement": QuizStatement,
 } as unknown as Components;

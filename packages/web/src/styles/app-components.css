@@ -86,7 +86,8 @@
 .check:active > input {
   background-image: var(--gradient-pressed);
 }
-.quiz__opt:has(> input:focus-visible) {
+.quiz__opt:has(> input:focus-visible),
+.quiz__tfopt:has(> input:focus-visible) {
   outline: var(--focus-width) solid var(--color-focus);
   outline-offset: var(--focus-offset);
 }

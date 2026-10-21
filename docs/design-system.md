@@ -65,7 +65,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `BottomTabs` | `.btabs` | Phone navigation | `label`, `items` (current) | current, *hover, pressed, focus* |
 | `SideRail` | `.rail` | Tablet navigation | `section`, `switcher`, `items`, `footItems`, `compact` | full, compact, current |
 | `Icon` | `.icon` | One of the bundle's 43 icons | `name`, `size` xs · sm · md · lg, `label` (else decorative) | — |
-| `Prose` | `.prose` | Course Markdown (no raw HTML) | `markdown`, `large`, `resolveImage` (relative images, e.g. a course's `_img/`) | callouts, code (Copy), tables, figures, quiz selection; ` ```mermaid ` drawn as a diagram (Mermaid loaded only then, strict mode, token colours, natural size scrolling sideways; the code shows until drawn or if it can't be) |
+| `Prose` | `.prose` | Course Markdown (no raw HTML) | `markdown`, `large`, `resolveImage` (relative images, e.g. a course's `_img/`), `answers` (quick-check key by question number) | callouts, code (Copy), tables, figures, quick check (`answers`: choice, true/false and open questions checked as answered, `.is-correct` / `.is-wrong`); ` ```mermaid ` drawn as a diagram (Mermaid loaded only then, strict mode, token colours, natural size scrolling sideways; the code shows until drawn or if it can't be) |
 
 Helpers (no UI): `cx`, `cssDurationMs`, `useMinWidth`, `useToast`, `linkClick`, `ICONS`, `BADGE_ICON`, `initialsOf`, `headingSlug` and `headingIds` (the ids Prose gives every H3, for a reader's outline).
 

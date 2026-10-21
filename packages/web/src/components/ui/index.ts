@@ -57,6 +57,7 @@ export {
 } from "./PageHeader";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { Prose, type ProseProps } from "./Prose";
+export type { QuickCheckAnswer } from "./prose-quiz";
 export { type HeadingLevel, headingIds, headingSlug } from "./prose-slug";
 export {
   RadioGroup,

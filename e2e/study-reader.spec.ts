@@ -195,3 +195,41 @@ test("draws diagrams in the token colours, dark scheme included", async ({
   });
   expect(drawn).toBe(ink);
 });
+
+// The quick check answers itself from the lesson's key. jsdom has no cascade:
+// green and red are checked here, against computed styles.
+test("checks the quick check as it's answered, in green and red", async ({
+  page,
+}) => {
+  await page.goto("/study/courses/course-bigo?p=2");
+  const choice = page.getByRole("radiogroup", {
+    name: "Which complexity class describes binary search on a sorted array?",
+  });
+  await choice.getByText("O(n)", { exact: true }).click();
+  const wrong = choice.locator(".quiz__opt.is-wrong");
+  const right = choice.locator(".quiz__opt.is-correct");
+  await expect(right).toContainText("O(log n)");
+  const tint = (el: import("@playwright/test").Locator) =>
+    el.evaluate((node) => getComputedStyle(node).backgroundColor);
+  const probe = (token: string) =>
+    page.evaluate((t) => {
+      const el = document.createElement("span");
+      el.style.backgroundColor = `var(${t})`;
+      document.body.append(el);
+      const value = getComputedStyle(el).backgroundColor;
+      el.remove();
+      return value;
+    }, token);
+  const success = await probe("--color-success-tint");
+  const danger = await probe("--color-danger-tint");
+  await expect.poll(() => tint(right)).toBe(success);
+  await expect.poll(() => tint(wrong)).toBe(danger);
+
+  const statement = page.getByRole("radiogroup", {
+    name: /A single for loop over an array is always/,
+  });
+  await statement.getByText("True", { exact: true }).click();
+  await expect(statement).toHaveClass(/is-wrong/);
+  await expect.poll(() => tint(statement)).toBe(danger);
+  await noHorizontalScroll(page);
+});

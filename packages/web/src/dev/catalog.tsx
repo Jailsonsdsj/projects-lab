@@ -130,11 +130,26 @@ const SAMPLE_COURSE = `## Big-O in one lesson
 const byId = new Map(users.map((u) => [u.id, u]));
 \`\`\`
 
+### ✅ Quick check
+
 1. Two nested loops over n items are roughly…
    - A) O(n)
    - B) O(n²)
    - C) O(log n)
+2. True or false?
+   - I. A Map lookup is O(1) on average.
+   - II. Sorting is O(n).
+3. Why index users by id before the loop?
 `;
+
+const SAMPLE_ANSWERS = {
+  1: { choice: "B", explanation: "Each of the n items scans all n." },
+  2: {
+    truths: { I: true, II: false },
+    explanation: "II: comparison sorts are O(n log n).",
+  },
+  3: { explanation: "Each lookup becomes O(1), so the loop is O(n + m)." },
+};
 
 function TabsDemo() {
   const [value, setValue] = useState("all");
@@ -1250,9 +1265,13 @@ export const CATALOG: readonly CatalogEntry[] = [
   },
   {
     name: "Prose",
-    summary: "Course Markdown: callouts, table, code, quiz.",
+    summary: "Course Markdown: callouts, table, code, quick check.",
     examples: [
       { label: "sample lesson", node: <Prose markdown={SAMPLE_COURSE} /> },
+      {
+        label: "quick check with answers",
+        node: <Prose markdown={SAMPLE_COURSE} answers={SAMPLE_ANSWERS} />,
+      },
     ],
   },
 ];

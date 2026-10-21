@@ -297,6 +297,25 @@ describe("Course reader", () => {
     expect(router.state.location.pathname).toBe("/study/courses");
   });
 
+  it("checks the lesson's quick check against its own answer key", async () => {
+    api();
+    const user = userEvent.setup();
+    openReader("/study/courses/course-bigo?p=2");
+    const group = await screen.findByRole("radiogroup", {
+      name: "Which complexity class describes binary search on a sorted array?",
+    });
+    await user.click(within(group).getByLabelText(/O\(n\)$/));
+    expect(screen.getByText("Not quite: the answer is B.")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Binary search halves the search space/),
+    ).toBeInTheDocument();
+    const fire = screen.getByRole("radiogroup", {
+      name: /A single for loop over an array is always/,
+    });
+    await user.click(within(fire).getByLabelText("False"));
+    expect(fire).toHaveClass("is-correct");
+  });
+
   it("keeps each lesson's answers out of the page until asked for", async () => {
     api();
     const user = userEvent.setup();

@@ -3,7 +3,7 @@
 // `## Lesson n · title`, and the wrap-up (the H2s after the lessons). The
 // answer key, from the rule before `# Answer key`, is kept apart. Headings
 // inside fenced code blocks don't count.
-import { headingIds } from "../../components/ui";
+import { headingIds, type QuickCheckAnswer } from "../../components/ui";
 
 export interface Section {
   /** The H3's text, and its anchor in the page. */
@@ -32,6 +32,63 @@ export interface Course {
   answerKey: string | null;
   /** Each lesson's answers (its `## Lesson n` section of the key), by number. */
   answers: Record<number, string>;
+  /** The same, read question by question for the quick checks: lesson → question → answer. */
+  checks: Record<number, Record<number, QuickCheckAnswer>>;
+}
+
+const ITEM = /^(\d+)[.)]\s+/;
+const CHOICE = /^\*\*([A-E])[.)]?\*\*[.):]?\s*|^([A-E])[.)]\s+/;
+const NUMERAL = "(?:X|IX|IV|V?I{1,3}|V)";
+const TRUTHS = new RegExp(
+  `^\\**((?:${NUMERAL}\\s*[-–—:=]\\s*(?:T|F|True|False)\\b[\\s,;]*)+)\\**\\.?\\s*`,
+);
+const TRUTH = new RegExp(`(${NUMERAL})\\s*[-–—:=]\\s*(T|F|True|False)\\b`, "g");
+const MODEL = /^\*\*Model answer:?\*\*:?\s*/i;
+
+/** One lesson's answers, question by question: `1. **B.** why`,
+ *  `2. I-F, II-T… why`, `3. **Model answer:** text`. Continuation lines
+ *  (indented, code included) belong to the item above. */
+export function parseChecks(
+  markdown: string,
+): Record<number, QuickCheckAnswer> {
+  const items: { n: number; lines: string[] }[] = [];
+  for (const { line, code } of scan(markdown)) {
+    const start = code ? null : ITEM.exec(line);
+    if (start) {
+      items.push({ n: Number(start[1]), lines: [line.slice(start[0].length)] });
+      continue;
+    }
+    const item = items.at(-1);
+    if (!item) continue;
+    // Indented under the item's marker: drop that indent.
+    item.lines.push(line.replace(/^ {1,4}/, ""));
+  }
+
+  const checks: Record<number, QuickCheckAnswer> = {};
+  for (const { n, lines } of items) {
+    const body = lines.join("\n").trim();
+    const choice = CHOICE.exec(body);
+    if (choice) {
+      checks[n] = {
+        choice: choice[1] ?? choice[2],
+        explanation: body.slice(choice[0].length).trim(),
+      };
+      continue;
+    }
+    const truths = TRUTHS.exec(body);
+    if (truths) {
+      const found: Record<string, boolean> = {};
+      for (const [, numeral, value] of (truths[1] ?? "").matchAll(TRUTH))
+        found[numeral as string] = value?.startsWith("T") ?? false;
+      checks[n] = {
+        truths: found,
+        explanation: body.slice(truths[0].length).trim(),
+      };
+      continue;
+    }
+    checks[n] = { explanation: body.replace(MODEL, "").trim() };
+  }
+  return checks;
 }
 
 /** The answer key's `## Lesson n` sections by number, and what follows them
@@ -135,6 +192,7 @@ export function splitCourse(markdown: string): Course {
       ],
       answerKey,
       answers,
+      checks: checksOf(answers),
     };
   }
 
@@ -186,5 +244,12 @@ export function splitCourse(markdown: string): Course {
     pages,
     answerKey,
     answers,
+    checks: checksOf(answers),
   };
+}
+
+function checksOf(answers: Record<number, string>) {
+  return Object.fromEntries(
+    Object.entries(answers).map(([n, markdown]) => [n, parseChecks(markdown)]),
+  ) as Course["checks"];
 }

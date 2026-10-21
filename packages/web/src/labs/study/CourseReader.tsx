@@ -402,6 +402,7 @@ function Reader({ course, parsed }: Loaded) {
             markdown={page.markdown}
             large={tablet}
             resolveImage={imageResolver(course.images)}
+            answers={page.kind === "lesson" ? parsed.checks[page.n] : undefined}
           />
           {page.kind === "lesson" && parsed.answers[page.n] && (
             // A new key per page: the answers start hidden on every lesson.
