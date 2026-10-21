@@ -165,10 +165,26 @@ learn_exam(
   level,                                 -- fast_track | essential | specialized (S-17)
   attempt,                               -- integer >= 1; next in sequence (S-13, S-14)
   md_path,                               -- "…__exam-<n>.md", unique (S-15)
-  pdf_path,                              -- "…__exam-<n>.pdf", unique (S-15)
+  pdf_path?,                             -- "…__exam-<n>.pdf", unique; null only for an app exam (S-15, S-22)
+  source,                                -- claude | app (S-22); existing exams are claude
   created_at,
   grade?,                                -- integer tenths 0..100 (S-16)
   graded_at?
+)
+
+-- An exam made in the app (12 § Exams in the app, ST-13): what the model wrote,
+-- the key it keeps from the owner until grading, the draft, the results.
+learn_exam_paper(
+  exam_id,                               -- PK, FK learn_exam; an app exam only (S-18)
+  title,                                 -- not blank
+  settings_json,                         -- the "Take the test" form (S-19: never changes)
+  questions_json,                        -- questions only (S-19)
+  key_json,                              -- never sent before grading (S-19)
+  draft_json,                            -- the answers so far; frozen on submit (S-20)
+  submitted_at?,                         -- set with results_json, once (S-21)
+  results_json?,                         -- per question: accuracy, feedback (S-21)
+  created_at,
+  updated_at
 )
 ```
 
@@ -192,9 +208,14 @@ Every column above without `?` is `NOT NULL`.
 | S-12 | `learn_course.path` is unique, under `Study Lab/`, ending in `.md` | Unique index; `CHECK (path GLOB 'Study Lab/*.md')` | `0008_study_tables` (ST-02) |
 | S-13 | `learn_exam.attempt` is an integer >= 1, unique per topic and level | `CHECK (typeof(attempt) = 'integer' AND attempt >= 1)`; unique index on `(topic_id, level, attempt)` | `0008_study_tables` (ST-02) |
 | S-14 | A new attempt is one past the topic's highest at that level | `BEFORE INSERT` trigger comparing with `MAX(attempt)` | `0009_study_triggers` (ST-02) |
-| S-15 | Exam paths are unique, under `Study Lab/`, ending in `.md` and `.pdf` | Unique indexes; `CHECK (md_path GLOB 'Study Lab/*.md' AND pdf_path GLOB 'Study Lab/*.pdf')` | `0008_study_tables` (ST-02) |
+| S-15 | Exam paths are unique, under `Study Lab/`, ending in `.md` and `.pdf` (the `.pdf` rule moved to S-22's trigger in ST-13b, `pdf_path` being nullable) | Unique indexes; `CHECK (md_path GLOB 'Study Lab/*.md' AND pdf_path GLOB 'Study Lab/*.pdf')` | `0008_study_tables` (ST-02) |
 | S-16 | An exam is created ungraded; `grade` (integer 0..100) and `graded_at` are set together; once graded, `grade` stays an integer 0..100 (it can be corrected, never cleared) and `graded_at` never changes | `BEFORE INSERT` and `BEFORE UPDATE OF grade, graded_at` triggers (`grade` is nullable, so a trigger, not a CHECK) | `0009_study_triggers` (ST-02) |
 | S-17 | `learn_exam.level` is one of the three levels | `CHECK (level IN (…))` | `0008_study_tables` (ST-02) |
+| S-18 | A paper belongs to an exam made in the app, one per exam | `BEFORE INSERT` trigger on `learn_exam_paper` (the exam's `source` is `app`); `exam_id` is the primary key | `0016_exam_source_and_paper_triggers` (ST-13b) |
+| S-19 | A paper's questions, key, title and settings never change | `BEFORE UPDATE` trigger | `0016_exam_source_and_paper_triggers` (ST-13b) |
+| S-20 | The draft freezes once the answers are submitted | `BEFORE UPDATE OF draft_json` trigger | `0016_exam_source_and_paper_triggers` (ST-13b) |
+| S-21 | `submitted_at` and `results_json` are set together, once, and the results are JSON (a paper may be written submitted, as a restore does) | `BEFORE INSERT` and `BEFORE UPDATE` triggers; the other JSON columns `CHECK (json_valid(…))` | `0015_exam_source_and_paper`, `0016_…_triggers` (ST-13b) |
+| S-22 | `learn_exam.source` is `claude` or `app` and never changes; only an `app` exam has no `.pdf`, and a `.pdf` is under `Study Lab/` | `CHECK (source IN (…))`; `BEFORE INSERT` and `BEFORE UPDATE OF pdf_path, source` triggers | `0015_exam_source_and_paper`, `0016_…_triggers` (ST-13b) |
 
 **Build notes.** The seven areas are seeded by `0010_study_areas` (fixed IDs `area-cs` … `area-se`). The tables live in `api/src/labs/study/schema.ts`, which `drizzle.config.ts` reads after core's. SQLite's INTEGER affinity turns numeric text (`'1'`, `'85'`) into integers, so only non-numeric text reaches the `typeof` checks. A topic's code is claimed in one `db.batch()`: `UPDATE learn_area SET next_seq = next_seq + 1 WHERE id = ?`, then `INSERT INTO learn_topic (…) SELECT …, prefix || '-' || printf('%02d', next_seq - 1), … FROM learn_area WHERE id = ?`, never read-then-write. All Study probes join `invariants.test.ts` and `verify-triggers.sh`.
 

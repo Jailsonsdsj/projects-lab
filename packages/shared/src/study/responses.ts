@@ -8,6 +8,7 @@ import {
   TOPIC_LEVELS,
   TOPIC_STATUSES,
 } from "./backlog";
+import { EXAM_SOURCES } from "./exam-paper";
 
 export const areaSchema = z.object({
   prefix: z.string(),
@@ -97,7 +98,9 @@ const examFields = {
   level: z.enum(COURSE_LEVELS),
   attempt: z.number().int(),
   mdPath: z.string(),
-  pdfPath: z.string(),
+  /** Null for an exam made in the app (no PDF). */
+  pdfPath: z.string().nullable(),
+  source: z.enum(EXAM_SOURCES),
   createdAt: z.string(),
   /** Integer tenths; null while awaiting a grade. */
   grade: z.number().int().nullable(),
@@ -116,7 +119,7 @@ export const examReadResponseSchema = z.object({
     ...examFields,
     skill: z.string(),
     md: z.object({ sha: z.string(), name: z.string() }),
-    pdf: z.object({ sha: z.string(), name: z.string() }),
+    pdf: z.object({ sha: z.string(), name: z.string() }).nullable(),
   }),
 });
 export type ExamRead = z.infer<typeof examReadResponseSchema>["exam"];

@@ -15,6 +15,7 @@ const EXAM = {
   attempt: 1,
   mdPath: `${BASE}.md`,
   pdfPath: `${BASE}.pdf`,
+  source: "claude",
   createdAt: "2026-10-18T12:00:00.000Z",
   grade: 85,
   gradedAt: "2026-10-18T15:00:00.000Z",

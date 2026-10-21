@@ -30,6 +30,13 @@ beforeAll(async () => {
       `UPDATE learn_exam SET grade = 85, graded_at = 'g1' WHERE id = 'e1'`,
       `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at) VALUES ('e2', 't1', 'essential', 2, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__essential__exam-2.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__essential__exam-2.pdf', 't')`,
       `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at) VALUES ('e3', 't1', 'fast_track', 1, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-1.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-1.pdf', 't')`,
+      // Exams made in the app (ST-13b), no PDF: ae1's paper submitted, ae3's
+      // a draft only, ae2 without a paper.
+      `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('ae1', 't1', 'fast_track', 2, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-2.md', NULL, 'app', 't')`,
+      `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('ae2', 't1', 'fast_track', 3, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-3.md', NULL, 'app', 't')`,
+      `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('ae3', 't1', 'fast_track', 4, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-4.md', NULL, 'app', 't')`,
+      `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at, submitted_at, results_json) VALUES ('ae1', 'Big-O', '{}', '[]', '[]', '[]', 't', 't', 's', '[]')`,
+      `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('ae3', 'Big-O', '{}', '[]', '[]', '[]', 't', 't')`,
       // Career Lab (CA-02a): a person, an experience with a fact, an education,
       // a declared skill, a scored and an unscored job with requirements and an event.
       `INSERT INTO skill (id, name, created_at) VALUES ('cs1', 'TypeScript', 't')`,
@@ -389,6 +396,22 @@ describe("permitted writes succeed", () => {
       "K-28 negotiation drill",
       `INSERT INTO career_drill (id, at, mode, topic, weakest_json, fix) VALUES ('cd3', 't3', 'negotiation', 'Acme rate', '["Anchored low"]', 'Open at the top')`,
     ],
+    [
+      "S-22 an app exam without a PDF",
+      `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('ae4', 't1', 'fast_track', 5, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-5.md', NULL, 'app', 't')`,
+    ],
+    [
+      "S-18 a paper for an app exam",
+      `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('ae4', 'Big-O', '{}', '[]', '[]', '[]', 't', 't')`,
+    ],
+    [
+      "S-20 a draft saved",
+      `UPDATE learn_exam_paper SET draft_json = '[{"type":"OPEN","text":"a"}]', updated_at = 't2' WHERE exam_id = 'ae4'`,
+    ],
+    [
+      "S-21 submitted with results",
+      `UPDATE learn_exam_paper SET submitted_at = 's', results_json = '[]' WHERE exam_id = 'ae4'`,
+    ],
   ])("%s", async (_, sql) => {
     await expect(run(sql)).resolves.toBeDefined();
   });
@@ -660,7 +683,7 @@ const forbidden: [string, string, string][] = [
   ],
   [
     "S-15 pdf path not a PDF",
-    "learn_exam_path_layout",
+    "learn_exam_pdf",
     `UPDATE learn_exam SET pdf_path = 'Study Lab/a/b/b__essential__exam-2.md' WHERE id = 'e2'`,
   ],
   [
@@ -712,6 +735,116 @@ const forbidden: [string, string, string][] = [
     "S-17 exam level unset",
     "learn_exam_level_allowed",
     `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at) VALUES ('xe4', 't1', 'unset', 1, 'Study Lab/a/b/b__x__exam-x4.md', 'Study Lab/a/b/b__x__exam-x4.pdf', 't')`,
+  ],
+  [
+    "S-22 a Claude exam without a PDF",
+    "learn_exam_pdf",
+    `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('xa1', 't1', 'fast_track', 6, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-6.md', NULL, 'claude', 't')`,
+  ],
+  [
+    "S-22 an unknown source",
+    "learn_exam_source_allowed",
+    `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('xa2', 't1', 'fast_track', 6, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-6.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-6.pdf', 'web', 't')`,
+  ],
+  [
+    "S-22 a source changed",
+    "learn_exam_pdf",
+    `UPDATE learn_exam SET source = 'app' WHERE id = 'e1'`,
+  ],
+  [
+    "S-22 a Claude exam's PDF cleared",
+    "learn_exam_pdf",
+    `UPDATE learn_exam SET pdf_path = NULL WHERE id = 'e1'`,
+  ],
+  [
+    "S-22 an app exam's PDF outside Study Lab",
+    "learn_exam_pdf",
+    `UPDATE learn_exam SET pdf_path = 'exam.pdf' WHERE id = 'ae1'`,
+  ],
+  [
+    "S-18 a paper for a Claude exam",
+    "learn_exam_paper: only an exam made in the app",
+    `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('e1', 'Big-O', '{}', '[]', '[]', '[]', 't', 't')`,
+  ],
+  [
+    "S-18 a paper for no exam",
+    "learn_exam_paper: only an exam made in the app",
+    `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('nope', 'Big-O', '{}', '[]', '[]', '[]', 't', 't')`,
+  ],
+  [
+    "S-18 a second paper for an exam",
+    "UNIQUE constraint failed: learn_exam_paper.exam_id",
+    `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('ae1', 'Big-O', '{}', '[]', '[]', '[]', 't', 't')`,
+  ],
+  [
+    "S-18 settings not JSON",
+    "learn_exam_paper_json",
+    `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('ae2', 'Big-O', 'x', '[]', '[]', '[]', 't', 't')`,
+  ],
+  [
+    "S-18 a blank title",
+    "learn_exam_paper_title",
+    `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('ae2', '  ', '{}', '[]', '[]', '[]', 't', 't')`,
+  ],
+  [
+    "S-19 the questions changed",
+    "the questions and key never change",
+    `UPDATE learn_exam_paper SET questions_json = '[1]' WHERE exam_id = 'ae3'`,
+  ],
+  [
+    "S-19 the key changed",
+    "the questions and key never change",
+    `UPDATE learn_exam_paper SET key_json = '[1]' WHERE exam_id = 'ae3'`,
+  ],
+  [
+    "S-19 the title changed",
+    "the questions and key never change",
+    `UPDATE learn_exam_paper SET title = 'Other' WHERE exam_id = 'ae3'`,
+  ],
+  [
+    "S-19 the settings changed",
+    "the questions and key never change",
+    `UPDATE learn_exam_paper SET settings_json = '{"questions":3}' WHERE exam_id = 'ae3'`,
+  ],
+  [
+    "S-21 submitted without results",
+    "learn_exam_paper_submitted",
+    `UPDATE learn_exam_paper SET submitted_at = 's' WHERE exam_id = 'ae3'`,
+  ],
+  [
+    "S-21 results without submitted",
+    "learn_exam_paper_submitted",
+    `UPDATE learn_exam_paper SET results_json = '[]' WHERE exam_id = 'ae3'`,
+  ],
+  [
+    "S-21 results not JSON",
+    "learn_exam_paper_submitted",
+    `UPDATE learn_exam_paper SET submitted_at = 's', results_json = 'nope' WHERE exam_id = 'ae3'`,
+  ],
+  [
+    "S-20 a draft after submit",
+    "the answers are submitted",
+    `UPDATE learn_exam_paper SET draft_json = '[1]' WHERE exam_id = 'ae1'`,
+  ],
+  [
+    "S-21 submitted again",
+    "learn_exam_paper_submitted",
+    `UPDATE learn_exam_paper SET submitted_at = 's2' WHERE exam_id = 'ae1'`,
+  ],
+  [
+    "S-21 results changed",
+    "learn_exam_paper_submitted",
+    `UPDATE learn_exam_paper SET results_json = '[1]' WHERE exam_id = 'ae1'`,
+  ],
+  [
+    "S-21 results cleared",
+    "learn_exam_paper_submitted",
+    `UPDATE learn_exam_paper SET submitted_at = NULL, results_json = NULL WHERE exam_id = 'ae1'`,
+  ],
+  [
+    "S-21 written half-submitted",
+    "learn_exam_paper_submitted",
+    `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at, submitted_at) VALUES ('ae2', 'Big-O', '{}', '[]', '[]', '[]', 't', 't', 's')`,
   ],
   [
     "K-1 a second person id",
@@ -1597,16 +1730,30 @@ const notNull: [string, string[], string[]][] = [
   ],
   [
     "learn_exam",
-    ["id", "topic_id", "level", "attempt", "md_path", "pdf_path", "created_at"],
+    ["id", "topic_id", "level", "attempt", "md_path", "source", "created_at"],
     [
       "'n1'",
       "'t1'",
       "'specialized'",
       "1",
       "'Study Lab/n/n/n__specialized__exam-1.md'",
-      "'Study Lab/n/n/n__specialized__exam-1.pdf'",
+      "'app'",
       "'t'",
     ],
+  ],
+  [
+    "learn_exam_paper",
+    [
+      "exam_id",
+      "title",
+      "settings_json",
+      "questions_json",
+      "key_json",
+      "draft_json",
+      "created_at",
+      "updated_at",
+    ],
+    ["'ae2'", "'Big-O'", "'{}'", "'[]'", "'[]'", "'[]'", "'t'", "'t'"],
   ],
   [
     "career_person",

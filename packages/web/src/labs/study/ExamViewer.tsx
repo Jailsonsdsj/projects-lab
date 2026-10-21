@@ -87,13 +87,16 @@ function Exam({ exam, markdown }: { exam: ExamRead; markdown: string }) {
             </span>
           )}
         </div>
-        <a
-          className="btn btn--soft mb-6 self-start"
-          href={contentUrl(exam.pdf)}
-        >
-          <Icon name="file" />
-          Open the PDF
-        </a>
+        {/* An exam made in the app has no PDF (PRD 12 § Exams in the app). */}
+        {exam.pdf && (
+          <a
+            className="btn btn--soft mb-6 self-start"
+            href={contentUrl(exam.pdf)}
+          >
+            <Icon name="file" />
+            Open the PDF
+          </a>
+        )}
         <Prose markdown={markdown} large={tablet} />
       </main>
     </>

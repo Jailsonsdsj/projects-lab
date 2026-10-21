@@ -6,6 +6,7 @@ import {
   afterCourseRecorded,
   afterGradeRecorded,
   type CourseLevel,
+  type ExamSource,
   localDate,
 } from "@projects-lab/shared/study";
 import {
@@ -176,7 +177,9 @@ export interface Exam {
   level: CourseLevel;
   attempt: number;
   mdPath: string;
-  pdfPath: string;
+  /** Null for an exam made in the app (S-22). */
+  pdfPath: string | null;
+  source: ExamSource;
   createdAt: string;
   grade: number | null;
   gradedAt: string | null;
@@ -184,7 +187,7 @@ export interface Exam {
 
 const EXAM_SELECT = `
   SELECT e.id AS examId, t.code AS topicId, e.level, e.attempt,
-         e.md_path AS mdPath, e.pdf_path AS pdfPath, e.created_at AS createdAt,
+         e.md_path AS mdPath, e.pdf_path AS pdfPath, e.source, e.created_at AS createdAt,
          e.grade, e.graded_at AS gradedAt
   FROM learn_exam e JOIN learn_topic t ON t.id = e.topic_id`;
 
@@ -404,9 +407,10 @@ export async function courseToRead(
 
 export interface ExamToRead extends Exam {
   skill: string;
-  /** Both files' blob SHAs and names, for /api/study/content/<sha>/<name>. */
+  /** The files' blob SHAs and names, for /api/study/content/<sha>/<name>. */
   md: { sha: string; name: string };
-  pdf: { sha: string; name: string };
+  /** Null for an exam made in the app, which has no PDF. */
+  pdf: { sha: string; name: string } | null;
 }
 
 /** A recorded exam with its files' current blob SHAs (PRD 12 § Screens). */
@@ -418,7 +422,7 @@ export async function examToRead(
   const row = await db
     .prepare(
       `SELECT e.id AS examId, t.code AS topicId, s.name AS skill, e.level, e.attempt,
-              e.md_path AS mdPath, e.pdf_path AS pdfPath, e.created_at AS createdAt,
+              e.md_path AS mdPath, e.pdf_path AS pdfPath, e.source, e.created_at AS createdAt,
               e.grade, e.graded_at AS gradedAt
        FROM learn_exam e
        JOIN learn_topic t ON t.id = e.topic_id
@@ -431,14 +435,14 @@ export async function examToRead(
   const [md, pdf] = (await fileEntries(
     env,
     db,
-    [row.mdPath, row.pdfPath],
+    row.pdfPath ? [row.mdPath, row.pdfPath] : [row.mdPath],
     (path) => `This exam file is no longer in study-materials: ${path}`,
-  )) as [GitHubEntry, GitHubEntry];
+  )) as [GitHubEntry, GitHubEntry | undefined];
   return {
     exam: {
       ...row,
       md: { sha: md.sha, name: md.name },
-      pdf: { sha: pdf.sha, name: pdf.name },
+      pdf: pdf ? { sha: pdf.sha, name: pdf.name } : null,
     },
   };
 }

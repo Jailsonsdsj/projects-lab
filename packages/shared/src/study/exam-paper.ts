@@ -6,6 +6,10 @@
 // grade (integer tenths, CLAUDE.md).
 import { z } from "zod";
 
+/** Where an exam was made: a Claude Code session (with a PDF) or the app (ST-13, none). */
+export const EXAM_SOURCES = ["claude", "app"] as const;
+export type ExamSource = (typeof EXAM_SOURCES)[number];
+
 export const EXAM_MAX_QUESTIONS = 20;
 export const EXAM_FOCUS_MAX_LENGTH = 500;
 export const EXAM_OPEN_ANSWER_MAX_LENGTH = 4000;
