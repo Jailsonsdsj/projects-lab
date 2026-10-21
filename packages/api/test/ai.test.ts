@@ -84,10 +84,13 @@ describe("askForJson", () => {
     expect(body).toMatchObject({
       model: AI_MODEL,
       max_tokens: 4000,
-      system: "You write exams.",
       messages: [{ role: "user", content: "Three questions on Big-O." }],
-      tool_choice: { type: "tool", name: "write_exam" },
+      // Sonnet 5.5 refuses a forced tool: offered, and asked for in the system prompt.
+      tool_choice: { type: "auto" },
     });
+    expect(body.system).toBe(
+      "You write exams.\n\nAnswer only by calling the write_exam tool, exactly once, with no other text.",
+    );
     expect(body.tools).toHaveLength(1);
     expect(body.tools[0]).toMatchObject({
       name: "write_exam",

@@ -228,7 +228,15 @@ test("checks the quick check as it's answered, in green and red", async ({
   const statement = page.getByRole("radiogroup", {
     name: /A single for loop over an array is always/,
   });
-  await statement.getByText("True", { exact: true }).click();
+  // On a slow runner, revealing the first answer's explanation can still move
+  // this row as the click lands (CI, 2026-10-21): click until the radio is
+  // checked, then check what answering it does.
+  await expect(async () => {
+    await statement.getByText("True", { exact: true }).click();
+    await expect(statement.getByRole("radio", { name: "True" })).toBeChecked({
+      timeout: 1000,
+    });
+  }).toPass();
   await expect(statement).toHaveClass(/is-wrong/);
   await expect.poll(() => tint(statement)).toBe(danger);
   await noHorizontalScroll(page);
