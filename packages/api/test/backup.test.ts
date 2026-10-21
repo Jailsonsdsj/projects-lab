@@ -94,6 +94,29 @@ beforeAll(async () => {
     db().prepare(
       "UPDATE learn_exam SET grade = 85, graded_at = '2026-10-05T10:00:00.000Z' WHERE id = 'e2'",
     ),
+    // Two exams made in the app (ST-13), no PDF: one submitted and graded,
+    // one with only a draft.
+    ...[3, 4].map((n) =>
+      db()
+        .prepare(
+          "INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES (?, ?, 'essential', ?, ?, NULL, 'app', 't')",
+        )
+        .bind(`e${n}`, topic?.id, n, path(n, "md")),
+    ),
+    ...[3, 4].map((n) =>
+      db()
+        .prepare(
+          `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at)
+           VALUES (?, 'Graphs', '{"questions":1}', '[{"type":"OPEN","stem":"Why BFS?"}]', '[{"type":"OPEN","modelAnswer":"Levels.","mustCover":["levels"]}]', '[{"type":"OPEN","text":"Layers"}]', 't', 't')`,
+        )
+        .bind(`e${n}`),
+    ),
+    db().prepare(
+      `UPDATE learn_exam_paper SET submitted_at = '2026-10-06T10:00:00.000Z', results_json = '[{"number":1,"accuracy":70,"feedback":"Close."}]' WHERE exam_id = 'e3'`,
+    ),
+    db().prepare(
+      "UPDATE learn_exam SET grade = 70, graded_at = '2026-10-06T10:00:00.000Z' WHERE id = 'e3'",
+    ),
     db()
       .prepare("UPDATE learn_topic SET status = 'done' WHERE id = ?")
       .bind(topic?.id),

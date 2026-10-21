@@ -376,6 +376,41 @@ describe("reading an exam", () => {
     });
   });
 
+  it("gives an exam made in the app with no PDF, never looking one up", async () => {
+    const md = "Study Lab/cs-fundamentals/heaps/heaps__fast-track__exam-1.md";
+    // Its own topic, so the other tests' exam counts don't change.
+    await env.DB?.batch([
+      env.DB.prepare(
+        "INSERT INTO skill (id, name, created_at) VALUES ('sk-app', 'Heaps', 't')",
+      ),
+      env.DB.prepare(
+        "INSERT INTO learn_topic (id, code, area_id, skill_id, created_at, updated_at) VALUES ('t-app', 'CS-09', 'area-cs', 'sk-app', 't', 't')",
+      ),
+      env.DB.prepare(
+        "INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('app-1', 't-app', 'fast_track', 1, ?, NULL, 'app', 't')",
+      ).bind(md),
+    ]);
+    const requests = github([md]);
+    const res = await get("/exams/app-1");
+    expect(res.status).toBe(200);
+    const { exam: read } = examReadResponseSchema.parse(await res.json());
+    expect(read).toMatchObject({
+      topicId: "CS-09",
+      source: "app",
+      pdfPath: null,
+      pdf: null,
+      md: { name: "heaps__fast-track__exam-1.md" },
+    });
+    expect(requests.some((url) => url.endsWith(".pdf"))).toBe(false);
+    const { exams } = (await (await get("/exams?topicId=CS-09")).json()) as {
+      exams: { examId: string; source: string; pdfPath: string | null }[];
+    };
+    expect(exams.find((e) => e.examId === "app-1")).toMatchObject({
+      source: "app",
+      pdfPath: null,
+    });
+  });
+
   it("names the missing file, and 404s an unknown exam", async () => {
     github([exam("essential", 1, "md")]);
     const res = await get(`/exams/${await examIdOf("essential", 1)}`);

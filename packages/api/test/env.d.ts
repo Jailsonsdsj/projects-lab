@@ -7,6 +7,12 @@ declare namespace Cloudflare {
   }
 }
 
+/** As src/env.d.ts declares it: the optional key of the AI integrations (AI-02). */
+interface Env {
+  ANTHROPIC_API_KEY?: string;
+  GITHUB_WRITE_TOKEN?: string;
+}
+
 /** Vite's import.meta.glob, which Vitest provides; only the form tests use. */
 interface ImportMeta {
   glob<T>(

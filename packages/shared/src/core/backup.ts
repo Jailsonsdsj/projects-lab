@@ -24,6 +24,7 @@ export const BACKUP_TABLES = [
   "learn_topic",
   "learn_course",
   "learn_exam",
+  "learn_exam_paper",
   "career_person",
   "career_link",
   "career_education",

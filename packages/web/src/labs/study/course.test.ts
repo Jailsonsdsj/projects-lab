@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import bigO from "../../../test/fixtures/big-o-notation__fast-track.md?raw";
 import { headingSlug } from "../../components/ui";
-import { splitCourse } from "./course";
+import { parseChecks, splitCourse } from "./course";
 
 describe("splitCourse on the real Big-O course", () => {
   const course = splitCourse(bigO);
@@ -63,6 +63,47 @@ describe("splitCourse on the real Big-O course", () => {
       expect(page.markdown).not.toContain(
         "Binary search halves the search space",
       );
+  });
+});
+
+describe("parseChecks", () => {
+  it("reads the real key question by question: letter, truths, model answer", () => {
+    const lesson1 = splitCourse(bigO).checks[1];
+    expect(lesson1?.[1]?.choice).toBe("B");
+    expect(lesson1?.[1]?.explanation).toMatch(/^As n grows large/);
+    expect(lesson1?.[2]?.truths).toEqual({
+      I: false,
+      II: true,
+      III: false,
+      IV: true,
+      V: true,
+    });
+    expect(lesson1?.[2]?.explanation).toMatch(/^I: Big-O describes/);
+    expect(lesson1?.[3]?.choice).toBeUndefined();
+    expect(lesson1?.[3]?.truths).toBeUndefined();
+    expect(lesson1?.[3]?.explanation).toMatch(/^"O\(n\)" only says/);
+    expect(Object.keys(splitCourse(bigO).checks)).toEqual(["1", "2", "3"]);
+  });
+
+  it("takes other spellings, and keeps an item's indented code", () => {
+    const checks = parseChecks(
+      [
+        "1. C) Because it halves.",
+        "2. **I: True, II: False**",
+        "3. **Model answer:** Use a Set:",
+        "   ```js",
+        "   1. not a new item",
+        "   ```",
+      ].join("\n"),
+    );
+    expect(checks[1]).toEqual({
+      choice: "C",
+      explanation: "Because it halves.",
+    });
+    expect(checks[2]?.truths).toEqual({ I: true, II: false });
+    expect(checks[3]?.explanation).toBe(
+      "Use a Set:\n```js\n1. not a new item\n```",
+    );
   });
 });
 

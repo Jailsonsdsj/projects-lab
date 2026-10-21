@@ -2,6 +2,7 @@
 // Biome boundary rules can keep Career out (architecture §4).
 
 export * from "./backlog";
+export * from "./exam-paper";
 export * from "./grades";
 export * from "./responses";
 export * from "./schemas";

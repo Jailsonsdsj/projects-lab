@@ -4,6 +4,8 @@
 import {
   addAreaInputSchema,
   addTopicsInputSchema,
+  examAnswersInputSchema,
+  examSettingsSchema,
   listBacklogInputSchema,
   listCoursesInputSchema,
   listExamsInputSchema,
@@ -15,7 +17,9 @@ import {
 } from "@projects-lab/shared/study";
 import { type Context, Hono } from "hono";
 import type { z } from "zod";
+import { AI_ERROR_STATUS, AiError } from "../../core/ai";
 import { database } from "../../core/db";
+import { GitHubError } from "../../core/github";
 import { idempotent } from "../../core/idempotency";
 import { type LabEnv, ToolError } from "../../core/lab";
 import {
@@ -28,6 +32,8 @@ import {
   removeTopic,
   updateTopic,
 } from "./backlog";
+import { generateExam } from "./exam-app";
+import { readPaper, saveDraft, submitExam } from "./exam-grade";
 import {
   courseToRead,
   examToRead,
@@ -66,6 +72,26 @@ function refused(c: Context, error: unknown) {
       STATUS[error.code],
     );
   throw error;
+}
+
+/** An AI or GitHub failure, or a refused service call, as { error, message } (PRD 02). */
+function serviceFailed(c: Context, error: unknown) {
+  if (error instanceof AiError || error instanceof GitHubError) {
+    if (error.retryAfter) c.header("Retry-After", String(error.retryAfter));
+    const status =
+      error instanceof AiError
+        ? AI_ERROR_STATUS[error.code]
+        : (
+            {
+              github_token_invalid: 502,
+              github_rate_limited: 503,
+              not_found: 404,
+              github_conflict: 409,
+            } as const
+          )[error.code];
+    return c.json({ error: error.code, message: error.message }, status);
+  }
+  return refused(c, error);
 }
 
 async function body(c: Context): Promise<unknown> {
@@ -205,6 +231,83 @@ export function backlogRoutes() {
       return refused(c, error);
     }
   });
+
+  // Exams in the app (ST-13c; PRD 12 § Exams in the app): the Worker writes
+  // one through the Anthropic API, commits its file and records it.
+  app.post(
+    "/courses/:courseId/exams",
+    idempotent("POST /api/study/courses/:courseId/exams"),
+    async (c) => {
+      const parsed = examSettingsSchema.safeParse(await body(c));
+      if (!parsed.success) return invalid(c, parsed.error);
+      try {
+        return c.json(
+          await generateExam(
+            c.env,
+            database(c.env),
+            c.req.param("courseId"),
+            parsed.data,
+            new Date(),
+          ),
+        );
+      } catch (error) {
+        return serviceFailed(c, error);
+      }
+    },
+  );
+
+  // An app exam's paper (ST-13d): the questions and draft; the key and the
+  // results once submitted.
+  app.get("/exams/:examId/paper", async (c) => {
+    try {
+      return c.json(await readPaper(database(c.env), c.req.param("examId")));
+    } catch (error) {
+      return refused(c, error);
+    }
+  });
+
+  app.put(
+    "/exams/:examId/draft",
+    idempotent("PUT /api/study/exams/:examId/draft"),
+    async (c) => {
+      const parsed = examAnswersInputSchema.safeParse(await body(c));
+      if (!parsed.success) return invalid(c, parsed.error);
+      try {
+        return c.json(
+          await saveDraft(
+            database(c.env),
+            c.req.param("examId"),
+            parsed.data.answers,
+            new Date(),
+          ),
+        );
+      } catch (error) {
+        return refused(c, error);
+      }
+    },
+  );
+
+  app.post(
+    "/exams/:examId/submit",
+    idempotent("POST /api/study/exams/:examId/submit"),
+    async (c) => {
+      const parsed = examAnswersInputSchema.safeParse(await body(c));
+      if (!parsed.success) return invalid(c, parsed.error);
+      try {
+        return c.json(
+          await submitExam(
+            c.env,
+            database(c.env),
+            c.req.param("examId"),
+            parsed.data.answers,
+            new Date(),
+          ),
+        );
+      } catch (error) {
+        return serviceFailed(c, error);
+      }
+    },
+  );
 
   app.post("/exams", idempotent("POST /api/study/exams"), async (c) => {
     const parsed = recordExamInputSchema.safeParse(await body(c));

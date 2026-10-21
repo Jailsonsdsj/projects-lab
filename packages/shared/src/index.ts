@@ -3,6 +3,7 @@
 // "@projects-lab/shared/study", so the Biome boundary patterns see it.
 
 export * from "./contracts/study";
+export * from "./core/ai";
 export * from "./core/auth";
 export * from "./core/backup";
 export * from "./core/bytes";

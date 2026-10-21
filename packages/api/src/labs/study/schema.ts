@@ -1,10 +1,11 @@
 // Study Lab tables (docs/prd/99-data-model.md § Study Lab). `drizzle-kit
 // generate` reads this beside core's schema; never hand-edit its output.
-// Triggers (S-4, S-9, S-14, S-16) live in their own custom migration, and the
+// Triggers (S-4, S-9, S-14, S-16, S-18–S-22) live in their own custom migration, and the
 // seven areas are seeded by another. Every column a CHECK references is NOT
 // NULL; the allowed values come from @projects-lab/shared/study.
 import {
   COURSE_LEVELS,
+  EXAM_SOURCES,
   NOTE_MAX_LENGTH,
   SPECIALIZED_MAX_MODULES,
   TOPIC_LEVELS,
@@ -144,7 +145,10 @@ export const learnExam = sqliteTable(
     level: text("level").notNull(),
     attempt: integer("attempt").notNull(),
     mdPath: text("md_path").notNull(),
-    pdfPath: text("pdf_path").notNull(),
+    // Null only for an exam made in the app (S-22, a trigger: nullable).
+    pdfPath: text("pdf_path"),
+    // claude (Claude Code, with a PDF) or app (ST-13).
+    source: text("source").notNull().default("claude"),
     createdAt: text("created_at").notNull(),
     // Integer tenths 0..100 and its time, set together (S-16, a trigger: nullable).
     grade: integer("grade"),
@@ -160,14 +164,47 @@ export const learnExam = sqliteTable(
     // S-15
     uniqueIndex("learn_exam_md_path_unique").on(t.mdPath),
     uniqueIndex("learn_exam_pdf_path_unique").on(t.pdfPath),
+    // The .pdf's layout is S-22's trigger (pdf_path is nullable).
+    check("learn_exam_path_layout", sql`${t.mdPath} GLOB 'Study Lab/*.md'`),
     check(
-      "learn_exam_path_layout",
-      sql`${t.mdPath} GLOB 'Study Lab/*.md' AND ${t.pdfPath} GLOB 'Study Lab/*.pdf'`,
+      "learn_exam_source_allowed",
+      sql`${t.source} IN (${sqlList(EXAM_SOURCES)})`,
     ),
     // S-17
     check(
       "learn_exam_level_allowed",
       sql`${t.level} IN (${sqlList(COURSE_LEVELS)})`,
     ),
+  ],
+);
+
+// An exam made in the app (ST-13): what the model wrote, the key it keeps from
+// the owner until grading, the owner's draft, and the graded results. One row
+// per app exam (S-18); the paper never changes once written (S-19); the draft
+// freezes on submit (S-20); results come once, with the submit time (S-21).
+export const learnExamPaper = sqliteTable(
+  "learn_exam_paper",
+  {
+    examId: text("exam_id")
+      .primaryKey()
+      .references(() => learnExam.id),
+    title: text("title").notNull(),
+    settingsJson: text("settings_json").notNull(),
+    questionsJson: text("questions_json").notNull(),
+    keyJson: text("key_json").notNull(),
+    // The answers so far, one per question (shared exam-paper.ts).
+    draftJson: text("draft_json").notNull(),
+    // Set together on submit (S-21, a trigger: nullable).
+    submittedAt: text("submitted_at"),
+    resultsJson: text("results_json"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    check(
+      "learn_exam_paper_json",
+      sql`json_valid(${t.settingsJson}) AND json_valid(${t.questionsJson}) AND json_valid(${t.keyJson}) AND json_valid(${t.draftJson})`,
+    ),
+    check("learn_exam_paper_title", sql`length(trim(${t.title})) > 0`),
   ],
 );

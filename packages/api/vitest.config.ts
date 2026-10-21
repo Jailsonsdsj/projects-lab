@@ -21,6 +21,8 @@ export default defineConfig({
             // Test-only values; real ones come from .dev.vars or `wrangler secret put`.
             TOKEN_SIGNING_KEY: "test-token-signing-key",
             GITHUB_TOKEN: "test-github-token",
+            GITHUB_WRITE_TOKEN: "test-github-write-token",
+            ANTHROPIC_API_KEY: "test-anthropic-key",
             PUBLIC_ORIGIN: "https://lab.example",
             STUDY_MATERIALS_REPO: "owner/study-materials",
           },

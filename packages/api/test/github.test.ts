@@ -254,4 +254,26 @@ describe("no write call to GitHub", () => {
       .map(([path]) => path);
     expect(callers).toEqual(["../src/core/github.ts"]);
   });
+
+  it("writes go through core/github-write.ts only, which only the exam-file guard imports", () => {
+    const sources = import.meta.glob<string>("../src/**/*.ts", {
+      eager: true,
+      query: "?raw",
+      import: "default",
+    });
+    const importers = Object.entries(sources)
+      .filter(([, source]) => /from "[./]*(core\/)?github-write"/.test(source))
+      .map(([path]) => path);
+    expect(importers).toEqual(["../src/labs/study/exam-files.ts"]);
+    // The only methods anywhere besides GET are this client's PUT and DELETE.
+    const writers = Object.entries(sources)
+      .filter(([, source]) =>
+        /method:\s*"(PUT|DELETE|POST|PATCH)"|"PUT" \| "DELETE"/.test(source),
+      )
+      .map(([path]) => path);
+    expect(writers).toContain("../src/core/github-write.ts");
+    expect(sources["../src/core/github-write.ts"]).not.toContain(
+      "GITHUB_TOKEN;",
+    );
+  });
 });

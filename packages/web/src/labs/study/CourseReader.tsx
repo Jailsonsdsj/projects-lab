@@ -8,7 +8,12 @@ import {
   courseReadResponseSchema,
 } from "@projects-lab/shared/study";
 import { type MouseEvent, useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router";
 import {
   Badge,
   Button,
@@ -24,6 +29,7 @@ import {
 import { apiFetch } from "../../core/api";
 import { ReadView } from "../../core/ReadView";
 import { type Course, type CoursePage, splitCourse } from "./course";
+import { CourseExams, TakeTestSheet } from "./TakeTest";
 
 const COURSES_PATH = "/study/courses";
 const LEVEL: Record<CourseRead["level"], string> = {
@@ -98,6 +104,10 @@ function MissingFile({ message }: { message: string }) {
 const pageLabel = (page: CoursePage) =>
   page.kind === "lesson" ? `Lesson ${page.n} · ${page.title}` : page.title;
 
+/** This tab's place in history, as the browser router keeps it (0 in tests). */
+const historyIdx = () =>
+  (window.history.state as { idx?: number } | null)?.idx ?? 0;
+
 /** Scrolls the window, where the browser can (not in jsdom). */
 function scrollTop() {
   if (typeof window.scrollTo === "function")
@@ -129,11 +139,13 @@ function useReadingProgress(page: number): number {
 }
 
 function Outline({
+  course,
   parsed,
   current,
   onPage,
   onSection,
 }: {
+  course: CourseRead;
   parsed: Course;
   current: number;
   onPage: (index: number) => void;
@@ -207,6 +219,7 @@ function Outline({
           </a>
         ))}
       </nav>
+      <CourseExams course={course} />
     </div>
   );
 }
@@ -234,10 +247,20 @@ function usePinnedOutline(): [boolean, (shown: boolean) => void] {
 
 function Reader({ course, parsed }: Loaded) {
   const navigate = useNavigate();
+  const location = useLocation();
   const tablet = useMinWidth("--breakpoint-tablet");
   const [params, setParams] = useSearchParams();
+  // Where in history the reader opened. Each page turn pushes an entry and
+  // carries this along, so Back leaves the course rather than turning a page.
+  const entry =
+    (location.state as { entry?: number } | null)?.entry ?? historyIdx();
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [pinned, setPinned] = usePinnedOutline();
+  // "Take the test" (ST-13e1): its form, and the course's lessons for it.
+  const [testing, setTesting] = useState(false);
+  const lessons = parsed.pages.flatMap((p) =>
+    p.kind === "lesson" ? [{ n: p.n, title: p.title }] : [],
+  );
   const outlineShown = tablet && pinned;
   const last = parsed.pages.length - 1;
   const requested = Number(params.get("p") ?? 0);
@@ -250,7 +273,7 @@ function Reader({ course, parsed }: Loaded) {
 
   const toPage = (index: number) => {
     setOutlineOpen(false);
-    setParams({ p: String(index) });
+    setParams({ p: String(index) }, { state: { entry } });
     scrollTop();
   };
   const toSection = (id: string) => {
@@ -258,9 +281,8 @@ function Reader({ course, parsed }: Loaded) {
     document.getElementById(id)?.scrollIntoView?.({ block: "start" });
   };
   const back = () => {
-    // Back to where the reader came from, else the Courses tab.
-    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
-    if (idx > 0) navigate(-1);
+    // Back past every page turned to where the reader came from, else the Courses tab.
+    if (entry > 0) navigate(entry - 1 - historyIdx());
     else navigate(COURSES_PATH);
   };
 
@@ -310,15 +332,34 @@ function Reader({ course, parsed }: Loaded) {
           title={tablet ? `${course.topicId} · ${title}` : title}
           titleIsHeading={false}
           actions={
-            !tablet && (
+            tablet ? (
               <Button
-                variant="ghost"
-                tone="neutral"
-                icon="list"
-                iconOnly
-                aria-label="Lesson outline"
-                onClick={() => setOutlineOpen(true)}
-              />
+                variant="soft"
+                size="sm"
+                icon="award"
+                onClick={() => setTesting(true)}
+              >
+                Take the test
+              </Button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  tone="neutral"
+                  icon="award"
+                  iconOnly
+                  aria-label="Take the test"
+                  onClick={() => setTesting(true)}
+                />
+                <Button
+                  variant="ghost"
+                  tone="neutral"
+                  icon="list"
+                  iconOnly
+                  aria-label="Lesson outline"
+                  onClick={() => setOutlineOpen(true)}
+                />
+              </div>
             )
           }
         />
@@ -334,6 +375,7 @@ function Reader({ course, parsed }: Loaded) {
             aria-label="Lesson outline"
           >
             <Outline
+              course={course}
               parsed={parsed}
               current={current}
               onPage={toPage}
@@ -360,6 +402,7 @@ function Reader({ course, parsed }: Loaded) {
             markdown={page.markdown}
             large={tablet}
             resolveImage={imageResolver(course.images)}
+            answers={page.kind === "lesson" ? parsed.checks[page.n] : undefined}
           />
           {page.kind === "lesson" && parsed.answers[page.n] && (
             // A new key per page: the answers start hidden on every lesson.
@@ -385,6 +428,20 @@ function Reader({ course, parsed }: Loaded) {
                   </Button>
                 </>
               )}
+              {!next && (
+                <>
+                  <span className="kicker">Done reading?</span>
+                  <Button
+                    variant="soft"
+                    size="lg"
+                    icon="award"
+                    block
+                    onClick={() => setTesting(true)}
+                  >
+                    Take the test
+                  </Button>
+                </>
+              )}
               {previous && (
                 <Button
                   variant="ghost"
@@ -403,6 +460,13 @@ function Reader({ course, parsed }: Loaded) {
           )}
         </main>
       </div>
+      <TakeTestSheet
+        course={course}
+        lessons={lessons}
+        open={testing}
+        onClose={() => setTesting(false)}
+        onReady={(examId) => navigate(`/study/exams/${examId}`)}
+      />
       {!tablet && (
         <Sheet
           open={outlineOpen}
@@ -410,6 +474,7 @@ function Reader({ course, parsed }: Loaded) {
           title="Lesson outline"
         >
           <Outline
+            course={course}
             parsed={parsed}
             current={current}
             onPage={toPage}

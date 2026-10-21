@@ -3,13 +3,15 @@
 // test fails if anything here could. Don't rely on the Workers Cache API:
 // metadata ETags live in D1 (`github_cache`), content is immutable by SHA.
 
-const API = "https://api.github.com";
-const USER_AGENT = "projects-lab"; // GitHub refuses requests without one
+export const API = "https://api.github.com";
+export const USER_AGENT = "projects-lab"; // GitHub refuses requests without one
 
 export type GitHubErrorCode =
   | "github_token_invalid"
   | "github_rate_limited"
-  | "not_found";
+  | "not_found"
+  /** A write found the file already there (github-write.ts). */
+  | "github_conflict";
 
 /** A GitHub failure the routes turn into the PRD 02 error table. */
 export class GitHubError extends Error {
@@ -116,7 +118,7 @@ const entry = (raw: Record<string, unknown>): GitHubEntry => ({
   size: Number(raw.size ?? 0),
 });
 
-const encodePath = (path: string) =>
+export const encodePath = (path: string) =>
   path.split("/").filter(Boolean).map(encodeURIComponent).join("/");
 
 /**
@@ -169,4 +171,15 @@ export async function getBlob(
   });
   if (!response.body) throw new Error(`GitHub sent no body for blob ${sha}`);
   return response.body;
+}
+
+/** A text file's content by path (metadata through the ETag cache, then the blob). */
+export async function getText(deps: GitHubDeps, path: string): Promise<string> {
+  const meta = await getMetadata(deps, path);
+  if (Array.isArray(meta) || meta.type !== "file")
+    throw new GitHubError(
+      "not_found",
+      `Not a file in study-materials: ${path}`,
+    );
+  return new Response(await getBlob(deps, meta.sha)).text();
 }

@@ -4,12 +4,90 @@
    app adds goes here, with the same rule: tokens only, no literals.
    ========================================================================= */
 
+/* RadioGroup (ST-13e2): Checkbox's row and box, round, with a dot. */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.radio-group--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: var(--space-4);
+}
+.radio-group__legend {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-ink);
+}
+.radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--size-touch);
+  cursor: pointer;
+  font-size: var(--text-base);
+  color: var(--color-ink);
+}
+.radio > input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: grid;
+  place-content: center;
+  margin: 0;
+  width: var(--size-checkbox);
+  height: var(--size-checkbox);
+  border: var(--border-thick) solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-1);
+  cursor: pointer;
+  transition: border-color var(--duration-instant) var(--ease-standard);
+}
+.radio > input::before {
+  content: "";
+  width: var(--size-icon-xs);
+  height: var(--size-icon-xs);
+  border-radius: var(--radius-full);
+  background-color: var(--color-lab-accent);
+  transform: scale(0);
+  transition: transform var(--duration-instant) var(--ease-standard);
+}
+.radio > input:checked {
+  border-color: var(--color-lab-accent);
+}
+.radio > input:checked::before {
+  transform: scale(0.6);
+}
+.radio:hover > input {
+  border-color: var(--color-ink-muted);
+  background-image: var(--gradient-hover);
+}
+.radio:hover > input:checked {
+  border-color: var(--color-lab-accent-hover);
+  background-image: none;
+}
+.radio.is-disabled {
+  color: var(--color-ink-disabled);
+  cursor: not-allowed;
+}
+.radio.is-disabled > input {
+  background-color: var(--color-disabled);
+  border-color: var(--color-border);
+}
+
 /* ── Native states for canvas-only rules that had no native selector ──── */
 /* The bundle drew these with .is-pressed / .is-focus alone (D-02a removed them). */
 .check:active > input {
   background-image: var(--gradient-pressed);
 }
-.quiz__opt:has(> input:focus-visible) {
+.quiz__opt:has(> input:focus-visible),
+.quiz__tfopt:has(> input:focus-visible) {
   outline: var(--focus-width) solid var(--color-focus);
   outline-offset: var(--focus-offset);
 }

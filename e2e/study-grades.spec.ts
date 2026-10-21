@@ -23,6 +23,7 @@ const exam = (examId: string, topicId: string, grade: number, at: string) => ({
   attempt: 1,
   mdPath: `Study Lab/x/${examId}.md`,
   pdfPath: `Study Lab/x/${examId}.pdf`,
+  source: "claude",
   createdAt: at,
   grade,
   gradedAt: at,

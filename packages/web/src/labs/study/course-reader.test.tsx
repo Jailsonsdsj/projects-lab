@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createMemoryRouter } from "react-router";
+import { createBrowserRouter, createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { json } from "../../../test/api";
@@ -263,6 +263,30 @@ describe("Course reader", () => {
     ).toBeInTheDocument();
   });
 
+  it("goes back to Courses past every page turned, not one page", async () => {
+    api(() => json({ course: COURSE }));
+    const user = userEvent.setup();
+    // A browser router: the reader steps back through real history.
+    window.history.replaceState(null, "", "/study/courses");
+    const router = createBrowserRouter(createRoutes());
+    render(<RouterProvider router={router} />);
+    await router.navigate("/study/courses/course-bigo");
+    await screen.findByRole("heading", { level: 1, name: "Big-O Notation" });
+    for (const name of [
+      "Lesson 1 · What Big-O measures and why",
+      "Lesson 2 · The common complexity classes",
+    ]) {
+      await user.click(screen.getByRole("button", { name }));
+      await screen.findByRole("heading", { level: 2, name });
+    }
+    await user.click(screen.getByRole("button", { name: "Back to courses" }));
+    await vi.waitFor(() =>
+      expect(router.state.location.pathname).toBe("/study/courses"),
+    );
+    expect(router.state.location.search).toBe("");
+    router.dispose();
+  });
+
   it("names the path when the course file left study-materials", async () => {
     const message =
       "This course file is no longer in study-materials: Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track.md";
@@ -271,6 +295,25 @@ describe("Course reader", () => {
     expect(await screen.findByText(message)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Courses" }));
     expect(router.state.location.pathname).toBe("/study/courses");
+  });
+
+  it("checks the lesson's quick check against its own answer key", async () => {
+    api();
+    const user = userEvent.setup();
+    openReader("/study/courses/course-bigo?p=2");
+    const group = await screen.findByRole("radiogroup", {
+      name: "Which complexity class describes binary search on a sorted array?",
+    });
+    await user.click(within(group).getByLabelText(/O\(n\)$/));
+    expect(screen.getByText("Not quite: the answer is B.")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Binary search halves the search space/),
+    ).toBeInTheDocument();
+    const fire = screen.getByRole("radiogroup", {
+      name: /A single for loop over an array is always/,
+    });
+    await user.click(within(fire).getByLabelText("False"));
+    expect(fire).toHaveClass("is-correct");
   });
 
   it("keeps each lesson's answers out of the page until asked for", async () => {

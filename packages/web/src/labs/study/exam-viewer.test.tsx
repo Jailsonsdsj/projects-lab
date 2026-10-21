@@ -23,6 +23,7 @@ const exam = (over: Partial<ExamInfo> = {}) => ({
   attempt: 2,
   mdPath: `${BASE}.md`,
   pdfPath: `${BASE}.pdf`,
+  source: "claude",
   createdAt: "2026-10-18T12:00:00.000Z",
   grade: 90,
   // Graded first on the 18th; corrected later, which kept this date.
@@ -85,6 +86,26 @@ describe("Exam viewer", () => {
     api(() => json({ exam: exam({ grade: null, gradedAt: null }) }));
     open();
     expect(await screen.findByText("Awaiting grade")).toBeInTheDocument();
+  });
+
+  it("offers no PDF for an exam made in the app, and says it's to answer", async () => {
+    api(() =>
+      json({
+        exam: {
+          ...exam({
+            pdfPath: null,
+            source: "app",
+            grade: null,
+            gradedAt: null,
+          }),
+          pdf: null,
+        },
+      }),
+    );
+    open();
+    // The answer form is app-exam.test.tsx's: here, the frame around it.
+    expect(await screen.findByText("To answer")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open the PDF" })).toBeNull();
   });
 
   it("names the path when a file left study-materials", async () => {

@@ -34,6 +34,7 @@ import {
   PageTitle,
   ProgressBar,
   Prose,
+  RadioGroup,
   ReadinessMeter,
   RequirementRow,
   Select,
@@ -129,11 +130,26 @@ const SAMPLE_COURSE = `## Big-O in one lesson
 const byId = new Map(users.map((u) => [u.id, u]));
 \`\`\`
 
+### ✅ Quick check
+
 1. Two nested loops over n items are roughly…
    - A) O(n)
    - B) O(n²)
    - C) O(log n)
+2. True or false?
+   - I. A Map lookup is O(1) on average.
+   - II. Sorting is O(n).
+3. Why index users by id before the loop?
 `;
+
+const SAMPLE_ANSWERS = {
+  1: { choice: "B", explanation: "Each of the n items scans all n." },
+  2: {
+    truths: { I: true, II: false },
+    explanation: "II: comparison sorts are O(n log n).",
+  },
+  3: { explanation: "Each lookup becomes O(1), so the loop is O(n + m)." },
+};
 
 function TabsDemo() {
   const [value, setValue] = useState("all");
@@ -473,6 +489,62 @@ export const CATALOG: readonly CatalogEntry[] = [
           <Chip pressed={false} disabled>
             Archived
           </Chip>
+        ),
+      },
+    ],
+  },
+  {
+    name: "RadioGroup",
+    summary:
+      "One choice among a few: native radios in a fieldset, --size-touch rows, round boxes.",
+    examples: [
+      {
+        label: "a choice",
+        node: (
+          <RadioGroup
+            label="What is the cost of binary search?"
+            name="catalog-mc"
+            value="B"
+            options={[
+              { value: "A", label: "A) O(1)" },
+              { value: "B", label: "B) O(log n)" },
+              { value: "C", label: "C) O(n)" },
+            ]}
+            onChange={() => {}}
+          />
+        ),
+      },
+      {
+        label: "inline, unanswered",
+        node: (
+          <RadioGroup
+            label="I. O(2n) is O(n)."
+            name="catalog-tf"
+            value={null}
+            inline
+            options={[
+              { value: "true", label: "True" },
+              { value: "false", label: "False" },
+            ]}
+            onChange={() => {}}
+          />
+        ),
+      },
+      {
+        label: "disabled",
+        node: (
+          <RadioGroup
+            label="Submitted"
+            name="catalog-disabled"
+            value="false"
+            inline
+            disabled
+            options={[
+              { value: "true", label: "True" },
+              { value: "false", label: "False" },
+            ]}
+            onChange={() => {}}
+          />
         ),
       },
     ],
@@ -1193,9 +1265,13 @@ export const CATALOG: readonly CatalogEntry[] = [
   },
   {
     name: "Prose",
-    summary: "Course Markdown: callouts, table, code, quiz.",
+    summary: "Course Markdown: callouts, table, code, quick check.",
     examples: [
       { label: "sample lesson", node: <Prose markdown={SAMPLE_COURSE} /> },
+      {
+        label: "quick check with answers",
+        node: <Prose markdown={SAMPLE_COURSE} answers={SAMPLE_ANSWERS} />,
+      },
     ],
   },
 ];

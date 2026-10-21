@@ -23,6 +23,7 @@ const STATUS = {
   github_token_invalid: 502,
   github_rate_limited: 503,
   not_found: 404,
+  github_conflict: 409,
 } as const;
 
 export function contentRoutes() {

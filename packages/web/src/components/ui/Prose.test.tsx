@@ -79,11 +79,16 @@ describe("Prose with a real course", () => {
       expect(table.parentElement).toHaveClass("tablewrap");
   });
 
-  it("turns lettered A–E options into quick-check questions; other lists stay lists", () => {
+  it("makes every quick-check question a quiz: A–E choice, I–V true/false, open", () => {
     const root = renderCourse();
-    const quizzes = root.querySelectorAll("section.quiz");
-    expect(quizzes.length).toBe((course.match(/^ {3}- A\) /gm) ?? []).length);
-    for (const quiz of quizzes) {
+    const quizzes = [...root.querySelectorAll("section.quiz")];
+    const lessons = (course.match(/^### ✅ Quick check/gm) ?? []).length;
+    expect(quizzes).toHaveLength(lessons * 3);
+    const choice = quizzes.filter((q) => q.querySelector(".quiz__opts"));
+    const truefalse = quizzes.filter((q) => q.querySelector(".quiz__stmts"));
+    expect(choice).toHaveLength(lessons);
+    expect(truefalse).toHaveLength(lessons);
+    for (const quiz of choice) {
       const letters = [...quiz.querySelectorAll(".quiz__letter")].map(
         (l) => l.textContent,
       );
@@ -92,7 +97,13 @@ describe("Prose with a real course", () => {
         within(quiz as HTMLElement).getByRole("radiogroup"),
       ).toBeInTheDocument();
     }
-    expect(root.textContent).toContain("I. Big-O measures exact running time");
+    for (const quiz of truefalse)
+      expect(
+        [...quiz.querySelectorAll(".quiz__letter")].map((l) => l.textContent),
+      ).toEqual(["I", "II", "III", "IV", "V"]);
+    expect(root.textContent).toContain("Big-O measures exact running time");
+    // Lists outside a quick check stay lists.
+    expect(root.querySelectorAll("li").length).toBeGreaterThan(20);
   });
 });
 
@@ -111,6 +122,106 @@ describe("Prose details", () => {
     await user.click(within(group).getByLabelText(/Third/));
     expect(options[1]).not.toHaveClass("is-selected");
     expect(options[2]).toHaveClass("is-selected");
+  });
+
+  const CHECK = [
+    "### ✅ Quick check",
+    "",
+    "1. Pick one",
+    "   - A) First",
+    "   - B) Second",
+    "   - C) Third",
+    "2. True or false?",
+    "   - I. Sky is blue",
+    "   - II. Fire is cold",
+    "3. Which one runs?",
+    "   ```js",
+    "   run();",
+    "   ```",
+    "   - A) This",
+    "   - B) That",
+    "4. Explain why.",
+  ].join("\n");
+  const ANSWERS = {
+    1: { choice: "B", explanation: "Because **second**." },
+    2: { truths: { I: true, II: false }, explanation: "II: it burns." },
+    3: { choice: "A", explanation: "" },
+    4: { explanation: "Because it is." },
+  };
+
+  it("checks a choice as soon as it's picked: right green, wrong red, why", async () => {
+    const user = userEvent.setup();
+    render(<Prose markdown={CHECK} answers={ANSWERS} />);
+    const group = screen.getByRole("radiogroup", { name: "Pick one" });
+    const options = group.querySelectorAll(".quiz__opt");
+    await user.click(within(group).getByLabelText(/Third/));
+    expect(options[2]).toHaveClass("is-wrong");
+    expect(options[1]).toHaveClass("is-correct");
+    expect(screen.getByText("Not quite: the answer is B.")).toBeInTheDocument();
+    expect(screen.getByText("second").tagName).toBe("STRONG");
+    // Answered: it stays as answered until Try again.
+    await user.click(within(group).getByLabelText(/First/));
+    expect(options[0]).not.toHaveClass("is-wrong");
+    expect(options[2]).toHaveClass("is-wrong");
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(group.querySelector(".is-wrong, .is-correct")).toBeNull();
+    await user.click(within(group).getByLabelText(/Second/));
+    expect(options[1]).toHaveClass("is-correct");
+    expect(screen.getByText("Correct.")).toBeInTheDocument();
+  });
+
+  it("checks a code question with options after the code", async () => {
+    const user = userEvent.setup();
+    render(<Prose markdown={CHECK} answers={ANSWERS} />);
+    const group = screen.getByRole("radiogroup", { name: "Which one runs?" });
+    const quiz = group.closest("section") as HTMLElement;
+    expect(quiz.querySelector(".codeblock")).not.toBeNull();
+    await user.click(within(group).getByLabelText(/This/));
+    expect(within(quiz).getByText("Correct.")).toBeInTheDocument();
+  });
+
+  it("checks each true/false statement when marked, then scores and explains", async () => {
+    const user = userEvent.setup();
+    render(<Prose markdown={CHECK} answers={ANSWERS} />);
+    const sky = screen.getByRole("radiogroup", { name: "Sky is blue" });
+    const fire = screen.getByRole("radiogroup", { name: "Fire is cold" });
+    await user.click(within(sky).getByLabelText("True"));
+    expect(sky).toHaveClass("is-correct");
+    expect(screen.queryByText("II: it burns.")).toBeNull();
+    await user.click(within(fire).getByLabelText("True"));
+    expect(fire).toHaveClass("is-wrong");
+    expect(within(fire).getByText("It's false")).toBeInTheDocument();
+    expect(screen.getByText("1 of 2 right.")).toBeInTheDocument();
+    expect(screen.getByText("II: it burns.")).toBeInTheDocument();
+    // A marked statement can't be changed to the answer just shown.
+    await user.click(within(fire).getByLabelText("False"));
+    expect(fire).toHaveClass("is-wrong");
+  });
+
+  it("shows an open question's model answer, then marks it as the reader judges", async () => {
+    const user = userEvent.setup();
+    render(<Prose markdown={CHECK} answers={ANSWERS} />);
+    expect(screen.queryByText("Because it is.")).toBeNull();
+    await user.type(screen.getByLabelText(/Your answer/), "No idea");
+    await user.click(screen.getByRole("button", { name: "Show model answer" }));
+    expect(screen.getByText("Because it is.")).toBeInTheDocument();
+    expect(screen.getByText("Did you get it?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Missed it" }));
+    expect(
+      screen.getByText("Because it is.").closest(".quiz__answer"),
+    ).toHaveClass("is-wrong");
+  });
+
+  it("without answers, takes a selection but checks nothing", async () => {
+    const user = userEvent.setup();
+    render(<Prose markdown={CHECK} />);
+    const sky = screen.getByRole("radiogroup", { name: "Sky is blue" });
+    await user.click(within(sky).getByLabelText("False"));
+    expect(sky).not.toHaveClass("is-wrong");
+    expect(within(sky).getByLabelText("False")).toBeChecked();
+    expect(
+      screen.queryByRole("button", { name: "Show model answer" }),
+    ).toBeNull();
   });
 
   it("copies a code block and says so for --duration-copied-hold", async () => {
