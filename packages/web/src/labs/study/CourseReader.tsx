@@ -8,7 +8,12 @@ import {
   courseReadResponseSchema,
 } from "@projects-lab/shared/study";
 import { type MouseEvent, useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router";
 import {
   Badge,
   Button,
@@ -97,6 +102,10 @@ function MissingFile({ message }: { message: string }) {
 
 const pageLabel = (page: CoursePage) =>
   page.kind === "lesson" ? `Lesson ${page.n} · ${page.title}` : page.title;
+
+/** This tab's place in history, as the browser router keeps it (0 in tests). */
+const historyIdx = () =>
+  (window.history.state as { idx?: number } | null)?.idx ?? 0;
 
 /** Scrolls the window, where the browser can (not in jsdom). */
 function scrollTop() {
@@ -234,8 +243,13 @@ function usePinnedOutline(): [boolean, (shown: boolean) => void] {
 
 function Reader({ course, parsed }: Loaded) {
   const navigate = useNavigate();
+  const location = useLocation();
   const tablet = useMinWidth("--breakpoint-tablet");
   const [params, setParams] = useSearchParams();
+  // Where in history the reader opened. Each page turn pushes an entry and
+  // carries this along, so Back leaves the course rather than turning a page.
+  const entry =
+    (location.state as { entry?: number } | null)?.entry ?? historyIdx();
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [pinned, setPinned] = usePinnedOutline();
   const outlineShown = tablet && pinned;
@@ -250,7 +264,7 @@ function Reader({ course, parsed }: Loaded) {
 
   const toPage = (index: number) => {
     setOutlineOpen(false);
-    setParams({ p: String(index) });
+    setParams({ p: String(index) }, { state: { entry } });
     scrollTop();
   };
   const toSection = (id: string) => {
@@ -258,9 +272,8 @@ function Reader({ course, parsed }: Loaded) {
     document.getElementById(id)?.scrollIntoView?.({ block: "start" });
   };
   const back = () => {
-    // Back to where the reader came from, else the Courses tab.
-    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
-    if (idx > 0) navigate(-1);
+    // Back past every page turned to where the reader came from, else the Courses tab.
+    if (entry > 0) navigate(entry - 1 - historyIdx());
     else navigate(COURSES_PATH);
   };
 

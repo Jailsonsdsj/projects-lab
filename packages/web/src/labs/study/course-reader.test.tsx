@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createMemoryRouter } from "react-router";
+import { createBrowserRouter, createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { json } from "../../../test/api";
@@ -261,6 +261,30 @@ describe("Course reader", () => {
         "Open this course once online to read it offline.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("goes back to Courses past every page turned, not one page", async () => {
+    api(() => json({ course: COURSE }));
+    const user = userEvent.setup();
+    // A browser router: the reader steps back through real history.
+    window.history.replaceState(null, "", "/study/courses");
+    const router = createBrowserRouter(createRoutes());
+    render(<RouterProvider router={router} />);
+    await router.navigate("/study/courses/course-bigo");
+    await screen.findByRole("heading", { level: 1, name: "Big-O Notation" });
+    for (const name of [
+      "Lesson 1 · What Big-O measures and why",
+      "Lesson 2 · The common complexity classes",
+    ]) {
+      await user.click(screen.getByRole("button", { name }));
+      await screen.findByRole("heading", { level: 2, name });
+    }
+    await user.click(screen.getByRole("button", { name: "Back to courses" }));
+    await vi.waitFor(() =>
+      expect(router.state.location.pathname).toBe("/study/courses"),
+    );
+    expect(router.state.location.search).toBe("");
+    router.dispose();
   });
 
   it("names the path when the course file left study-materials", async () => {
