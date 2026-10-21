@@ -13,6 +13,7 @@ import {
 } from "../components/ui";
 import { readBackupStatus } from "./BackupCard";
 import { ConnectionsScreen } from "./ConnectionsScreen";
+import { GuideScreen } from "./GuideScreen";
 import {
   type LabDefinition,
   type LabHome,
@@ -168,6 +169,12 @@ export const platformLab: LabDefinition = {
       icon: "link",
       path: "/connections",
       screen: <ConnectionsScreen />,
+    },
+    {
+      label: "Guide",
+      icon: "book",
+      path: "/guide",
+      screen: <GuideScreen />,
     },
     {
       label: "Settings",

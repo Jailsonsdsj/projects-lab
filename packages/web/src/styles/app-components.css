@@ -377,7 +377,16 @@ dialog.is-closing::backdrop {
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-10) var(--space-4) var(--space-6);
-  border-left: var(--border-thin) solid var(--color-border);
+  border-right: var(--border-thin) solid var(--color-border);
+}
+/* Outline hidden: the text takes the width, padding kept, up to the app's
+   maximum and centred beyond it (a desktop line stays readable). */
+.reader--wide .reader__main {
+  max-width: var(--size-app-max);
+  margin-inline: auto;
+}
+.reader--wide .prose {
+  max-width: none;
 }
 /* Not `.outline`: that is Tailwind's outline-style utility. */
 .reader__outline {

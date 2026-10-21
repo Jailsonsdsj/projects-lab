@@ -27,7 +27,7 @@ The shell and Home iterate the registry; core code never imports a lab. A lab wi
 | Path | Lab | Screen |
 |---|---|---|
 | `/` | platform | Home |
-| `/connections`, `/settings` | platform | Connections (`01-identity`), Settings |
+| `/connections`, `/guide`, `/settings` | platform | Connections (`01-identity`), Guide (`docs/user-guide.md` rendered, one part per tab in `?view=`), Settings |
 | `/login`, `/oauth/authorize` | platform | Login, Allow Claude (no shell) |
 | `/study`, `/study/courses`, `/study/grades` | study | Backlog (first tab), Courses, Grades |
 | `/career`, `/career/skills`, `/career/profile`, `/career/documents`, `/career/interviews` | career | Jobs (first tab), Skills, Profile, Documents, Interviews (CA-13); `/career/jobs/:jobId` is a page under Jobs (CA-11a) |
@@ -36,7 +36,7 @@ The current lab comes from the first path segment, so a deep link opens in the r
 
 ## The shell
 
-- **Phone (< 768 px):** a `PageHeader` per screen and `BottomTabs` with the current lab's tabs. Platform's tabs are Home, Connections and Settings. Content scrolls under the frosted tab bar.
+- **Phone (< 768 px):** a `PageHeader` per screen and `BottomTabs` with the current lab's tabs. Platform's tabs are Home, Connections, Guide and Settings. Content scrolls under the frosted tab bar.
 - **Tablet (768–1279 px, either orientation):** a `SideRail` with the lab's name, its tabs with counts, and Settings at the bottom. Labels show from 1024 px; below that the rail is compact (icons only).
 - **Wide (≥ 1280 px):** the tablet layout, centred at `--size-app-max`.
 - **LabSwitcher** in the header: Home, Study Lab, Career Lab, each with a one-line description. A `Sheet` on phone, a popover menu on tablet.

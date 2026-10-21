@@ -12,6 +12,9 @@ the owner decides when `developer` goes to `main`. No PRs until after launch.
    each criterion is actually met. Say which, one line each.
 4. Update the progress table at the top of docs/backlog.md, and rewrite this
    task's "Done when" cell as ✅ plus what was found.
+   If the task added or changed anything the owner uses (a screen or view, an
+   MCP tool, a pnpm script, a slash command, a script, a workflow), update
+   docs/user-guide.md to match; `pnpm lint` checks that each is mentioned.
 5. Make sure you are on `developer` (stop and say so if you are on `main`),
    then commit everything, backlog included, with a conventional-commit message
    derived from the diff that names the task ID. No `Co-Authored-By` trailer

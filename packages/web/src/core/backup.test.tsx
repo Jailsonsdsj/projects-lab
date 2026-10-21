@@ -41,7 +41,8 @@ afterEach(() => {
 
 describe("Settings → Backup", () => {
   it("downloads one file with the rows and each file's bytes, then records it on the server", async () => {
-    const done = "2026-10-20T10:00:05.000Z";
+    // Recorded now, so the card reads "today" whatever day the test runs.
+    const done = new Date().toISOString();
     const clicked = vi
       .spyOn(HTMLAnchorElement.prototype, "click")
       .mockImplementation(() => {});
@@ -78,9 +79,9 @@ describe("Settings → Backup", () => {
     );
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i) ?? "";
-      expect(`${key}=${localStorage.getItem(key)}`).not.toMatch(
-        /export|backup|2026-10-20T10:00:05/i,
-      );
+      const entry = `${key}=${localStorage.getItem(key)}`;
+      expect(entry).not.toMatch(/export|backup/i);
+      expect(entry).not.toContain(done);
     }
   });
 

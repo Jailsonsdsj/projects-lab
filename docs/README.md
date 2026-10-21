@@ -1,5 +1,7 @@
 # Projects Lab — PRD index
 
+How to use the app, its workflows with Claude and every command: [`user-guide.md`](user-guide.md).
+
 The PRD is split one file per feature area, so a task loads one ~80-line file instead of the whole document (playbook §5). Files are **numbered by lab**, leaving room for future labs:
 
 | Range | Owner |

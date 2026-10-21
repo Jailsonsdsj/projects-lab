@@ -57,7 +57,7 @@ export {
 } from "./PageHeader";
 export { ProgressBar, type ProgressBarProps } from "./ProgressBar";
 export { Prose, type ProseProps } from "./Prose";
-export { headingIds, headingSlug } from "./prose-slug";
+export { type HeadingLevel, headingIds, headingSlug } from "./prose-slug";
 export { ReadinessMeter, type ReadinessMeterProps } from "./ReadinessMeter";
 export {
   type Readiness,

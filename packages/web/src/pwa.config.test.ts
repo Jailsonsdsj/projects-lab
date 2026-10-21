@@ -8,6 +8,7 @@ import type { VitePWAOptions } from "vite-plugin-pwa";
 import { describe, expect, it } from "vitest";
 import wrangler from "../../api/wrangler.jsonc?raw";
 import favicon from "../public/favicon.svg?raw";
+import devFavicon from "../public/favicon-dev.svg?raw";
 import {
   mermaidOnlyFiles,
   pwaOptions,
@@ -177,6 +178,17 @@ describe("manifest and icons", () => {
       .sort();
     expect(fills).toEqual(
       [light("--color-on-platform"), light("--color-platform")]
+        .map((c) => c.toUpperCase())
+        .sort(),
+    );
+  });
+
+  it("draws the dev icon in the warning line and the platform accent", () => {
+    const fills = [...devFavicon.matchAll(/(?:fill|stroke)="(#[0-9A-Fa-f]+)"/g)]
+      .map((m) => m[1]?.toUpperCase())
+      .sort();
+    expect(fills).toEqual(
+      [light("--color-warning-line"), light("--color-platform")]
         .map((c) => c.toUpperCase())
         .sort(),
     );
