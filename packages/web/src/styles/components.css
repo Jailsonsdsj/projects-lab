@@ -517,7 +517,12 @@
 .rail__item.is-disabled { color: var(--color-ink-disabled); cursor: not-allowed; background-image: none; }
 .rail__foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-3); border-top: var(--border-thin) solid var(--color-border); }
 .rail--compact { width: var(--size-rail-compact); align-items: stretch; padding: var(--space-2); }
-.rail--compact .rail__item { flex-direction: column; justify-content: center; gap: var(--space-1); min-height: var(--size-row); padding: 0; font-size: var(--text-xs); text-align: center; }
+.rail--compact .rail__item { flex-direction: column; justify-content: center; gap: var(--space-1); min-height: var(--size-row); padding: var(--space-2) 0; font-size: var(--text-xs); text-align: center; }
+/* The label sits under the icon at its own height (not stretched, which pinned the icon to the top), and never wider than the column. */
+.rail--compact .rail__item > span { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Too narrow for the lab's name: mark and chevron, centred; the name stays for screen readers. */
+.rail--compact .labsw--block { justify-content: center; gap: var(--space-1); margin-bottom: var(--space-2); padding: 0; }
+.rail--compact .labsw__name { position: absolute; width: var(--border-thin); height: var(--border-thin); overflow: hidden; clip-path: inset(50%); }
 
 /* ── Prose — course Markdown ──────────────────────────────────────────── */
 .prose { max-width: var(--size-measure); font-size: var(--text-prose); line-height: var(--leading-prose); color: var(--color-ink); }
