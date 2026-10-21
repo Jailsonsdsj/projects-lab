@@ -13,7 +13,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 | 1 Design system | 16 | 16 | Done |
 | 2 Study Lab | 16 | 24 | In progress |
 | 3 Career Lab | 20 | 24 | In progress |
-| AI integration | 0 | 3 | — |
+| AI integration | 1 | 3 | In progress |
 | Hardening | 5 | 5 | Done |
 | Go-Live | 0 | 5 | — |
 
@@ -155,7 +155,7 @@ The app's own calls to the Anthropic API (owner's decision, 2026-10-21): an exce
 
 | ID | Task | Size | Model | Load | Done when |
 |---|---|---|---|---|---|
-| AI-01 | The rule change: CLAUDE.md ("no LLM except through the Anthropic API integrations listed in `docs/architecture.md`"), architecture §1–2 (the exception, `ANTHROPIC_API_KEY`, cost, CPU: the Worker only sends and parses), `.dev.vars.example`; the model as a shared constant (`claude-sonnet-5-5`) | S | Opus | `docs/architecture.md`, `CLAUDE.md` | Owner approves the wording; `check-workflows.sh` still keeps the key out of CI |
+| AI-01 | The rule change: CLAUDE.md ("no LLM except through the Anthropic API integrations listed in `docs/architecture.md`"), architecture §1–2 (the exception, `ANTHROPIC_API_KEY`, cost, CPU: the Worker only sends and parses), `.dev.vars.example`; the model as a shared constant (`claude-sonnet-5-5`) | S | Opus | `docs/architecture.md`, `CLAUDE.md` | ✅ 2026-10-21. Wording approved by the owner. **CLAUDE.md:** "no LLM of its own… the only exception is the Anthropic API integrations listed in docs/architecture.md §1"; a new rule (Worker only, a listed integration only, the one client, `ANTHROPIC_API_KEY`, billed per use so never retried blindly or made without the owner's action, model `AI_MODEL`); the key joins the secrets read outside any 401 `try`; the CPU rule: an AI call is network waiting. **Architecture:** §1's rule plus an AI integrations table (Exams in the app · Sonnet 5.5 · "Take the test" · ST-13); §2's diagram gains the Anthropic API; §3: `ANTHROPIC_API_KEY` optional, not in wrangler's required secrets (the app deploys without it); §10 CPU row. `packages/api/.dev.vars.example` gains the key; `AI_MODEL = "claude-sonnet-5-5"` in `shared/core/ai.ts`; the user guide's local setup and owner steps name the key. **Checked:** a `ci.yml` step reading `secrets.ANTHROPIC_API_KEY` fails `check-workflows.sh` (no new rule needed: any `secrets.` in PR CI fails). Left to ST-13a/ST-13c: the app writing exam files to `study-materials` (§2 table, §7) |
 | AI-02 | Anthropic client in the Worker: plain `fetch` to the Messages API (no SDK), structured output validated with Zod, named errors (key missing or invalid, rate limited, overloaded, timeout) mapped to the app's error shapes; the key read outside any `try` that maps to 401 | M | Opus | `docs/architecture.md` | Tests with the API stubbed on the global fetch: request shape, a valid reply parsed, each error named, a malformed reply refused; nothing calls the real API in CI |
 | AI-03 | The key **(Human)**: create an API key at console.anthropic.com (set a monthly spend limit there), `wrangler secret put ANTHROPIC_API_KEY`, add it to `packages/api/.dev.vars` | S | — | — | The first exam generated in production (ST-13f) reaches the API: no "ANTHROPIC_API_KEY is unset" error |
 

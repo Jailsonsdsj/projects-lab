@@ -1,5 +1,5 @@
 # Projects Lab
-One web app hosting labs (Study Lab, Career Lab) that share data. Single owner. The app has no LLM: Claude sessions write into it over MCP.
+One web app hosting labs (Study Lab, Career Lab) that share data. Single owner. The app has no LLM of its own: Claude sessions write into it over MCP. The only exception is the Anthropic API integrations listed in docs/architecture.md §1 (today: exams in the app, ST-13).
 
 ## Stack
 One Cloudflare Worker (Hono) + static assets (Vite/React 19). D1 + Drizzle. R2. KV (OAuth only). pnpm workspaces.
@@ -22,8 +22,9 @@ Infra → docs/architecture.md · UI → docs/design-system.md · Owner's guide 
 - Invariants are DB triggers. A RAISE(ABORT) means the code is wrong; never drop a trigger.
 - Every column a CHECK references is NOT NULL.
 - Never edit an applied migration. Triggers live in their own custom migration.
+- Anthropic API calls happen only in the Worker, only for an integration listed in architecture §1, through the one client (AI-02), with `ANTHROPIC_API_KEY`. Each is billed per use, so a call is never retried blindly and never made without the owner's action. The model is `AI_MODEL` in packages/shared.
 - Grades are integer tenths, 0–100 (8.5 → 85). No floats anywhere.
-- 10 ms CPU free tier: no PDF generation, image processing or heavy crypto server-side; KDF runs in the browser.
+- 10 ms CPU free tier: no PDF generation, image processing or heavy crypto server-side; KDF runs in the browser. An AI call is network waiting: the Worker only builds the request and parses the reply.
 - KDF params and every shared magic number live in packages/shared only.
 - Every mutation accepts Idempotency-Key (per-route middleware, not wildcard). MCP write tools take `idempotencyKey` and use the same table.
 - Two credentials, never interchangeable: session JWT for /api, OAuth access token for /mcp. Each surface rejects the other's token.
@@ -32,7 +33,7 @@ Infra → docs/architecture.md · UI → docs/design-system.md · Owner's guide 
 - `study-materials` is read-only to the app (GITHUB_TOKEN, Contents read). Only Claude Code pushes there. Fetch content by blob SHA; don't rely on the Workers Cache API.
 - Video never goes to R2. Interview videos are Google Drive links.
 - assets.run_worker_first is ["/api/*","/mcp","/oauth/*","/.well-known/*"], never true.
-- Read secrets (TOKEN_SIGNING_KEY, GITHUB_TOKEN) outside any try that maps errors to 401; a missing secret throws a message naming the fix.
+- Read secrets (TOKEN_SIGNING_KEY, GITHUB_TOKEN, ANTHROPIC_API_KEY) outside any try that maps errors to 401; a missing secret throws a message naming the fix.
 - Never pin a dependency version from memory; report anything >1 minor behind.
 - TypeScript stays on 5.x until Drizzle supports 7.
 - Colours/type/spacing/border widths/breakpoints come from tokens.css; literals fail CI. A lab's colour is `--color-lab-accent` only.

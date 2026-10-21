@@ -7,5 +7,9 @@ TOKEN_SIGNING_KEY=
 # Fine-grained GitHub token: Contents read, study-materials repo only
 GITHUB_TOKEN=
 
+# Anthropic API key for the AI integrations (architecture §1); optional:
+# without it, only those features fail, with a message naming this key
+ANTHROPIC_API_KEY=
+
 # The app's origin for OAuth (issuer, and <origin>/mcp as the token audience)
 PUBLIC_ORIGIN=http://localhost:8787

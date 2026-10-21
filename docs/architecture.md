@@ -15,7 +15,13 @@ One web app that hosts **labs**: modules that each run one kind of productive wo
 | **Study Lab** | Backlog of topics → course → final exam → grade. Everything cs-learning-lab does today. English, AI, CS and so on are **areas** inside it, not separate labs. | First lab |
 | **Career Lab** | Profile, skills and gaps, per-role documents (resume, cover letter, self-introduction, salary range), form-filling help, automated job search, interview answers. Absorbs `job-mapper`. | Second lab |
 
-**The one rule that shapes everything:** the app contains **no LLM** and no Anthropic API key. Every intelligent output (a course, a grade, a resume, a job match) is produced by a Claude session on your Claude plan and delivered to the app over MCP, or pushed to git.
+**The one rule that shapes everything:** the app contains **no LLM of its own**. Every intelligent output (a course, a grade, a resume, a job match) is produced by a Claude session on your Claude plan and delivered over MCP or pushed to git, **except the AI integrations below**: features where the Worker calls the Anthropic API directly because you start them in the app. They're billed per use to your Anthropic API account, not your Claude plan.
+
+**AI integrations** (owner's decision, 2026-10-21; backlog section `AI-`). Each is started by you in the app, goes through the one Worker client (AI-02) with `ANTHROPIC_API_KEY`, and uses `AI_MODEL` from `packages/shared`:
+
+| Integration | What the model does | Model | Started by | Task |
+|---|---|---|---|---|
+| Exams in the app | Writes an exam (questions and a hidden key) from a course; grades open and code answers | Sonnet 5.5 (`AI_MODEL`) | You, with "Take the test" | ST-13 |
 
 ---
 
@@ -37,6 +43,7 @@ flowchart LR
     kv[(KV OAUTH_KV<br/>OAuth grants)]
   end
   gh[(GitHub<br/>study-materials · private)]
+  anthropic[Anthropic API<br/>per-use billing]
   drive[(Google Drive<br/>interview videos)]
   gmail[Gmail<br/>job digest]
 
@@ -45,6 +52,7 @@ flowchart LR
   vsc & ccw -- git push courses, exams --> gh
   vsc & chat -. generated PDF / DOCX, not stored .-> you
   worker -- read-only token --> gh
+  worker -- exams: write, grade --> anthropic
   worker --- d1 & r2 & kv
   you -. upload, paste link .-> drive
   worker -. stores link only .-> drive
@@ -68,7 +76,7 @@ flowchart LR
 | Product shape | One app, one domain | One app hosting **lab modules** compiled in. See §4 |
 | Credentials | Passphrase → session JWT | Two credential types: session JWT for `/api`, **OAuth 2.1 access token** for `/mcp`. See §6 |
 | Bindings | D1, R2 | D1 `DB` · R2 `FILES` · **KV `OAUTH_KV`** (required by `workers-oauth-provider`) |
-| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. Fresh per project, never shared. (`UPLOAD_SIGNING_KEY`, for the signed uploads built in F-18, was removed by F-23: R3-1 left them without a use) |
+| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. Fresh per project, never shared. + **`ANTHROPIC_API_KEY`**: only the AI integrations (§1) use it; the owner sets it with `wrangler secret put` and caps spending in the Anthropic console. A missing key fails with a message naming the fix, and only when an AI feature is used; it isn't in wrangler's required secrets, so the app deploys and runs without it. (`UPLOAD_SIGNING_KEY`, for the signed uploads built in F-18, was removed by F-23: R3-1 left them without a use) |
 | `run_worker_first` | `["/api/*"]` | `["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]`. Still an array, never `true` |
 | Content | Lives in D1/R2 | Study content lives in **git** (`study-materials`). D1 stores only paths and metadata. See §7 |
 | Caching | Not specified | **Don't rely on the Workers Cache API**: on a `workers.dev` hostname it can't be counted on. Content is addressed by git blob SHA and cached **in the client** as immutable. See §7 |
@@ -280,7 +288,7 @@ Account-wide, with sticker-collector as the only other project (assumption A-5).
 | KV namespaces | 0 | 1 (`OAUTH_KV`) | A handful of writes per day for one user |
 | Cron Triggers | 0 | 1 | 1 of 5 |
 | Worker requests | shared | UI + MCP calls; course content is cached in the client | Far under 100k/day for one user |
-| Worker CPU | — | OAuth decrypt and JSON per request; no PDF, no LLM, no image work | Within 10 ms |
+| Worker CPU | — | OAuth decrypt and JSON per request; no PDF, no image work; an AI call is network waiting, the Worker only builds the request and parses the reply | Within 10 ms |
 
 ---
 
