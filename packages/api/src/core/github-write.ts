@@ -95,3 +95,20 @@ export async function deleteFile(
 ): Promise<void> {
   await send(deps, "DELETE", path, { message, sha });
 }
+
+/** Replaces a file's content, given the blob SHA it has now; answers the new SHA. */
+export async function updateFile(
+  deps: GitHubWriteDeps,
+  path: string,
+  text: string,
+  message: string,
+  sha: string,
+): Promise<{ sha: string }> {
+  const response = await send(deps, "PUT", path, {
+    message,
+    content: bytesToBase64(new TextEncoder().encode(text)),
+    sha,
+  });
+  const reply = (await response.json()) as { content?: { sha?: string } };
+  return { sha: String(reply.content?.sha ?? "") };
+}

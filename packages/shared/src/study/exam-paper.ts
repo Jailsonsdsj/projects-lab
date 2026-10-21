@@ -526,3 +526,60 @@ export const generatedExamResponseSchema = z.object({
   }),
 });
 export type GeneratedExamResponse = z.infer<typeof generatedExamResponseSchema>;
+
+// --- Answering and grading (ST-13d) ---
+
+/** PUT …/draft and POST …/submit: the answers, one per question. */
+export const examAnswersInputSchema = z.object({ answers: examAnswersSchema });
+
+/** What a paper keeps once graded (`results_json`); the grade lives on the exam. */
+export const storedResultsSchema = z.object({
+  review: z.string(),
+  questions: z.array(
+    z.object({
+      number: z.number().int().min(1),
+      accuracy: z.number().int().min(0).max(100),
+      feedback: z.string().optional(),
+      missing: z.string().optional(),
+    }),
+  ),
+});
+export type StoredResults = z.infer<typeof storedResultsSchema>;
+
+/** One graded question as the owner sees it: their answer, the key, and what it earned. */
+export const questionResultSchema = z.object({
+  number: z.number().int().min(1),
+  accuracy: z.number().int().min(0).max(100),
+  /** "0.5 / 1.0" */
+  points: z.string(),
+  feedback: z.string().optional(),
+  missing: z.string().optional(),
+  answer: examAnswerSchema,
+  key: examKeySchema,
+});
+
+/** GET …/paper, and the answer to a submit: the key only once graded. */
+export const examPaperResponseSchema = z.object({
+  paper: z.object({
+    examId: z.string(),
+    topicId: z.string(),
+    skill: z.string(),
+    level: z.enum(COURSE_LEVELS),
+    attempt: z.number().int().min(1),
+    title: z.string(),
+    questions: z.array(examQuestionSchema),
+    draft: examAnswersSchema,
+    submittedAt: z.string().nullable(),
+    result: z
+      .object({
+        /** Integer tenths. */
+        grade: z.number().int().min(0).max(100),
+        /** Shown below 7 only (empty otherwise). */
+        review: z.string(),
+        questions: z.array(questionResultSchema),
+      })
+      .nullable(),
+  }),
+});
+export type ExamPaperResponse = z.infer<typeof examPaperResponseSchema>;
+export type ExamPaper = ExamPaperResponse["paper"];

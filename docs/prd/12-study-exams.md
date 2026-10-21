@@ -43,6 +43,8 @@ The same exam, written and graded by the Worker through the Anthropic API (archi
 3. **The key** stays in the app's database. It is never in the file, on the page or in any response until the exam is graded.
 4. **Answer.** A form per type (a choice for MC and CODE-MC, T or F per statement, text for OPEN, one field per blank for CODE), with a **draft** saved as the owner goes.
 5. **Submit.** MC, TF and CODE-MC are scored against the key, without the model. OPEN and CODE go to the model with the reference answers, which returns an accuracy (0–100%) and feedback for each. The grade follows rule 4: the mean accuracy over 10, one decimal, stored in tenths. `## Results` is appended to the same file in the rules' report format, with the owner's answers, the correct ones, feedback and the grade; review suggestions only below 7, which also go to the topic's note, as Claude does. The grade is recorded like any other (`recordGrade`: the topic is Done, Verified at 7.0).
+**Routes** (session only, `/api/study`): `POST /courses/:courseId/exams` writes one (ST-13c); `GET /exams/:examId/paper` gives the questions and the draft, and the key and per-question results only once submitted (a Claude Code exam has no paper: 404); `PUT /exams/:examId/draft` saves the answers (409 once submitted); `POST /exams/:examId/submit` grades. Writes take an Idempotency-Key, and a second submit answers the stored result without grading again.
+
 6. **Failures.** Each AI error (`ai_*`, architecture §1) is shown with what to do. A failed grading keeps the answers saved, so the owner can submit again.
 
 ## Screens

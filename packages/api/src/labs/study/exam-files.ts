@@ -7,6 +7,7 @@ import {
   type GitHubWriteDeps,
   githubWriteDeps,
   putFile,
+  updateFile,
 } from "../../core/github-write";
 
 /** The write token's deps: exam files only, through the functions below. */
@@ -35,4 +36,16 @@ export async function removeExamFile(
 ) {
   examFileOnly(path);
   await deleteFile(deps, path, sha, message);
+}
+
+/** An exam file's new content (its Results appended), given its current SHA. */
+export async function rewriteExamFile(
+  deps: GitHubWriteDeps,
+  path: string,
+  text: string,
+  message: string,
+  sha: string,
+) {
+  examFileOnly(path);
+  return updateFile(deps, path, text, message, sha);
 }

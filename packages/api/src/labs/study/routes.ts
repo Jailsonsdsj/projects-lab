@@ -4,6 +4,7 @@
 import {
   addAreaInputSchema,
   addTopicsInputSchema,
+  examAnswersInputSchema,
   examSettingsSchema,
   listBacklogInputSchema,
   listCoursesInputSchema,
@@ -32,6 +33,7 @@ import {
   updateTopic,
 } from "./backlog";
 import { generateExam } from "./exam-app";
+import { readPaper, saveDraft, submitExam } from "./exam-grade";
 import {
   courseToRead,
   examToRead,
@@ -245,6 +247,59 @@ export function backlogRoutes() {
             database(c.env),
             c.req.param("courseId"),
             parsed.data,
+            new Date(),
+          ),
+        );
+      } catch (error) {
+        return serviceFailed(c, error);
+      }
+    },
+  );
+
+  // An app exam's paper (ST-13d): the questions and draft; the key and the
+  // results once submitted.
+  app.get("/exams/:examId/paper", async (c) => {
+    try {
+      return c.json(await readPaper(database(c.env), c.req.param("examId")));
+    } catch (error) {
+      return refused(c, error);
+    }
+  });
+
+  app.put(
+    "/exams/:examId/draft",
+    idempotent("PUT /api/study/exams/:examId/draft"),
+    async (c) => {
+      const parsed = examAnswersInputSchema.safeParse(await body(c));
+      if (!parsed.success) return invalid(c, parsed.error);
+      try {
+        return c.json(
+          await saveDraft(
+            database(c.env),
+            c.req.param("examId"),
+            parsed.data.answers,
+            new Date(),
+          ),
+        );
+      } catch (error) {
+        return refused(c, error);
+      }
+    },
+  );
+
+  app.post(
+    "/exams/:examId/submit",
+    idempotent("POST /api/study/exams/:examId/submit"),
+    async (c) => {
+      const parsed = examAnswersInputSchema.safeParse(await body(c));
+      if (!parsed.success) return invalid(c, parsed.error);
+      try {
+        return c.json(
+          await submitExam(
+            c.env,
+            database(c.env),
+            c.req.param("examId"),
+            parsed.data.answers,
             new Date(),
           ),
         );
