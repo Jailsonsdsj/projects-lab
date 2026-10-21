@@ -7,6 +7,10 @@ TOKEN_SIGNING_KEY=
 # Fine-grained GitHub token: Contents read, study-materials repo only
 GITHUB_TOKEN=
 
+# Fine-grained GitHub token: Contents read and write, study-materials only.
+# Optional: only exams taken in the app write files with it (ST-13)
+GITHUB_WRITE_TOKEN=
+
 # Anthropic API key for the AI integrations (architecture §1); optional:
 # without it, only those features fail, with a message naming this key
 ANTHROPIC_API_KEY=

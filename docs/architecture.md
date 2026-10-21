@@ -64,6 +64,7 @@ flowchart LR
   vsc & ccw -- git push courses, exams --> gh
   vsc & chat -. generated PDF / DOCX, not stored .-> you
   worker -- read-only token --> gh
+  worker -- exam files only, write token --> gh
   worker -- exams: write, grade --> anthropic
   worker --- d1 & r2 & kv
   you -. upload, paste link .-> drive
@@ -76,6 +77,7 @@ flowchart LR
 | What | Written by | Stored in | The app's access |
 |---|---|---|---|
 | Course and exam **content** (Markdown, exam PDF, images) | Claude Code, by `git push` | `study-materials` repo | Read-only |
+| An exam taken **in the app** (its Markdown: questions, then Results) | The Worker, through the Contents API with `GITHUB_WRITE_TOKEN` (ST-13); `core/github-write.ts`, reached only through `labs/study/exam-files.ts`, which allows exam files only | `study-materials` repo, beside the course | Writes those files only |
 | Everything else: backlog, grades, profile, skills, jobs, openings | You (web UI → `/api`) or Claude (MCP → `/mcp`) | D1, plus R2 for your profile photo | Read-write |
 | Resumes, cover letters, any other career file | Claude, on demand, from the profile | **Not stored**: returned to you (§6.4) | — |
 
@@ -88,7 +90,7 @@ flowchart LR
 | Product shape | One app, one domain | One app hosting **lab modules** compiled in. See §4 |
 | Credentials | Passphrase → session JWT | Two credential types: session JWT for `/api`, **OAuth 2.1 access token** for `/mcp`. See §6 |
 | Bindings | D1, R2 | D1 `DB` · R2 `FILES` · **KV `OAUTH_KV`** (required by `workers-oauth-provider`) |
-| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. Fresh per project, never shared. + **`ANTHROPIC_API_KEY`**: only the AI integrations (§1) use it; the owner sets it with `wrangler secret put` and caps spending in the Anthropic console. A missing key fails with a message naming the fix, and only when an AI feature is used; it isn't in wrangler's required secrets, so the app deploys and runs without it. (`UPLOAD_SIGNING_KEY`, for the signed uploads built in F-18, was removed by F-23: R3-1 left them without a use) |
+| Secrets | `TOKEN_SIGNING_KEY` | + **`GITHUB_TOKEN`**: fine-grained, Contents read-only, `study-materials` only. Fresh per project, never shared. + **`GITHUB_WRITE_TOKEN`**: fine-grained, Contents read and write, `study-materials` only; used only to write exam files for exams taken in the app (§2), optional like the AI key. + **`ANTHROPIC_API_KEY`**: only the AI integrations (§1) use it; the owner sets it with `wrangler secret put` and caps spending in the Anthropic console. A missing key fails with a message naming the fix, and only when an AI feature is used; it isn't in wrangler's required secrets, so the app deploys and runs without it. (`UPLOAD_SIGNING_KEY`, for the signed uploads built in F-18, was removed by F-23: R3-1 left them without a use) |
 | `run_worker_first` | `["/api/*"]` | `["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]`. Still an array, never `true` |
 | Content | Lives in D1/R2 | Study content lives in **git** (`study-materials`). D1 stores only paths and metadata. See §7 |
 | Caching | Not specified | **Don't rely on the Workers Cache API**: on a `workers.dev` hostname it can't be counted on. Content is addressed by git blob SHA and cached **in the client** as immutable. See §7 |
@@ -263,7 +265,7 @@ study-materials/
 - Images under `_img/` are proxied the same way, so the private repo never needs to be public.
 - A missing or expired `GITHUB_TOKEN` fails with a named error ("GITHUB_TOKEN is unset or expired: …"), never an empty course list.
 
-**Exams (R2-4).** Exams are taken in the Claude Code session, as today. The app shows the grade and links the Markdown and the PDF.
+**Exams (R2-4).** Exams are taken in the Claude Code session, as today, **or in the app** (ST-13, PRD 12 § Exams in the app). The app shows the grade and links the Markdown, and the PDF of a Claude Code exam. An app exam's file is written by the Worker (§2), beside the course, in the same format, and numbered with the Claude Code exams; the Worker reads the skill's `exam-rules.md` (`EXAM_RULES_PATH`) so both follow one rulebook.
 
 ---
 

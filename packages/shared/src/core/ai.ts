@@ -6,8 +6,9 @@ export const AI_MODEL = "claude-sonnet-5-5";
 /** The Messages API version the Worker's client speaks (the `anthropic-version` header). */
 export const ANTHROPIC_VERSION = "2023-06-01";
 
-/** How long the Worker waits for one reply before giving up (no retry follows). */
-export const AI_TIMEOUT_MS = 120_000;
+/** How long the Worker waits for one reply before giving up (no retry follows).
+ *  A 20-question exam can take the model over two minutes to write. */
+export const AI_TIMEOUT_MS = 240_000;
 
 /**
  * Why an AI call failed, as the app reports it. Every one is shown to the

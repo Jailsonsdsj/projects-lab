@@ -308,14 +308,14 @@ Claude never runs these; they're yours:
 
 - `pnpm provision --remote` (create the production owner).
 - Any `--remote` command: `wrangler d1 execute … --remote` for imports and restores, `wrangler d1 time-travel restore`.
-- `wrangler secret put TOKEN_SIGNING_KEY` / `GITHUB_TOKEN` / `ANTHROPIC_API_KEY` (create the API key at console.anthropic.com and set a monthly spend limit there).
+- `wrangler secret put TOKEN_SIGNING_KEY` / `GITHUB_TOKEN` / `GITHUB_WRITE_TOKEN` / `ANTHROPIC_API_KEY` (create the API key at console.anthropic.com and set a monthly spend limit there).
 - Merging `developer` into `main` (that deploys).
 - Creating and changing routines at claude.ai/code/routines.
 
 ### Local setup
 
 1. `pnpm install`.
-2. `cp packages/api/.dev.vars.example packages/api/.dev.vars` and fill in `TOKEN_SIGNING_KEY` (any long random string: `openssl rand -base64 32`), `GITHUB_TOKEN` (read-only on `study-materials`; only courses and exams need it), `PUBLIC_ORIGIN`, and optionally `ANTHROPIC_API_KEY` (only the AI features need it; each use is billed to your Anthropic API account). Restart `pnpm dev` after any change to this file.
+2. `cp packages/api/.dev.vars.example packages/api/.dev.vars` and fill in `TOKEN_SIGNING_KEY` (any long random string: `openssl rand -base64 32`), `GITHUB_TOKEN` (read-only on `study-materials`; only courses and exams need it), `PUBLIC_ORIGIN`, and optionally `ANTHROPIC_API_KEY` (only the AI features need it; each use is billed to your Anthropic API account) and `GITHUB_WRITE_TOKEN` (only exams taken in the app need it: Contents read and write on `study-materials`). Restart `pnpm dev` after any change to this file.
 3. `pnpm seed`, then `pnpm dev`, and sign in with `projects-lab-dev`.
 
 The local app has its own database and owner: your production passphrase doesn't work there, and `projects-lab-dev` doesn't work in production.

@@ -5,12 +5,36 @@
 // text in the same formats Claude Code writes. Pure: no I/O, no floats in a
 // grade (integer tenths, CLAUDE.md).
 import { z } from "zod";
+import { COURSE_LEVELS } from "./backlog";
+import { LEVEL_SLUGS, parseCoursePath } from "./schemas";
 
 /** Where an exam was made: a Claude Code session (with a PDF) or the app (ST-13, none). */
 export const EXAM_SOURCES = ["claude", "app"] as const;
 export type ExamSource = (typeof EXAM_SOURCES)[number];
 
 export const EXAM_MAX_QUESTIONS = 20;
+
+/** The exam rules Claude Code follows, in study-materials (the skill's reference). */
+export const EXAM_RULES_PATH =
+  ".claude/skills/study-course-builder/references/exam-rules.md";
+
+/** The exam file's last line when the exam is answered in the app. */
+export const EXAM_APP_FOOTER =
+  "Answer this exam in Projects Lab: Study → Courses → this course.";
+
+/**
+ * Where attempt `n` of a course's exam goes: beside the course, named as
+ * Claude Code names them (`<topic>__<level>__exam-<n>.md`); null for a path
+ * that isn't a course.
+ */
+export function examPathFor(
+  coursePath: string,
+  attempt: number,
+): string | null {
+  const course = parseCoursePath(coursePath);
+  if (!course || !Number.isInteger(attempt) || attempt < 1) return null;
+  return `Study Lab/${course.areaSlug}/${course.topicSlug}/${course.topicSlug}__${LEVEL_SLUGS[course.level]}__exam-${attempt}.md`;
+}
 export const EXAM_FOCUS_MAX_LENGTH = 500;
 export const EXAM_OPEN_ANSWER_MAX_LENGTH = 4000;
 export const EXAM_BLANK_ANSWER_MAX_LENGTH = 500;
@@ -487,3 +511,18 @@ export function resultsMarkdown(
     parts.push("## Review suggestions", review.trim());
   return `\n${parts.join("\n\n")}\n`;
 }
+
+// --- POST /api/study/courses/:courseId/exams ---
+
+/** The exam just written: the questions only, never the key. */
+export const generatedExamResponseSchema = z.object({
+  exam: z.object({
+    examId: z.string(),
+    topicId: z.string(),
+    level: z.enum(COURSE_LEVELS),
+    attempt: z.number().int().min(1),
+    title: z.string(),
+    questions: z.array(examQuestionSchema),
+  }),
+});
+export type GeneratedExamResponse = z.infer<typeof generatedExamResponseSchema>;
