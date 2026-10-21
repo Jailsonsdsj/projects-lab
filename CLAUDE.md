@@ -7,7 +7,7 @@ packages/shared (zero deps: Zod, pure rules, constants, contracts) · packages/a
 
 ## Read on demand, never by default
 Task → docs/backlog.md (one row; load only its Load column) · Rules → docs/prd/<nn>-*.md
-Infra → docs/architecture.md · UI → docs/design-system.md
+Infra → docs/architecture.md · UI → docs/design-system.md · Owner's guide → docs/user-guide.md
 
 ## Labs
 - Lab code lives in `api/src/labs/<lab>`, `web/src/labs/<lab>`, `shared/src/<lab>`.
@@ -37,6 +37,7 @@ Infra → docs/architecture.md · UI → docs/design-system.md
 - TypeScript stays on 5.x until Drizzle supports 7.
 - Colours/type/spacing/border widths/breakpoints come from tokens.css; literals fail CI. A lab's colour is `--color-lab-accent` only.
 - Layouts are designed for phone and tablet; desktop uses the tablet layout.
+- docs/user-guide.md is the owner's guide. A change that adds or changes anything the owner uses (a screen or view, an MCP tool, a pnpm script, a slash command, a script, a workflow) updates it in the same commit. `pnpm lint` fails when a tool, route, pnpm script, slash command or script is missing from it.
 
 ## Commands
 pnpm dev | test | typecheck | lint | lint:tokens | seed | db:generate | types | provision | e2e
