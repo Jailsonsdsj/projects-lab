@@ -29,6 +29,7 @@ import {
 import { apiFetch } from "../../core/api";
 import { ReadView } from "../../core/ReadView";
 import { type Course, type CoursePage, splitCourse } from "./course";
+import { CourseExams, TakeTestSheet } from "./TakeTest";
 
 const COURSES_PATH = "/study/courses";
 const LEVEL: Record<CourseRead["level"], string> = {
@@ -138,11 +139,13 @@ function useReadingProgress(page: number): number {
 }
 
 function Outline({
+  course,
   parsed,
   current,
   onPage,
   onSection,
 }: {
+  course: CourseRead;
   parsed: Course;
   current: number;
   onPage: (index: number) => void;
@@ -216,6 +219,7 @@ function Outline({
           </a>
         ))}
       </nav>
+      <CourseExams course={course} />
     </div>
   );
 }
@@ -252,6 +256,11 @@ function Reader({ course, parsed }: Loaded) {
     (location.state as { entry?: number } | null)?.entry ?? historyIdx();
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [pinned, setPinned] = usePinnedOutline();
+  // "Take the test" (ST-13e1): its form, and the course's lessons for it.
+  const [testing, setTesting] = useState(false);
+  const lessons = parsed.pages.flatMap((p) =>
+    p.kind === "lesson" ? [{ n: p.n, title: p.title }] : [],
+  );
   const outlineShown = tablet && pinned;
   const last = parsed.pages.length - 1;
   const requested = Number(params.get("p") ?? 0);
@@ -323,15 +332,34 @@ function Reader({ course, parsed }: Loaded) {
           title={tablet ? `${course.topicId} · ${title}` : title}
           titleIsHeading={false}
           actions={
-            !tablet && (
+            tablet ? (
               <Button
-                variant="ghost"
-                tone="neutral"
-                icon="list"
-                iconOnly
-                aria-label="Lesson outline"
-                onClick={() => setOutlineOpen(true)}
-              />
+                variant="soft"
+                size="sm"
+                icon="award"
+                onClick={() => setTesting(true)}
+              >
+                Take the test
+              </Button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  tone="neutral"
+                  icon="award"
+                  iconOnly
+                  aria-label="Take the test"
+                  onClick={() => setTesting(true)}
+                />
+                <Button
+                  variant="ghost"
+                  tone="neutral"
+                  icon="list"
+                  iconOnly
+                  aria-label="Lesson outline"
+                  onClick={() => setOutlineOpen(true)}
+                />
+              </div>
             )
           }
         />
@@ -347,6 +375,7 @@ function Reader({ course, parsed }: Loaded) {
             aria-label="Lesson outline"
           >
             <Outline
+              course={course}
               parsed={parsed}
               current={current}
               onPage={toPage}
@@ -398,6 +427,20 @@ function Reader({ course, parsed }: Loaded) {
                   </Button>
                 </>
               )}
+              {!next && (
+                <>
+                  <span className="kicker">Done reading?</span>
+                  <Button
+                    variant="soft"
+                    size="lg"
+                    icon="award"
+                    block
+                    onClick={() => setTesting(true)}
+                  >
+                    Take the test
+                  </Button>
+                </>
+              )}
               {previous && (
                 <Button
                   variant="ghost"
@@ -416,6 +459,13 @@ function Reader({ course, parsed }: Loaded) {
           )}
         </main>
       </div>
+      <TakeTestSheet
+        course={course}
+        lessons={lessons}
+        open={testing}
+        onClose={() => setTesting(false)}
+        onReady={(examId) => navigate(`/study/exams/${examId}`)}
+      />
       {!tablet && (
         <Sheet
           open={outlineOpen}
@@ -423,6 +473,7 @@ function Reader({ course, parsed }: Loaded) {
           title="Lesson outline"
         >
           <Outline
+            course={course}
             parsed={parsed}
             current={current}
             onPage={toPage}

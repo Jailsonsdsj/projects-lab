@@ -61,7 +61,8 @@ Courses Claude recorded, grouped by area, in progress first. Tap one to read it.
 
 **Reader** (`/study/courses/:courseId`): full screen, one lesson per page with previous and next, diagrams, and **Show answer key** per lesson so answers stay hidden while you study. A course you've opened once reads offline.
 
-- **Outline** ("In this lesson", the lessons, the course): on phone, the list button opens it as a sheet. On tablet and desktop it's a column on the left; the **sidebar button** at the top left (as in Preview) hides it so the text uses the whole width, and shows it again. The reader remembers your choice on that device.
+- **Outline** ("In this lesson", the lessons, the course): on phone, the list button opens it as a sheet. On tablet and desktop it's a column on the left; the **sidebar button** at the top left (as in Preview) hides it so the text uses the whole width, and shows it again. The reader remembers your choice on that device. Its **Exams** section lists this course's attempts: the grade, "Awaiting grade" (a Claude Code exam not graded yet) or "To answer" (an exam made in the app).
+- **Take the test** (the header's button on tablet, the medal icon on phone, and at the end of the last page): the app writes a final exam for this course. Choose the number of questions (1–20, 10 by default) and, optionally, how many of each type (the counts must add up), which lessons to cover, and a focus. **Generate** takes up to a minute; the exam is saved beside the course in `study-materials` and opens. Each exam is written by the AI and billed to your Anthropic API account. Answering it on the page and its grading come with the next update (ST-13e2).
 
 #### Grades — `/study/grades`
 
@@ -156,6 +157,10 @@ Ask "what should I learn next?". Claude asks up to three questions, reads your b
 #### Take a course — `/learn <topic>` (Claude Code, in `study-materials`)
 
 Courses are made only in a Claude Code session opened in the `study-materials` repository (`git pull` first). Claude writes the course, pushes it, and records it with `study_record_course`; the topic moves to In progress and the course appears in Courses.
+
+#### Take the final exam in the app — "Take the test"
+
+Open the course, tap **Take the test**, choose the questions and **Generate**. The app writes the exam with the AI (the same exam rules Claude Code follows), saves it beside the course and opens it; it shares attempt numbers with Claude Code exams. Answering and grading in the app come with ST-13e2.
 
 #### Take the final exam — `/final-exam` (Claude Code, in `study-materials`)
 
