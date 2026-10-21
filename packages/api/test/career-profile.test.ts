@@ -126,6 +126,46 @@ describe("person and links", () => {
     expect(results).toEqual([{ id: "person" }]);
   });
 
+  it("keeps the address in parts; the location is derived from them, or the text saved before", async () => {
+    await ok(
+      await api("/person", {
+        method: "PATCH",
+        body: { location: "Somewhere free-text" },
+      }),
+    );
+    expect((await profile()).person).toMatchObject({
+      location: "Somewhere free-text",
+      city: "",
+      region: "",
+      country: "",
+    });
+    const saved = await ok<{ person: Profile["person"] }>(
+      await api("/person", {
+        method: "PATCH",
+        body: { city: "Recife", region: "Pernambuco", country: "Brazil" },
+      }),
+    );
+    expect(saved.person).toMatchObject({
+      city: "Recife",
+      region: "Pernambuco",
+      country: "Brazil",
+      location: "Recife, Pernambuco, Brazil",
+    });
+    // A part left empty is left out of the location.
+    await ok(await api("/person", { method: "PATCH", body: { region: "" } }));
+    expect((await profile()).person).toMatchObject({
+      location: "Recife, Brazil",
+    });
+    expect(
+      (
+        await api("/person", {
+          method: "PATCH",
+          body: { city: "x".repeat(81) },
+        })
+      ).status,
+    ).toBe(400);
+  });
+
   it("refuses an edit with nothing in it", async () => {
     const res = await api("/person", { method: "PATCH", body: {} });
     expect(res.status).toBe(400);

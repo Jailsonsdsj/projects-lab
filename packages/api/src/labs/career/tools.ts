@@ -92,7 +92,7 @@ const profileTools = [
     name: "career_update_person",
     kind: "write",
     description:
-      "Changes the owner's name, headline, location, time zone, email, phone, summary (at most 600 characters) or languages. Only the fields given change.",
+      "Changes the owner's name, headline, address (city, region for state or province, country), time zone, email, phone, summary (at most 600 characters) or languages. Only the fields given change.",
     input: updatePersonInputSchema,
     async run(input, ctx) {
       return { person: await updatePerson(ctx.db, input, new Date()) };

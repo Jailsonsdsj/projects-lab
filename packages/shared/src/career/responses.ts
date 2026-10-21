@@ -25,7 +25,12 @@ export type ProfileFact = z.infer<typeof profileFactSchema>;
 export const profilePersonSchema = z.object({
   fullName: z.string(),
   headline: z.string(),
+  /** "City, State, Country" from the parts, or the free text written before them. */
   location: z.string(),
+  city: z.string(),
+  /** State or province. */
+  region: z.string(),
+  country: z.string(),
   timezone: z.string(),
   email: z.string(),
   phone: z.string(),

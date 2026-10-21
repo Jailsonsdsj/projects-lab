@@ -15,7 +15,10 @@ const PROFILE: ProfileResponse = {
   person: {
     fullName: "Sam Rivera",
     headline: "AI engineer",
-    location: "Recife",
+    location: "Recife, Pernambuco, Brazil",
+    city: "Recife",
+    region: "Pernambuco",
+    country: "Brazil",
     timezone: "America/Recife",
     email: "sam.rivera@example.com",
     phone: "",
@@ -38,6 +41,39 @@ const PROFILE: ProfileResponse = {
   facts: [],
   skills: [],
 };
+
+/** Saved out of order and with their own labels: the copy section orders and
+ *  names them the way forms ask. */
+const ORDERED_LINKS: ProfileResponse["links"] = [
+  {
+    id: "l4",
+    kind: "other",
+    label: "Conference talk",
+    url: "https://talks.example/sam",
+    position: 0,
+  },
+  {
+    id: "l3",
+    kind: "portfolio",
+    label: "My site",
+    url: "https://sam.example",
+    position: 1,
+  },
+  {
+    id: "l1",
+    kind: "linkedin",
+    label: "LinkedIn URL",
+    url: "https://www.linkedin.com/in/sam-rivera",
+    position: 2,
+  },
+  {
+    id: "l2",
+    kind: "github",
+    label: "Code",
+    url: "https://github.com/sam-rivera",
+    position: 3,
+  },
+];
 
 const job = (id: string, company: string, role: string): JobSummary => ({
   id,
@@ -110,7 +146,10 @@ afterEach(() => {
 
 describe("Profile copy panel", () => {
   it("lists the standard fields in order, empty ones left out, then the job's answers", async () => {
-    api();
+    api({
+      "GET /api/career/profile": () =>
+        json({ ...PROFILE, links: ORDERED_LINKS }),
+    });
     openProfile();
     await screen.findByRole("button", { name: "Copy name" });
     expect(
@@ -119,7 +158,13 @@ describe("Profile copy panel", () => {
     expect(labels()).toEqual([
       "Name",
       "Email",
-      "LinkedIn URL",
+      "City",
+      "State/Province",
+      "Country",
+      "LinkedIn",
+      "GitHub",
+      "Website",
+      "Conference talk",
       "Notice period",
       "Tell me about yourself",
       "Salary range",
@@ -129,6 +174,9 @@ describe("Profile copy panel", () => {
     expect(document.querySelector(".copy__value.mono")).toHaveTextContent(
       "https://www.linkedin.com/in/sam-rivera",
     );
+    expect(
+      screen.getByRole("button", { name: "Copy state/province" }),
+    ).toBeInTheDocument();
     // No photo: initials.
     expect(screen.getByRole("img", { name: "Sam Rivera" })).toHaveTextContent(
       "SR",
@@ -404,6 +452,38 @@ describe("Profile records", () => {
     );
     expect(await screen.findByText("Removed")).toBeInTheDocument();
     expect(removed).toBe(true);
+  });
+
+  it("edits the address in its three parts", async () => {
+    let body: Record<string, unknown> | null = null;
+    api({
+      "GET /api/career/profile": () => json(FULL),
+      "PATCH /api/career/person": (init) => {
+        body = JSON.parse(String(init?.body));
+        return json({ person: FULL.person });
+      },
+    });
+    openProfile();
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Sam Rivera/ }),
+    );
+    const sheet = await screen.findByRole("dialog", {
+      name: "Name and contact",
+    });
+    expect(within(sheet).getByLabelText(/^City/)).toHaveValue("Recife");
+    const region = within(sheet).getByLabelText(/^State or province/);
+    expect(region).toHaveValue("Pernambuco");
+    await userEvent.clear(region);
+    await userEvent.type(region, "PE");
+    await userEvent.click(within(sheet).getByRole("button", { name: "Save" }));
+    await vi.waitFor(() =>
+      expect(body).toMatchObject({
+        city: "Recife",
+        region: "PE",
+        country: "Brazil",
+      }),
+    );
+    expect(body).not.toHaveProperty("location");
   });
 
   it("replaces the links from their sheet, https only", async () => {

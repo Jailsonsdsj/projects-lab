@@ -93,9 +93,9 @@ Your declared skills by level, each **verified** (Study proved it) or **declared
 
 #### Profile — `/career/profile`
 
-Your photo (upload or remove, up to 2 MB), person and contact, links, experiences with their facts (unverified facts are badged; verify them here), education and languages. Everything edits through sheets.
+Your photo (upload or remove, up to 2 MB), person and contact (name, email, phone, and your address as City, State or province, Country), links, experiences with their facts (unverified facts are badged; verify them here), education and languages. Everything edits through sheets.
 
-**Copy panel:** "Tap Copy, then paste into the form": your standard fields and standard answers, and, for a job you pick, its form answers, self-introduction and salary range. It works offline.
+**Copy panel:** "Tap Copy, then paste into the form": your standard fields (name, email, phone, city, state/province, country, LinkedIn, GitHub, Website, then any other link; empty ones are left out) and standard answers, and, for a job you pick, its form answers, self-introduction and salary range. It works offline.
 
 #### Documents — `/career/documents`
 
