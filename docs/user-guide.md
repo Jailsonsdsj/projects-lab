@@ -6,22 +6,20 @@ How to use Projects Lab day to day, how to run its workflows with Claude, and ev
 
 ## Contents
 
-1. [Getting started](#getting-started)
-2. [Home](#home)
-3. [Study Lab](#study-lab)
-4. [Career Lab](#career-lab)
-5. [Connections and Settings](#connections-and-settings)
-6. [Working with Claude](#working-with-claude)
-7. [Workflows](#workflows)
-8. [MCP tool reference](#mcp-tool-reference)
-9. [Backup and restore](#backup-and-restore)
-10. [Developing Projects Lab](#developing-projects-lab)
-11. [Troubleshooting](#troubleshooting)
-12. [Keeping this guide current](#keeping-this-guide-current)
+The guide has four parts:
+
+1. **[Using the app](#using-the-app):** [Getting started](#getting-started) · [Home](#home) · [Study Lab](#study-lab) · [Career Lab](#career-lab) · [Connections, Guide and Settings](#connections-guide-and-settings)
+2. **[Working with Claude](#working-with-claude):** [Connect Claude](#connect-claude) · [Workflows](#workflows) · [MCP tool reference](#mcp-tool-reference)
+3. **[Developing Projects Lab](#developing-projects-lab):** [The task loop](#the-task-loop-claude-code-in-this-repository) · [Slash commands](#slash-commands) · [`pnpm` commands](#pnpm-commands) · [Scripts](#scripts) · [Owner-only steps](#owner-only-steps) · [Local setup](#local-setup) · [Testing in the dev environment](#testing-in-the-dev-environment)
+4. **[Help](#help):** [Backup and restore](#backup-and-restore) · [Troubleshooting](#troubleshooting) · [Keeping this guide current](#keeping-this-guide-current)
+
+In the app, the parts are the tabs of the **Guide** screen (`/guide`).
 
 ---
 
-## Getting started
+## Using the app
+
+### Getting started
 
 **What it is.** One web app with two labs that share data: **Study Lab** (what you're learning, courses, exams, grades) and **Career Lab** (profile, jobs, documents, job search, interviews). The app has no AI of its own: Claude reads and writes it through its MCP connector, and you use the app to see, check and edit.
 
@@ -35,11 +33,11 @@ How to use Projects Lab day to day, how to run its workflows with Claude, and ev
 
 **Find your way around.**
 
-- **Phone:** tabs at the bottom for the current lab. **Tablet and desktop:** a side rail with the lab's tabs and Settings at the bottom.
+- **Phone:** tabs at the bottom for the current lab (Home's are Home, Connections, Guide and Settings). **Tablet and desktop:** a side rail with the lab's tabs and Settings at the bottom.
 - **Lab switcher** (the button with the lab's name at the top): Home, Study Lab, Career Lab. Each lab has its own accent colour.
 - Every screen has distinct states: loading, empty (with what to do next), error (with **Retry**) and **offline** ("You're offline", with **Retry**). Screens you've opened show their last saved copy while offline.
 
-## Home
+### Home
 
 `/`: one card per lab.
 
@@ -47,9 +45,9 @@ How to use Projects Lab day to day, how to run its workflows with Claude, and ev
 - **Career card:** tracked jobs and the best match's readiness and gaps.
 - **Backup reminder:** "No backup yet." or "No backup in a while." (after 30 days) with **Back up**, which opens Settings.
 
-## Study Lab
+### Study Lab
 
-### Backlog — `/study`
+#### Backlog — `/study`
 
 Every topic you want to learn, grouped by **area** (CS Fundamentals, Frontend, Backend, Databases and Data, DevOps and Cloud, Software Architecture, Security, plus any you add). Each topic has an ID like `FE-03`, a level (Fast track, Essential, Specialized), a priority (P1 next up, P2 soon, P3 later), a status (Not started, In progress, Done) and, once graded, a grade.
 
@@ -57,19 +55,19 @@ Every topic you want to learn, grouped by **area** (CS Fundamentals, Frontend, B
 - **Edit:** tap a topic → its sheet: level, priority, status, note; its exams with grades; **Remove** (with confirmation).
 - **Filter and search:** status tabs (All, Not started, In progress, Done) and the search box.
 
-### Courses — `/study/courses`
+#### Courses — `/study/courses`
 
 Courses Claude recorded, grouped by area, in progress first. Tap one to read it.
 
 **Reader** (`/study/courses/:courseId`): full screen, one lesson per page with previous and next, the lesson outline (a sheet on phone, beside the text on tablet), diagrams, and **Show answer key** per lesson so answers stay hidden while you study. A course you've opened once reads offline.
 
-### Grades — `/study/grades`
+#### Grades — `/study/grades`
 
 Graded exams, newest first, with the average grade of Done topics. Tap an exam to open it (`/study/exams/:examId`): its questions, the results once graded, and **Open the PDF**.
 
-## Career Lab
+### Career Lab
 
-### Jobs — `/career`
+#### Jobs — `/career`
 
 Three views at the top:
 
@@ -81,41 +79,49 @@ Three views at the top:
 - **Openings** (`?view=openings`): what the weekly job search found. **Keep**, **Dismiss**, or **Track** (copies a prompt for Claude to map it as a job). Openings still new after 30 days are muted.
 - **Search criteria** (`?view=criteria`): lanes, rate floor, hours, work shape and the rest of what the weekly search uses. Only you edit them; the search only reads them.
 
-### Skills — `/career/skills`
+#### Skills — `/career/skills`
 
 Your declared skills by level, each **verified** (Study proved it) or **declared**, plus "Verified in Study, not declared" suggestions.
 
-### Profile — `/career/profile`
+#### Profile — `/career/profile`
 
 Your photo (upload or remove, up to 2 MB), person and contact, links, experiences with their facts (unverified facts are badged; verify them here), education and languages. Everything edits through sheets.
 
 **Copy panel:** "Tap Copy, then paste into the form": your standard fields and standard answers, and, for a job you pick, its form answers, self-introduction and salary range. It works offline.
 
-### Documents — `/career/documents`
+#### Documents — `/career/documents`
 
 The app stores no documents: Claude writes them and gives them to you. This tab is each job's **application kit**: which facts the last document used, the self-introduction, the salary range and the form answers, with **Ask Claude for a document** (copies a prompt such as "Write my resume for … with `career_document_brief`").
 
-### Interviews — `/career/interviews`
+#### Interviews — `/career/interviews`
 
 - **Answers** (default view): prepared answers, grouped by job and then general, with a Google Drive video if you attached one (paste a Drive link; the video stays in Drive).
 - **Stories** (`?view=stories`): STAR stories (situation, task, action, result) with their skills and facts.
 - **Practice** (`?view=practice`): the drill log: date, mode, weakest answers and the fix.
 
-## Connections and Settings
+### Connections, Guide and Settings
 
-### Connections — `/connections`
+#### Connections — `/connections`
 
 Every Claude client you've allowed (Claude Code, claude.ai, the apps), when it was granted and last used, and **Revoke**. A revoked client must sign in again.
 
-### Settings — `/settings`
+#### Guide — `/guide`
+
+This guide, in the app. Its four parts are the tabs at the top (The app, Claude, Develop, Help), links to a section in another part open that part at the section, and links to other project files open them on GitHub. It's part of the installed app, so it reads offline, and it always matches `docs/user-guide.md`: the app shows that file itself.
+
+#### Settings — `/settings`
 
 - **Change passphrase:** current, new, confirm. Every other device is signed out; this one stays signed in.
 - **Backup:** **Download backup** and when the last one was. See [Backup and restore](#backup-and-restore).
 - **Session:** **Log out** signs out this device only.
 
+---
+
 ## Working with Claude
 
-### Connect a surface
+### Connect Claude
+
+#### Connect a surface
 
 When Claude asks you to sign in, `/oauth/authorize` shows the same login screen, then "Allow *client* to read and write Projects Lab": **Allow**.
 
@@ -128,52 +134,52 @@ When Claude asks you to sign in, `/oauth/authorize` shows the same login screen,
 
 To check a connection, ask Claude to run `core_whoami`: it answers with your owner ID, timezone, the client name and the labs.
 
-### How Claude works with the app
+#### How Claude works with the app
 
 - Every write Claude makes is recorded (tool, client, time, success); Connections shows when each client was last used.
 - Retrying a write is safe: Claude sends an `idempotencyKey`, and a retry returns the first result.
 - Claude never sends files to the app. Documents come to you as downloads; the only file the app stores is your photo.
 - A job posting you paste is data, not instructions: commands hidden in it are ignored.
 
-## Workflows
+### Workflows
 
-### Plan what to learn — `/roadmap` (any surface)
+#### Plan what to learn — `/roadmap` (any surface)
 
 Ask "what should I learn next?". Claude asks up to three questions, reads your backlog, profile and tracked jobs, proposes topics by area with level and priority, and adds them with `study_add_topics` only after you confirm.
 
-### Add topics and check the backlog — `/add`, `/backlog` (any surface)
+#### Add topics and check the backlog — `/add`, `/backlog` (any surface)
 
 "Add Kubernetes to DevOps, P1" → `study_add_topics`. "Show my backlog" → `study_list_backlog` / `study_get_summary`. Or use the Backlog tab yourself.
 
-### Take a course — `/learn <topic>` (Claude Code, in `study-materials`)
+#### Take a course — `/learn <topic>` (Claude Code, in `study-materials`)
 
 Courses are made only in a Claude Code session opened in the `study-materials` repository (`git pull` first). Claude writes the course, pushes it, and records it with `study_record_course`; the topic moves to In progress and the course appears in Courses.
 
-### Take the final exam — `/final-exam` (Claude Code, in `study-materials`)
+#### Take the final exam — `/final-exam` (Claude Code, in `study-materials`)
 
 Claude writes the exam (Markdown and PDF), pushes it and records it with `study_record_exam`. You answer in the session; Claude grades it, records the grade with `study_record_grade` (the topic becomes Done), and suggests what's next. A grade of 7.0 or more makes the skill **Verified** for every job that needs it. A retake is a new attempt; a correction replaces the grade.
 
-### Map a job posting (any surface)
+#### Map a job posting (any surface)
 
 Paste the posting and ask Claude to map it. Claude extracts the requirements (required, nice to have, not mapped), matches skills (`core_find_skill`), scores the fit and saves it with `career_add_job`. The app computes readiness. Then send gaps to Study, from Claude (`career_send_gaps`) or with **Add to Study backlog** on the job screen.
 
-### Write a resume or cover letter (any surface)
+#### Write a resume or cover letter (any surface)
 
 Ask "Write my resume for *job*" (or copy the prompt from Documents). Claude calls `career_document_brief`, asks you to confirm any unverified fact first, writes the document in the posting's language and gives you the file, then saves what it used with `career_save_selection`. The self-introduction, salary range and form answers are saved with `career_save_job_kit` after you agree on them.
 
-### Weekly job search (routine)
+#### Weekly job search (routine)
 
 A Claude Code routine scans for openings every Monday, saves them with `career_save_openings` and emails you a digest. Its setup and prompt are in [`docs/routines/job-search.md`](routines/job-search.md). Review the results in Jobs → Openings.
 
-### Interview practice (any surface)
+#### Interview practice (any surface)
 
 Ask Claude to drill you ("practise negotiation for Evalco"). It reads your weak spots with `career_list_drills`, runs the drill and logs it with `career_log_drill`. Prepared answers and stories are saved with `career_save_answer` and `career_save_story`.
 
-### Keep the profile current (any surface or the app)
+#### Keep the profile current (any surface or the app)
 
 "Add this experience…", "this fact is confirmed" → `career_save_experience`, `career_save_fact`, `career_declare_skill`. Or edit in Profile and Skills.
 
-## MCP tool reference
+### MCP tool reference
 
 Read tools change nothing. Write tools take an optional `idempotencyKey` and are audited.
 
@@ -235,18 +241,10 @@ Read tools change nothing. Write tools take an optional `idempotencyKey` and are
 | `career_log_drill` | write | Logs a practice drill |
 | `career_list_drills` | read | Recent drills and weak spots |
 
-## Backup and restore
-
-**Back up:** Settings → Backup → **Download backup** saves `projects-lab-backup-<date>.json`: every row of your data and your photo. It contains your passphrase's hash, so keep it somewhere private (not in a shared folder). Home reminds you after 30 days.
-
-**Restore** (into a fresh environment):
-
-1. `pnpm tsx scripts/restore-backup.ts <backup.json>` checks the backup against the repo's migrations and writes `scripts/out/restore/restore.sql` plus the files.
-2. It prints the commands: run the `--local` ones to check on a local database, then the `--remote` ones for production (yours to run).
-
-For a recent mistake, Cloudflare's **D1 Time Travel** restores the whole database to a point in time (`wrangler d1 time-travel restore`, yours to run). Details: [`prd/90-services.md`](prd/90-services.md).
+---
 
 ## Developing Projects Lab
+
 
 ### The task loop (Claude Code in this repository)
 
@@ -350,7 +348,22 @@ Everything below runs against your local Worker and database. Nothing reaches pr
 
 **Not testable locally:** claude.ai, the desktop app and the phone app run in the cloud and can't reach `localhost`; test those surfaces in production. To start over with an empty local database, stop `pnpm dev` and run `pnpm seed`.
 
-## Troubleshooting
+---
+
+## Help
+
+### Backup and restore
+
+**Back up:** Settings → Backup → **Download backup** saves `projects-lab-backup-<date>.json`: every row of your data and your photo. It contains your passphrase's hash, so keep it somewhere private (not in a shared folder). Home reminds you after 30 days.
+
+**Restore** (into a fresh environment):
+
+1. `pnpm tsx scripts/restore-backup.ts <backup.json>` checks the backup against the repo's migrations and writes `scripts/out/restore/restore.sql` plus the files.
+2. It prints the commands: run the `--local` ones to check on a local database, then the `--remote` ones for production (yours to run).
+
+For a recent mistake, Cloudflare's **D1 Time Travel** restores the whole database to a point in time (`wrangler d1 time-travel restore`, yours to run). Details: [`prd/90-services.md`](prd/90-services.md).
+
+### Troubleshooting
 
 | You see | Do this |
 |---|---|
@@ -367,7 +380,7 @@ Everything below runs against your local Worker and database. Nothing reaches pr
 | Claude can't reach the app | Check Connections; revoke and reconnect the client, then run `core_whoami` |
 | Local web tests time out | The machine is busy (TD-02): run each package's tests on its own |
 
-## Keeping this guide current
+### Keeping this guide current
 
 The rule, in [`CLAUDE.md`](../CLAUDE.md) and in `/ship`: **a change that adds or changes something you use updates this guide in the same commit**: a screen or view, an MCP tool, a `pnpm` command, a slash command, a script, or a workflow.
 

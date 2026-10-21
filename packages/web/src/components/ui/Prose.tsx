@@ -18,7 +18,7 @@ import type { IconName } from "./icons";
 import { highlight } from "./prose-highlight";
 import { MermaidDiagram } from "./prose-mermaid";
 import { type CalloutKind, remarkCourse } from "./prose-remark";
-import { rehypeHeadingIds } from "./prose-slug";
+import { type HeadingLevel, rehypeHeadingIds } from "./prose-slug";
 
 export interface ProseProps {
   /** Course Markdown (study-course-builder's template). Raw HTML is not rendered. */
@@ -29,10 +29,60 @@ export interface ProseProps {
    *  has no such file, which then shows as its alt text. Absolute URLs are
    *  used as they are. */
   resolveImage?: (src: string) => string | null;
+  /** Which headings get an id, for in-page links. Courses: H3 (the default). */
+  headingLevels?: readonly HeadingLevel[];
+  /** Where a link goes. An `http(s)` result opens in a new tab; anything else
+   *  is an in-app path handed to `onNavigate`. Without it, links are as written. */
+  resolveLink?: (href: string) => string;
+  onNavigate?: (path: string) => void;
   className?: string;
 }
 
 const ImageContext = createContext<ProseProps["resolveImage"]>(undefined);
+const LinkContext = createContext<
+  Pick<ProseProps, "resolveLink" | "onNavigate"> | undefined
+>(undefined);
+const EXTERNAL = /^https?:/i;
+
+function Link({
+  href = "",
+  title,
+  children,
+}: {
+  href?: string;
+  title?: string;
+  children?: ReactNode;
+}) {
+  const links = useContext(LinkContext);
+  if (!links?.resolveLink)
+    return (
+      <a href={href} title={title}>
+        {children}
+      </a>
+    );
+  const to = links.resolveLink(href);
+  if (EXTERNAL.test(to))
+    return (
+      <a href={to} title={title} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
+  return (
+    <a
+      href={to}
+      title={title}
+      onClick={(event) => {
+        // A modified click keeps the browser's own behaviour (a new tab).
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button)
+          return;
+        event.preventDefault();
+        links.onNavigate?.(to);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
 const ABSOLUTE = /^(https?:|data:|\/)/i;
 
 function Image({ src = "", alt = "" }: { src?: string; alt?: string }) {
@@ -47,19 +97,24 @@ export function Prose({
   markdown,
   large,
   resolveImage,
+  headingLevels,
+  resolveLink,
+  onNavigate,
   className,
 }: ProseProps) {
   return (
     <ImageContext.Provider value={resolveImage}>
-      <article className={cx("prose", large && "prose--lg", className)}>
-        <Markdown
-          remarkPlugins={[remarkGfm, remarkCourse]}
-          rehypePlugins={[rehypeHeadingIds]}
-          components={COMPONENTS}
-        >
-          {markdown}
-        </Markdown>
-      </article>
+      <LinkContext.Provider value={{ resolveLink, onNavigate }}>
+        <article className={cx("prose", large && "prose--lg", className)}>
+          <Markdown
+            remarkPlugins={[remarkGfm, remarkCourse]}
+            rehypePlugins={[[rehypeHeadingIds, { levels: headingLevels }]]}
+            components={COMPONENTS}
+          >
+            {markdown}
+          </Markdown>
+        </article>
+      </LinkContext.Provider>
     </ImageContext.Provider>
   );
 }
@@ -247,6 +302,7 @@ const COMPONENTS = {
   th: cell("th"),
   td: cell("td"),
   img: Image,
+  a: Link,
   "x-callout": Callout,
   "x-quiz": Quiz,
   "x-quiz-stem": QuizStem,

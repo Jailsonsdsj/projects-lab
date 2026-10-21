@@ -1,5 +1,6 @@
 // Anchors for course headings: Prose gives every H3 this id (deduplicated in
-// document order), and a reader's outline links to the same ids.
+// document order), and a reader's outline links to the same ids. A document
+// with its own in-page links (the user guide) asks for more levels.
 import type { Element, Root, RootContent } from "hast";
 
 /** "O(n log n) — Linearithmic time" → "on-log-n-linearithmic-time". */
@@ -32,20 +33,25 @@ function textOf(node: Root | RootContent): string {
     : "";
 }
 
-/** rehype: an id on every H3, from its text. */
-export function rehypeHeadingIds() {
+export type HeadingLevel = "h2" | "h3" | "h4";
+
+/** rehype: an id on every heading of the given levels (H3 by default), from its text. */
+export function rehypeHeadingIds(
+  options: { levels?: readonly HeadingLevel[] } = {},
+) {
+  const levels = new Set<string>(options.levels ?? ["h3"]);
   return (tree: Root) => {
-    const h3s: Element[] = [];
+    const headings: Element[] = [];
     const walk = (node: Root | Element) => {
       for (const child of node.children) {
         if (child.type !== "element") continue;
-        if (child.tagName === "h3") h3s.push(child);
+        if (levels.has(child.tagName)) headings.push(child);
         walk(child);
       }
     };
     walk(tree);
-    const ids = headingIds(h3s.map((h) => textOf(h).trim()));
-    h3s.forEach((h, i) => {
+    const ids = headingIds(headings.map((h) => textOf(h).trim()));
+    headings.forEach((h, i) => {
       h.properties.id = ids[i];
     });
   };
