@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "CI=true wrangler d1 migrations apply projects-lab --local && wrangler dev",
     "types": "wrangler types",
     "deploy:dry": "wrangler deploy --dry-run --env=\"\"",
     "db:generate": "drizzle-kit generate",

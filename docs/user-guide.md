@@ -270,7 +270,7 @@ Agents Claude can use here: `explore` (find where code lives), `reviewer` (revie
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | Runs the web app (Vite) and the Worker (`wrangler dev`) locally |
+| `pnpm dev` | Applies any new migrations to the local database, then runs the web app (Vite) and the Worker (`wrangler dev`) locally |
 | `pnpm seed` | Resets the local database and files and loads sample data (dev passphrase `projects-lab-dev`); stop `pnpm dev` first |
 | `pnpm test` | Unit and integration tests in every package (if the machine is busy, run one package: `pnpm --filter api test`) |
 | `pnpm typecheck` | TypeScript across the workspace |
@@ -327,6 +327,7 @@ The component gallery for every UI state is at `/dev/ui` in development.
 |---|---|
 | "Session expired" on the login screen | Sign in again |
 | Too many attempts at sign-in | Wait for the 15-minute window to end |
+| Locally, lab screens show errors while Connections and Settings work | The local database is missing newer migrations: restart `pnpm dev` (it applies them), or reset with `pnpm seed` |
 | Locally, sign-in fails with the right passphrase (`projects-lab-dev`) | `packages/api/.dev.vars` is missing or has no `TOKEN_SIGNING_KEY`: create it (see [Local setup](#local-setup)) and restart `pnpm dev` |
 | Sign-in says there's no owner (`not_provisioned`) | The owner wasn't created: `pnpm provision` (`--remote` in production) |
 | "You're offline" | Reconnect and tap **Retry**; opened screens show their saved copy |
