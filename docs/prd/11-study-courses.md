@@ -41,7 +41,7 @@ Nothing derivable from the file (lesson count, minutes, title) is stored; the re
 
 - **Courses tab** (`/study/courses`): courses grouped by area, each row showing the topic, level (and module), and the date recorded; In progress topics first. Empty: "No courses yet. Start one in Claude Code with `/learn <topic>`."
 - **Reader** (`/study/courses/:courseId`): metadata by path gives the blob SHA; content by SHA (`02-integration`), immutable, cached by the service worker, so a course once opened reads offline.
-  - `Prose` renders the Markdown (design system). Lesson outline from the H2s: a `Sheet` on phone, beside the text on tablet. "Lesson n of N" with previous and next.
+  - `Prose` renders the Markdown (design system). Lesson outline from the H2s: a `Sheet` on phone; on tablet and wider, a column **left** of the text that the header's sidebar button (`sidebar` icon, like Preview's) hides and shows, remembered per device. Hidden, the text takes the width (padding kept, no reading-measure cap) up to `--size-app-max`, centred beyond it. "Lesson n of N" with previous and next.
   - **Answer key** is split off at `# Answer key` and shown only on request ("Show answer key", per lesson), so answers aren't seen while studying.
   - **Images** under `_img/` resolve through the content proxy by SHA; external `https` images load directly.
   - **Mermaid** renders in the browser with the library loaded only when a course has a diagram (never server-side: 10 ms CPU).

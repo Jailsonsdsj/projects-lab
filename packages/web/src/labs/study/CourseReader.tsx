@@ -12,6 +12,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   Badge,
   Button,
+  cx,
   ErrorState,
   PageHeader,
   ProgressBar,
@@ -210,11 +211,34 @@ function Outline({
   );
 }
 
+/** Tablet and wider: whether the outline column shows, remembered on this device. */
+const OUTLINE_KEY = "pl_reader_outline";
+function usePinnedOutline(): [boolean, (shown: boolean) => void] {
+  const [shown, setShown] = useState(() => {
+    try {
+      return localStorage.getItem(OUTLINE_KEY) !== "hidden";
+    } catch {
+      return true;
+    }
+  });
+  const set = (next: boolean) => {
+    setShown(next);
+    try {
+      localStorage.setItem(OUTLINE_KEY, next ? "shown" : "hidden");
+    } catch {
+      // Private mode: it still toggles, just isn't remembered.
+    }
+  };
+  return [shown, set];
+}
+
 function Reader({ course, parsed }: Loaded) {
   const navigate = useNavigate();
   const tablet = useMinWidth("--breakpoint-tablet");
   const [params, setParams] = useSearchParams();
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [pinned, setPinned] = usePinnedOutline();
+  const outlineShown = tablet && pinned;
   const last = parsed.pages.length - 1;
   const requested = Number(params.get("p") ?? 0);
   const current = Number.isInteger(requested)
@@ -249,14 +273,29 @@ function Reader({ course, parsed }: Loaded) {
         <PageHeader
           leading={
             tablet ? (
-              <Button
-                variant="ghost"
-                tone="neutral"
-                icon="chevron-left"
-                onClick={back}
-              >
-                Courses
-              </Button>
+              <div className="flex items-center gap-1">
+                {/* Like Preview's sidebar button: the outline column, shown or hidden. */}
+                <Button
+                  variant="ghost"
+                  tone="neutral"
+                  icon="sidebar"
+                  iconOnly
+                  aria-label={
+                    pinned ? "Hide lesson outline" : "Show lesson outline"
+                  }
+                  aria-expanded={pinned}
+                  aria-controls="reader-outline"
+                  onClick={() => setPinned(!pinned)}
+                />
+                <Button
+                  variant="ghost"
+                  tone="neutral"
+                  icon="chevron-left"
+                  onClick={back}
+                >
+                  Courses
+                </Button>
+              </div>
             ) : (
               <Button
                 variant="ghost"
@@ -287,7 +326,21 @@ function Reader({ course, parsed }: Loaded) {
           <ProgressBar value={progress} label="Reading progress" size="sm" />
         )}
       </div>
-      <div className="reader">
+      <div className={cx("reader", tablet && !pinned && "reader--wide")}>
+        {outlineShown && (
+          <aside
+            id="reader-outline"
+            className="reader__aside"
+            aria-label="Lesson outline"
+          >
+            <Outline
+              parsed={parsed}
+              current={current}
+              onPage={toPage}
+              onSection={toSection}
+            />
+          </aside>
+        )}
         <main className="reader__main">
           {/* Lesson position and minutes are in the course's own badges. */}
           <div className="reader__meta">
@@ -349,16 +402,6 @@ function Reader({ course, parsed }: Loaded) {
             </nav>
           )}
         </main>
-        {tablet && (
-          <aside className="reader__aside" aria-label="Lesson outline">
-            <Outline
-              parsed={parsed}
-              current={current}
-              onPage={toPage}
-              onSection={toSection}
-            />
-          </aside>
-        )}
       </div>
       {!tablet && (
         <Sheet

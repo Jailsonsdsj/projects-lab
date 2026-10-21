@@ -96,6 +96,45 @@ test("shows the outline: a Sheet on phone, beside the text on tablet", async ({
   await noHorizontalScroll(page);
 });
 
+test("puts the outline on the left; hidden, the text takes the width", async ({
+  page,
+}, info) => {
+  await page.goto("/study/courses/course-bigo?p=2");
+  await expect(page.getByText("📖 Lesson 2 of 3")).toBeVisible();
+  if (info.project.name === "phone") {
+    await expect(
+      page.getByRole("button", { name: "Hide lesson outline" }),
+    ).toHaveCount(0);
+    return;
+  }
+  const aside = page.getByRole("complementary", { name: "Lesson outline" });
+  const main = page.locator(".reader__main");
+  const prose = page.locator(".reader__main .prose");
+  const asideBox = await aside.boundingBox();
+  const mainBox = await main.boundingBox();
+  expect(asideBox && mainBox && asideBox.x < mainBox.x).toBe(true);
+  const narrow = (await prose.boundingBox())?.width ?? 0;
+
+  await page.getByRole("button", { name: "Hide lesson outline" }).click();
+  await expect(aside).toHaveCount(0);
+  const viewport = page.viewportSize()?.width ?? 0;
+  const wide = await main.boundingBox();
+  const appMax = 1200; // --size-app-max
+  // Up to the app's maximum, centred beyond it.
+  expect(wide?.width).toBeCloseTo(Math.min(viewport, appMax), 0);
+  expect(wide?.x).toBeCloseTo(Math.max(0, (viewport - appMax) / 2), 0);
+  // The text fills the column: padding kept, no 68ch cap.
+  expect((await prose.boundingBox())?.width ?? 0).toBeGreaterThan(narrow);
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+
+  await page.getByRole("button", { name: "Show lesson outline" }).click();
+  await expect(aside).toBeVisible();
+});
+
 test("keeps a lesson's answers hidden until asked for", async ({ page }) => {
   await page.goto("/study/courses/course-bigo?p=2");
   await expect(page.getByText("📖 Lesson 2 of 3")).toBeVisible();

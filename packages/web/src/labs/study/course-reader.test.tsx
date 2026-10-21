@@ -150,6 +150,10 @@ describe("Course reader", () => {
     await screen.findByRole("heading", { level: 1, name: "Big-O Notation" });
     await user.click(screen.getByRole("button", { name: "Lesson outline" }));
     const sheet = await screen.findByRole("dialog", { name: "Lesson outline" });
+    // The sidebar button is tablet and wider only.
+    expect(
+      screen.queryByRole("button", { name: /lesson outline$/ }),
+    ).toBeNull();
     const lessons = within(sheet).getByRole("navigation", { name: "Lessons" });
     expect(within(lessons).getAllByRole("link")).toHaveLength(3);
     await user.click(
@@ -194,6 +198,53 @@ describe("Course reader", () => {
     expect(
       within(aside).getByRole("link", { name: /What Big-O measures/ }),
     ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("puts the outline left of the text; the sidebar button hides it for a full-width read, remembered", async () => {
+    tablet();
+    api();
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <RouterProvider
+        router={createMemoryRouter(createRoutes(), {
+          initialEntries: ["/study/courses/course-bigo?p=1"],
+        })}
+      />,
+    );
+    const aside = await screen.findByRole("complementary", {
+      name: "Lesson outline",
+    });
+    const main = document.querySelector(".reader__main") as HTMLElement;
+    // Left: the column comes first in the reading row.
+    expect(
+      aside.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const hide = screen.getByRole("button", { name: "Hide lesson outline" });
+    expect(hide).toHaveAttribute("aria-expanded", "true");
+    expect(hide).toHaveAttribute("aria-controls", aside.id);
+
+    await user.click(hide);
+    expect(
+      screen.queryByRole("complementary", { name: "Lesson outline" }),
+    ).toBeNull();
+    const show = screen.getByRole("button", { name: "Show lesson outline" });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    expect(document.querySelector(".reader")).toHaveClass("reader--wide");
+
+    // The next course opens the same way on this device.
+    unmount();
+    openReader("/study/courses/course-bigo?p=2");
+    await screen.findByRole("button", { name: "Show lesson outline" });
+    expect(
+      screen.queryByRole("complementary", { name: "Lesson outline" }),
+    ).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Show lesson outline" }),
+    );
+    expect(
+      await screen.findByRole("complementary", { name: "Lesson outline" }),
+    ).toBeInTheDocument();
+    expect(document.querySelector(".reader")).not.toHaveClass("reader--wide");
   });
 
   it("shows an error when the read fails, and the reader's own words offline", async () => {
