@@ -1,6 +1,6 @@
 # Study exams
 
-Final exams: how Claude writes, delivers and grades them, and what the app records and shows. Exams are taken in the Claude Code session (R2-4); the app shows the grade and links the Markdown and the PDF. Source: cs-learning-lab `exam-rules.md` and the skill's Workflows B and C. The backlog is `10`, courses `11`.
+Final exams: how Claude writes, delivers and grades them, and what the app records and shows. Exams are taken in the Claude Code session (R2-4) **or in the app** (ST-13, below); the app shows the grade and links the Markdown, and the PDF of a Claude Code exam. Source: cs-learning-lab `exam-rules.md` and the skill's Workflows B and C. The backlog is `10`, courses `11`.
 
 ## Question types
 
@@ -34,8 +34,20 @@ Final exams: how Claude writes, delivers and grades them, and what the app recor
 
 The topic's **grade and Finished date** are those of its most recently graded exam, at any level (`10`, derived). A retake is a new attempt; earlier attempts stay as history.
 
+## Exams in the app (ST-13; AI-01)
+
+The same exam, written and graded by the Worker through the Anthropic API (architecture §1) because the owner starts it in the app. Shapes, scoring and the file's text are `shared/study/exam-paper.ts`.
+
+1. **Start.** "Take the test" on a course opens a form: **questions** (1–20, required), the **mix** of types (optional; the counts add up to the questions), the **lessons** to cover (optional; all by default) and a **focus** note (optional, up to 500 characters).
+2. **Generate.** The Worker sends the course and `exam-rules.md` (read from `study-materials`: the rules Claude Code follows) to `AI_MODEL`, and gets back the questions and, separately, a **key**: the right letter and why (MC, CODE-MC), the five true or false values (TF), a model answer and the points it must cover (OPEN), each blank's answer and the full solution (CODE). The reply must fit the settings (count, mix) and each type's shape (five options; a CODE snippet numbering its blanks `____(1)____` in order, one key answer per blank; a CODE-MC snippet with exactly one blank). The Worker commits `<topic-slug>__<level>__exam-<n>.md` beside the course in the **same format** as a Claude Code exam (§ Rules, rule 5), questions only, and records the exam with the next attempt **at the course's level**: numbering is shared with Claude Code exams. **No PDF.** A failed generation records nothing.
+3. **The key** stays in the app's database. It is never in the file, on the page or in any response until the exam is graded.
+4. **Answer.** A form per type (a choice for MC and CODE-MC, T or F per statement, text for OPEN, one field per blank for CODE), with a **draft** saved as the owner goes.
+5. **Submit.** MC, TF and CODE-MC are scored against the key, without the model. OPEN and CODE go to the model with the reference answers, which returns an accuracy (0–100%) and feedback for each. The grade follows rule 4: the mean accuracy over 10, one decimal, stored in tenths. `## Results` is appended to the same file in the rules' report format, with the owner's answers, the correct ones, feedback and the grade; review suggestions only below 7, which also go to the topic's note, as Claude does. The grade is recorded like any other (`recordGrade`: the topic is Done, Verified at 7.0).
+6. **Failures.** Each AI error (`ai_*`, architecture §1) is shown with what to do. A failed grading keeps the answers saved, so the owner can submit again.
+
 ## Screens
 
+- **In the app** (ST-13e): "Take the test" in the course reader, the course's exams (to answer, graded), the answer screen and the results.
 - **Grades tab** (`/study/grades`): graded exams, newest first: topic, level, attempt ("Retake #2"), grade with one decimal, date. Header: average grade of Done topics (`10` summary). Empty: "No grades yet. Take a final exam in Claude Code with `/final-exam`."
 - **Topic sheet** (`10`): its attempts with grade or "Awaiting grade", each linking to the Markdown (rendered by the reader, `11`) and the PDF (opened by the device's viewer through the content proxy).
 - States per `00-platform`.
@@ -62,10 +74,10 @@ S-13 to S-17: attempt numbering, paths, grade range, and a graded exam that stay
 
 Settled by the owner on 2026-10-19:
 
-1. **The PDF is the questions only**, built by Claude, pushed with the Markdown; required for every exam.
+1. **The PDF is the questions only**, built by Claude, pushed with the Markdown; required for every **Claude Code** exam. *Amended 2026-10-21:* exams made in the app have none.
 2. **A grade can be corrected** by recording it again for the same attempt; `graded_at` stays, and the audit log keeps the change. (The draft proposed set-once; the owner chose correction.)
 3. **Recording an exam checks both files exist** and that the attempt is the next one.
-4. **Exams only in Claude Code** (R2-4), like courses.
+4. **Exams only in Claude Code** (R2-4), like courses. *Amended 2026-10-21:* in Claude Code **or in the app**, the app's through the Anthropic API (AI-01, ST-13).
 
 ---
 
