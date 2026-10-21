@@ -383,6 +383,7 @@ function AnswerField({
       <Textarea
         label="Your answer"
         rows={6}
+        resizable
         maxLength={4000}
         disabled={disabled}
         value={answer.text}

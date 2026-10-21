@@ -459,6 +459,17 @@ export const CATALOG: readonly CatalogEntry[] = [
     summary: "Multi-line input in a Field.",
     examples: [
       {
+        label: "resizable · grows as it's typed",
+        node: (
+          <Textarea
+            label="Your answer"
+            rows={3}
+            resizable
+            hint="Drag the corner, or keep typing."
+          />
+        ),
+      },
+      {
         label: "default · hint",
         node: (
           <Textarea

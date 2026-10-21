@@ -123,6 +123,20 @@ dialog.dialog::backdrop {
   animation: var(--animate-scrim-in);
 }
 
+/* A text field's focus is its box's border (.input:focus-within): the
+   app-wide :focus-visible ring (.pl :focus-visible, more specific than the
+   bundle's .input > input { outline: none }) drew a second ring inside it. */
+.pl .input > :is(input, select, textarea):focus-visible {
+  outline: none;
+}
+
+/* Textarea resizable: the bundle's multiline box is fixed (resize: none); a
+   long answer can be dragged taller, and grows as it's typed (Textarea.tsx). */
+.input--resizable > textarea {
+  resize: vertical;
+  min-height: var(--size-control);
+}
+
 /* BusyOverlay: a full-screen modal wait over everything, sheets included. */
 dialog.busy {
   display: flex;

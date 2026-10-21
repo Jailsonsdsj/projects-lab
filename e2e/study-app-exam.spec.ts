@@ -178,10 +178,30 @@ test("answers each type, keeps the draft, submits and shows the results", async 
     ["III. includes is O(1).", "False"],
   ] as const)
     await q2.getByRole("group", { name: statement }).getByText(value).click();
-  await page
+  // The open answer's box can be dragged taller, and grows as a long answer
+  // is typed (phones have no resize handle).
+  const openAnswer = page
     .getByRole("region", { name: /Question 3/ })
-    .getByLabel("Your answer")
-    .fill("Constants hide the real cost.");
+    .getByLabel("Your answer");
+  const start = (await openAnswer.boundingBox())?.height ?? 0;
+  expect(await openAnswer.evaluate((el) => getComputedStyle(el).resize)).toBe(
+    "vertical",
+  );
+  await openAnswer.fill(
+    Array.from(
+      { length: 14 },
+      (_, i) => `Line ${i + 1} of a long answer.`,
+    ).join("\n"),
+  );
+  await expect
+    .poll(async () => (await openAnswer.boundingBox())?.height ?? 0)
+    .toBeGreaterThan(start);
+  const grown = await openAnswer.evaluate((el) => ({
+    client: el.clientHeight,
+    scroll: el.scrollHeight,
+  }));
+  expect(grown.client).toBeGreaterThanOrEqual(grown.scroll); // no inner scroll
+  await openAnswer.fill("Constants hide the real cost.");
   const q4 = page.getByRole("region", { name: /Question 4/ });
   await q4.getByLabel("Blank (1)").fill("*=");
   await q4.getByLabel("Blank (2)").fill("i - 1");

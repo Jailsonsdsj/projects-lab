@@ -369,6 +369,7 @@ function Open({
               optional
               hint="Not saved: for thinking it through."
               rows={3}
+              resizable
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
             />

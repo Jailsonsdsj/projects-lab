@@ -35,7 +35,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `Button` | `.btn` | Action button | `variant` solid · soft · outline · ghost; `tone` accent · neutral · danger; `size` sm · md · lg; `block`; `icon`; `iconOnly` (needs `aria-label`) | default, disabled, loading (`aria-busy`, ignores clicks), *hover, pressed, focus* |
 | `Field` | `.field` | Label, hint and error around one control; `useId()` when no `id` | `label`, `hint`, `error`, `required`, `optional`, `disabled`; render-prop child | default, invalid, disabled |
 | `Input` | `.input` | Text input in a Field | `icon`, `search`, `action` (trailing button) + input props | default, filled, required, invalid, disabled, *hover, focus* |
-| `Textarea` | `.input--multiline` | Multi-line input in a Field | textarea props | default, invalid, disabled |
+| `Textarea` | `.input--multiline`, `.input--resizable` (app-components.css) | Multi-line input in a Field | textarea props; `resizable` (long answers: dragged taller where the browser offers a handle, grows to fit what's typed, never shrinks below `rows`) | default, resizable, invalid, disabled |
 | `Chip` | `.chip` | Filter toggle | `pressed` (aria-pressed), `count` | off, on, disabled, *hover, pressed* |
 | `RadioGroup` | `.radio-group`, `.radio` (app-components.css) | One choice among a few: native radios in a fieldset (arrows move, the legend names it), round boxes like Checkbox's | `label`, `name`, `value`, `options`, `onChange`, `inline`, `hideLabel`, `disabled` | unchecked, checked, inline, disabled, *hover, focus* |
 | `Checkbox` | `.check` | A `--size-touch` row around a `--size-checkbox` box | `mixed`, `invalid` + input props | unchecked, checked, mixed, invalid, disabled, *pressed, focus* |
