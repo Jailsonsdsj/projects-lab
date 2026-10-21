@@ -31,7 +31,7 @@ export function LoginScreen() {
   if (token && !isExpired(token)) return <Navigate to={from ?? "/"} replace />;
 
   return (
-    <div className="mx-auto w-full max-w-(--size-form)">
+    <div className="safe-top mx-auto w-full max-w-(--size-form)">
       {(banner || expired) && (
         <div className="px-4 pt-4">
           {banner ?? (

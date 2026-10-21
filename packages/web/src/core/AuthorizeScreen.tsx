@@ -23,17 +23,19 @@ const SCOPES: { icon: IconName; text: string }[] = [
 
 function Expired() {
   return (
-    <main className="mx-auto flex w-full max-w-(--size-form) flex-col gap-5 px-6 pt-12">
-      <span className="brandmark" aria-hidden="true">
-        PL
-      </span>
-      <h1 className="text-2xl font-semibold tracking-tight">
-        This page expired
-      </h1>
-      <p className="text-ink-secondary">
-        Sign-in pages work once, for ten minutes, in the browser that opened
-        them. Start again from Claude.
-      </p>
+    <main className="safe-top">
+      <div className="mx-auto flex w-full max-w-(--size-form) flex-col gap-5 px-6 pt-12">
+        <span className="brandmark" aria-hidden="true">
+          PL
+        </span>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          This page expired
+        </h1>
+        <p className="text-ink-secondary">
+          Sign-in pages work once, for ten minutes, in the browser that opened
+          them. Start again from Claude.
+        </p>
+      </div>
     </main>
   );
 }
@@ -91,7 +93,7 @@ export function AuthorizeScreen() {
 
   if (!authKey)
     return (
-      <div className="mx-auto w-full max-w-(--size-form)">
+      <div className="safe-top mx-auto w-full max-w-(--size-form)">
         {banner && <div className="px-4 pt-4">{banner}</div>}
         <main className="flex flex-col gap-10 px-6 pt-12">
           <div className="flex flex-col gap-5">

@@ -110,17 +110,24 @@ dialog.sheet {
   margin: auto auto 0;
   padding: 0 0 env(safe-area-inset-bottom);
   border: 0;
-  max-height: calc(100dvh - var(--space-12));
+  /* A tall sheet stops below the status bar, not under it. */
+  max-height: calc(100dvh - var(--space-12) - env(safe-area-inset-top));
 }
 dialog.dialog {
   margin: auto;
   width: calc(100% - var(--space-8));
-  max-height: calc(100dvh - var(--space-8));
+  max-height: calc(100dvh - var(--space-8) - env(safe-area-inset-top));
 }
 dialog.sheet::backdrop,
 dialog.dialog::backdrop {
   background-color: var(--color-scrim);
   animation: var(--animate-scrim-in);
+}
+
+/* Screens outside the shell (login, Allow Claude, a bare error) start below
+   the status bar: the app draws edge to edge (viewport-fit=cover). */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
 }
 
 /* A text field's focus is its box's border (.input:focus-within): the
@@ -274,6 +281,8 @@ dialog.is-closing::backdrop {
     top: 0;
     height: 100dvh;
     overflow-y: auto;
+    /* Below the status bar on iPad (edge to edge: viewport-fit=cover). */
+    padding-top: calc(var(--space-3) + env(safe-area-inset-top));
   }
 }
 .shell__main {
@@ -283,6 +292,8 @@ dialog.is-closing::backdrop {
 
   @variant tablet {
     padding-bottom: 0;
+    /* No sticky header on tablet: the page itself starts below the status bar. */
+    padding-top: env(safe-area-inset-top);
   }
 }
 .shell__header {
@@ -462,6 +473,8 @@ dialog.is-closing::backdrop {
 .reader__head {
   position: sticky;
   top: 0;
+  /* Below the status bar and Safari's glass on iPhone and iPad. */
+  padding-top: env(safe-area-inset-top);
   background-color: var(--color-ground);
   border-bottom: var(--border-thin) solid var(--color-border);
 
@@ -511,7 +524,7 @@ dialog.is-closing::backdrop {
 }
 .reader__aside {
   position: sticky;
-  top: var(--size-header);
+  top: calc(var(--size-header) + env(safe-area-inset-top));
   flex: none;
   width: var(--size-outline);
   align-self: stretch;

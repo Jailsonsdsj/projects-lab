@@ -35,5 +35,5 @@ export function RouteError({ bare }: { bare?: boolean }) {
     </Failure>
   );
 
-  return bare ? <main className="p-4">{failure}</main> : failure;
+  return bare ? <main className="safe-top p-4">{failure}</main> : failure;
 }
