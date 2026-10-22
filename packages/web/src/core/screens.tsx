@@ -161,9 +161,9 @@ export const platformLab: LabDefinition = {
   name: "Home",
   shortName: "Platform",
   description: "Both labs at a glance",
-  icon: "home",
+  icon: "monitor",
   tabs: [
-    { label: "Home", icon: "home", path: "/", screen: <HomeScreen /> },
+    { label: "Home", icon: "monitor", path: "/", screen: <HomeScreen /> },
     {
       label: "Connections",
       icon: "link",

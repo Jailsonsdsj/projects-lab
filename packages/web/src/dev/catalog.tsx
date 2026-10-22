@@ -88,7 +88,7 @@ const LABS = [
     id: "platform",
     name: "Home",
     description: "Both labs at a glance",
-    icon: "home",
+    icon: "monitor",
     href: "#home",
   },
   {

@@ -1,8 +1,9 @@
 // Icons copied from the Claude Design bundle (docs/design/*.html): every path,
 // circle and rect below is the bundle's own markup on a 24 x 24 grid, named by
 // where the design uses it. Add an icon by copying it from the bundle, not by
-// drawing one. One exception, drawn to the same grid and stroke because the
-// bundle has none: `sidebar`, the course reader's outline toggle.
+// drawing one. Two exceptions, drawn to the same grid and stroke because the
+// bundle has none: `sidebar`, the course reader's outline toggle, and
+// `monitor`, Home (the owner's choice over the bundle's house).
 
 export type IconShape = readonly [
   tag: "path" | "circle" | "rect",
@@ -121,9 +122,9 @@ export const ICONS = {
     ["rect", { x: "3", y: "4", width: "18", height: "16", rx: "2" }],
     ["path", { d: "M9 4v16" }],
   ],
-  home: [
-    ["path", { d: "M3 10.5 12 3l9 7.5" }],
-    ["path", { d: "M5 9.5V20h14V9.5" }],
+  monitor: [
+    ["rect", { x: "3", y: "4", width: "18", height: "12", rx: "2" }],
+    ["path", { d: "M8 20h8M12 16v4" }],
   ],
   settings: [
     ["path", { d: "M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12" }],
