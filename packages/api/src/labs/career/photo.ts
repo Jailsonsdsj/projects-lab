@@ -29,7 +29,7 @@ const ascii = (bytes: Uint8Array, from: number, to: number) =>
 function bucket(env: Env): R2Bucket {
   if (!env.FILES)
     throw new Error(
-      "R2 binding FILES is missing in this environment: add r2_buckets FILES to wrangler.jsonc (preview gets its own in G-03)",
+      "R2 binding FILES is missing in this environment: add r2_buckets FILES to wrangler.jsonc",
     );
   return env.FILES;
 }

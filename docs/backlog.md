@@ -15,7 +15,7 @@ Sizes: S ≈ 20 min · M ≈ 45 min · L ≈ 90 min (split an L that runs past 2
 | 3 Career Lab | 20 | 24 | In progress |
 | AI integration | 3 | 3 | Done |
 | Hardening | 5 | 5 | Done |
-| Go-Live | 2 | 5 | In progress |
+| Go-Live | 5 | 5 | Done |
 
 _Post-launch and TD are tracked separately and excluded from the totals._
 
@@ -174,7 +174,7 @@ The app's own calls to the Anthropic API (owner's decision, 2026-10-21): an exce
 
 ## Go-Live (`G-`)
 
-Playbook §17 unchanged: **G-00** merge and watch deploy ✅ 2026-10-22 (`developer` → `main` through PRs #1 to #11; the deploy workflow green on the latest, 9 of the last 10) · **G-01** provision the owner from the deployed commit **(Human)** ✅ 2026-10-22 (the owner signs in to production and uses both labs) · **G-02** real phone **and tablet** check · **G-03** `verify-triggers.sh --remote` on preview, then delete the preview DB · **G-04** first backup stored off-device. Add: connect Claude (claude.ai connector + Claude Code) to production and run `core_whoami` from each surface used.
+Playbook §17 unchanged: **G-00** merge and watch deploy ✅ 2026-10-22 (`developer` → `main` through PRs #1 to #11; the deploy workflow green on the latest, 9 of the last 10) · **G-01** provision the owner from the deployed commit **(Human)** ✅ 2026-10-22 (the owner signs in to production and uses both labs) · **G-02** real phone **and tablet** check ✅ 2026-10-22 (by the owner on iPhone and iPad, in Safari and installed on the Home Screen; found on the way and fixed: screens under the status bar, then iPadOS 26 blurring the top of the installed app) · **G-03** `verify-triggers.sh --remote` on preview, then delete the preview DB ✅ 2026-10-22 (settled without a preview, the owner's call: the script refuses `--remote` by design and runs every trigger and NOT NULL probe on a fresh D1 in CI before each merge and deploy, and production has every migration; the never-used `preview` env left `wrangler.jsonc`; the owner deletes `projects-lab-preview` in D1 and `projects-lab-images-preview` in R2) · **G-04** first backup stored off-device ✅ 2026-10-22 (by the owner: a backup exported from the app and kept off the device). Add: connect Claude (claude.ai connector + Claude Code) to production and run `core_whoami` from each surface used.
 
 ## Post-launch (`P-`)
 

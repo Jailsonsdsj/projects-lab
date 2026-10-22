@@ -1,7 +1,8 @@
 # Every push to main (playbook §9): the same checks, then remote migrations,
 # deploy and a health check. The Cloudflare secrets are set only on the steps
 # that need them, never job-wide, and every wrangler call names --env=""
-# because wrangler.jsonc defines a `preview` env.
+# (the top-level Worker), so an env added to wrangler.jsonc later can't
+# change what deploys.
 name: deploy
 
 on:

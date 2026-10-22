@@ -94,7 +94,7 @@ flowchart LR
 | `run_worker_first` | `["/api/*"]` | `["/api/*", "/mcp", "/oauth/*", "/.well-known/*"]`. Still an array, never `true` |
 | Content | Lives in D1/R2 | Study content lives in **git** (`study-materials`). D1 stores only paths and metadata. See §7 |
 | Caching | Not specified | **Don't rely on the Workers Cache API**: on a `workers.dev` hostname it can't be counted on. Content is addressed by git blob SHA and cached **in the client** as immutable. See §7 |
-| R2 | Images | One bucket, `projects-lab-images` (`projects-lab-images-preview` for preview), profile photo only; generated documents are never stored (§6.4). **Never video** |
+| R2 | Images | One bucket, `projects-lab-images`, profile photo only; generated documents are never stored (§6.4). **Never video** |
 | Video | — | Google Drive. You upload; the app stores the link and embeds Drive's player |
 | Cron | Prune job | One Cron Trigger, daily prune. The job search is **not** a Worker cron; it's a Claude scheduled task (§8) |
 | Email | — | None sent by the app. The job digest goes out from the scheduled task through your Gmail connector |
@@ -297,7 +297,7 @@ Account-wide, with sticker-collector as the only other project (assumption A-5).
 
 | Resource | sticker-collector | Projects Lab | Account total vs free limit |
 |---|---|---|---|
-| D1 databases | 2 | 1 (+1 preview, created for G-03 and deleted after) | 3–4 of 10 |
+| D1 databases | 2 | 1 (no preview: G-03 settled that CI's trigger checks and production's migrations cover it) | 3 of 10 |
 | R2 buckets / storage | 2 / images | 1 / profile photo only | Well under 10 GB |
 | KV namespaces | 0 | 1 (`OAUTH_KV`) | A handful of writes per day for one user |
 | Cron Triggers | 0 | 1 | 1 of 5 |
