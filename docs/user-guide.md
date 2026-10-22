@@ -120,7 +120,7 @@ This guide, in the app. Its four parts are the tabs at the top (The app, Claude,
 
 #### Settings — `/settings`
 
-- **Change passphrase:** current, new, confirm. Every other device is signed out; this one stays signed in.
+- **Change passphrase:** closed until you tap its title, then the fields slide down: current, new, confirm. Every other device is signed out; this one stays signed in. **Cancel** (or the title again) closes it and clears what you typed; so does a change that went through.
 - **Backup:** **Download backup** and when the last one was. See [Backup and restore](#backup-and-restore).
 - **Session:** **Log out** signs out this device only.
 

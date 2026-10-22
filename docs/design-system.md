@@ -58,6 +58,7 @@ Every export of `packages/web/src/components/ui` that renders something. States 
 | `EmptyState` | `.empty` | A successful, empty answer | `icon`, `title`, text, `actions` | — |
 | `ErrorState` | `.empty--error` / `--offline` | A failed read; never "nothing here yet" | `kind` error · offline, `code`, `actions` | error, offline |
 | `Skeleton` | `.skel` | Placeholder shape (decorative) | `shape` text · title · circle · block; `width` (%); `size` (token) | pulsing; still under reduced motion |
+| `Slide` | `.slide`, `.slide__inner`; its control `.disclosure` (app-components.css) | A body that slides open from a control, like a card opening from its title (Settings' Change passphrase): height animated to its content's, measured and kept current; closed, hidden and inert. Not a 0fr→1fr grid row: WebKit applies the fraction twice | `open`, `id` (for `aria-controls`), children | closed, opening (sheet-in), open, closing (sheet-out); at once under reduced motion |
 | `ImageTile` | `.tile` | Profile photo with initials fallback | `src`, `name`, `size` md · lg, `round` | loading, loaded, failed / no photo (initials) |
 | `LabCard` | `.labcard` | Home's per-lab card in that lab's accent | `lab`, `name`, `icon`, `href`, `state` | loading, loaded, empty, error (Retry) |
 | `LabSwitcher` | `.labsw` / `.labopt` | Current lab; opens the list of labs | `variant` sheet · menu; `block` | closed, open; current lab checked |
