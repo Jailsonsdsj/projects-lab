@@ -61,6 +61,7 @@ Any exam, made in Claude Code or in the app, graded or not. **Only the owner del
 ## Screens
 
 - **In the app** (ST-13e): "Take the test" in the course reader, the course's exams (to answer, graded), the answer screen and the results.
+- **Exam page** (`/study/exams/:examId`, ST-14b): **Delete exam** in the header (a trash icon on phone, "Delete" on tablet), held while an app exam is being graded → danger dialog "Delete exam #n?" → back where the owner came from, toast "<ID> exam #n deleted" with **Undo** ("is back"; a refusal shows the server's reason; a failure offers Retry). Every read on screen reads again after Undo (`announceDataChanged`, `core/read.ts`).
 - **Grades tab** (`/study/grades`): graded exams, newest first: topic, level, attempt ("Retake #2"), grade with one decimal, date. Header: average grade of Done topics (`10` summary). Empty: "No grades yet. Take a final exam in Claude Code with `/final-exam`."
 - **Topic sheet** (`10`): its attempts with grade or "Awaiting grade", each linking to the Markdown (rendered by the reader, `11`) and the PDF (opened by the device's viewer through the content proxy).
 - States per `00-platform`.

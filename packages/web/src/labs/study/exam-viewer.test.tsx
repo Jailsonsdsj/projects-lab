@@ -116,6 +116,193 @@ describe("Exam viewer", () => {
   });
 });
 
+describe("Deleting an exam", () => {
+  interface Sent {
+    method: string;
+    path: string;
+    key: string | null;
+  }
+  /** The exam opened from Grades; `deleted` and `restored` answer the writes. */
+  function api(
+    deleted: () => Response = () =>
+      json({ exam: { ...exam(), deletedAt: "d" } }),
+    restored: () => Response = () =>
+      json({ exam: { ...exam(), deletedAt: null } }),
+  ) {
+    const sent: Sent[] = [];
+    let gradesReads = 0;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const path = String(input);
+      const method = init?.method ?? "GET";
+      if (method !== "GET") {
+        sent.push({
+          method,
+          path,
+          key: new Headers(init?.headers).get("Idempotency-Key"),
+        });
+        return path.endsWith("/restore") ? restored() : deleted();
+      }
+      if (path === "/api/study/exams/exam-2") return json({ exam: exam() });
+      if (path.startsWith(`/api/study/content/${MD_SHA}/`))
+        return new Response(MARKDOWN);
+      if (path === "/api/study/exams") {
+        gradesReads += 1;
+        return json({ exams: [] });
+      }
+      if (path === "/api/study/backlog") return json({ areas: [], topics: [] });
+      throw new Error(`unexpected request ${method} ${path}`);
+    });
+    return { sent, gradesReads: () => gradesReads };
+  }
+
+  function fromGrades() {
+    const router = createMemoryRouter(createRoutes(), {
+      initialEntries: ["/study/grades", "/study/exams/exam-2"],
+      initialIndex: 1,
+    });
+    render(<RouterProvider router={router} />);
+    return router;
+  }
+
+  it("asks first, then deletes and goes back to Grades, which reads again; Undo brings it back", async () => {
+    const { sent, gradesReads } = api();
+    const user = userEvent.setup();
+    const router = fromGrades();
+    await user.click(
+      await screen.findByRole("button", { name: "Delete exam" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Delete exam #2?",
+    });
+    expect(dialog).toHaveTextContent(
+      "CS-01 · Essential retake #2 leaves Grades and its course, and the topic's grade is worked out without it. Its files leave study-materials tonight; until then, Undo brings it back.",
+    );
+    // Cancel sends nothing.
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(sent).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: "Delete exam" }));
+    await user.click(
+      within(
+        await screen.findByRole("dialog", { name: "Delete exam #2?" }),
+      ).getByRole("button", { name: "Delete" }),
+    );
+    expect(
+      await screen.findByText("CS-01 exam #2 deleted"),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/study/grades");
+    expect(sent).toEqual([
+      {
+        method: "DELETE",
+        path: "/api/study/exams/exam-2",
+        key: expect.any(String),
+      },
+    ]);
+    await screen.findByRole("heading", { name: "Grades" });
+    const before = gradesReads();
+
+    await user.click(screen.getByRole("button", { name: "Undo" }));
+    expect(
+      await screen.findByText("CS-01 exam #2 is back"),
+    ).toBeInTheDocument();
+    expect(sent[1]).toEqual({
+      method: "POST",
+      path: "/api/study/exams/exam-2/restore",
+      key: expect.any(String),
+    });
+    // Grades, on screen, reads again to show it.
+    await vi.waitFor(() => expect(gradesReads()).toBeGreaterThan(before));
+  });
+
+  it("takes an exam already gone (404) as deleted", async () => {
+    api(() => json({ error: "not_found" }, { status: 404 }));
+    const user = userEvent.setup();
+    const router = fromGrades();
+    await user.click(
+      await screen.findByRole("button", { name: "Delete exam" }),
+    );
+    await user.click(
+      within(
+        await screen.findByRole("dialog", { name: "Delete exam #2?" }),
+      ).getByRole("button", { name: "Delete" }),
+    );
+    expect(
+      await screen.findByText("CS-01 exam #2 deleted"),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/study/grades");
+  });
+
+  it("stays on the exam and says so when the delete fails", async () => {
+    const { sent } = api(() => new Response("boom", { status: 500 }));
+    const user = userEvent.setup();
+    const router = fromGrades();
+    await user.click(
+      await screen.findByRole("button", { name: "Delete exam" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Delete exam #2?",
+    });
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(
+      await within(dialog).findByText(
+        "Couldn't delete it. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/study/exams/exam-2");
+    expect(sent).toHaveLength(1);
+  });
+
+  async function deleteThenUndo(user: ReturnType<typeof userEvent.setup>) {
+    fromGrades();
+    await user.click(
+      await screen.findByRole("button", { name: "Delete exam" }),
+    );
+    await user.click(
+      within(
+        await screen.findByRole("dialog", { name: "Delete exam #2?" }),
+      ).getByRole("button", { name: "Delete" }),
+    );
+    await user.click(await screen.findByRole("button", { name: "Undo" }));
+  }
+
+  it("says why when Undo comes after its files are removed", async () => {
+    api(undefined, () =>
+      json(
+        {
+          error: "conflict",
+          message:
+            "Its files were removed from study-materials, so this exam stays deleted.",
+        },
+        { status: 409 },
+      ),
+    );
+    await deleteThenUndo(userEvent.setup());
+    expect(
+      await screen.findByText(
+        "Its files were removed from study-materials, so this exam stays deleted.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("offers Retry when Undo fails", async () => {
+    const answers = [
+      () => new Response("boom", { status: 500 }),
+      () => json({ exam: { ...exam(), deletedAt: null } }),
+    ];
+    const { sent } = api(undefined, () => (answers.shift() ?? answers[0])!());
+    const user = userEvent.setup();
+    await deleteThenUndo(user);
+    expect(
+      await screen.findByText("Couldn't bring back CS-01 exam #2."),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(
+      await screen.findByText("CS-01 exam #2 is back"),
+    ).toBeInTheDocument();
+    expect(sent.map((s) => s.method)).toEqual(["DELETE", "POST", "POST"]);
+  });
+});
+
 describe("Exams in the topic sheet", () => {
   const bigO: TopicInfo = {
     id: "CS-01",
