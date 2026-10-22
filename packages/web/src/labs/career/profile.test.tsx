@@ -3,7 +3,14 @@ import type {
   JobSummary,
   ProfileResponse,
 } from "@projects-lab/shared/career";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -424,6 +431,64 @@ describe("Profile records", () => {
     expect(
       await within(sheet).findByText(/ends 2024, before 2025/),
     ).toBeInTheDocument();
+  });
+
+  it("opens a fresh form each time: closing or adding leaves nothing behind", async () => {
+    api({
+      "GET /api/career/profile": () => json(FULL),
+      "POST /api/career/education": () => json({ education: { id: "e2" } }),
+    });
+    const user = userEvent.setup();
+    openProfile();
+    const addEducation = async () => {
+      await user.click(
+        await screen.findByRole("button", { name: "Add education" }),
+      );
+      return screen.findByRole("dialog", { name: "Add education" });
+    };
+    const closed = () =>
+      waitFor(() =>
+        expect(
+          screen.queryByRole("dialog", { name: "Add education" }),
+        ).toBeNull(),
+      );
+
+    // Typed, then closed: the next one starts empty.
+    let sheet = await addEducation();
+    await user.type(within(sheet).getByLabelText("Degree"), "MSc");
+    await user.type(within(sheet).getByLabelText("Institution"), "USP");
+    await user.click(within(sheet).getByRole("button", { name: "Close" }));
+    await closed();
+    sheet = await addEducation();
+    expect(within(sheet).getByLabelText("Degree")).toHaveValue("");
+    expect(within(sheet).getByLabelText("Institution")).toHaveValue("");
+
+    // Added: the next one starts empty too.
+    await user.type(within(sheet).getByLabelText("Degree"), "MSc");
+    await user.type(within(sheet).getByLabelText("Institution"), "USP");
+    await user.type(within(sheet).getByLabelText("Start"), "2024");
+    await user.click(within(sheet).getByRole("button", { name: "Add" }));
+    await closed();
+    sheet = await addEducation();
+    expect(within(sheet).getByLabelText("Degree")).toHaveValue("");
+    expect(within(sheet).getByLabelText("Start")).toHaveValue("");
+    await user.click(within(sheet).getByRole("button", { name: "Close" }));
+    await closed();
+
+    // An experience opened to edit, then closed: Add experience is empty.
+    await user.click(await screen.findByRole("button", { name: /Engineer/ }));
+    const edit = await screen.findByRole("dialog", { name: "Experience" });
+    expect(within(edit).getByLabelText("Organization")).toHaveValue("Acme");
+    await user.click(within(edit).getByRole("button", { name: "Close" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Experience" })).toBeNull(),
+    );
+    await user.click(screen.getByRole("button", { name: "Add experience" }));
+    const add = await screen.findByRole("dialog", {
+      name: "Add an experience",
+    });
+    expect(within(add).getByLabelText("Organization")).toHaveValue("");
+    expect(within(add).getByLabelText("Title")).toHaveValue("");
   });
 
   it("removes an experience after confirming", async () => {
