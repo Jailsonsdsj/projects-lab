@@ -43,7 +43,7 @@ Claude writes them with `career_save_job_kit` (intro, range, answers) after the 
 
 On the **Profile** tab, "Tap Copy, then paste into the form":
 
-- **Standard fields** from the profile: name, email, phone, links, and the owner's **standard answers** (label and value pairs such as "Notice period: 30 days", "Work authorization", "Earliest start"), each with Copy ("Copied" for `--duration-copied-hold`, then back).
+- **Standard fields** from the profile, in this order: name, email, phone, city, state/province, country, then links (LinkedIn, GitHub and Website under those fixed labels, any other link under its own), and the owner's **standard answers** (label and value pairs such as "Notice period: 30 days", "Work authorization", "Earliest start"), each with Copy ("Copied" for `--duration-copied-hold`, then back).
 - **"Answers for <job>"**: a job picker (the bundle's Select), then that job's form answers, self-introduction and salary range, each with Copy.
 
 Copying never needs the network: the panel reads what's already loaded. Filling forms through Claude in Chrome is later (P-03).

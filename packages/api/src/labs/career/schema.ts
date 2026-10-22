@@ -61,7 +61,12 @@ export const careerPerson = sqliteTable(
     id: text("id").primaryKey(),
     fullName: text("full_name").notNull().default(""),
     headline: text("headline").notNull().default(""),
+    // Written before the address had parts; read only when they're empty.
     location: text("location").notNull().default(""),
+    // The address, as application forms ask for it.
+    city: text("city").notNull().default(""),
+    region: text("region").notNull().default(""),
+    country: text("country").notNull().default(""),
     timezone: text("timezone").notNull().default(""),
     email: text("email").notNull().default(""),
     phone: text("phone").notNull().default(""),

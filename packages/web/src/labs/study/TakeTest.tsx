@@ -20,6 +20,7 @@ import { Link } from "react-router";
 import {
   Badge,
   Banner,
+  BusyOverlay,
   Button,
   Checkbox,
   Input,
@@ -179,114 +180,115 @@ export function TakeTestSheet({
     });
 
   return (
-    <Sheet
-      open={open}
-      onClose={() => {
-        if (!busy) onClose();
-      }}
-      title="Take the test"
-      footer={
-        <div className="flex w-full flex-col gap-2">
-          {busy && (
-            <p className="text-sm text-ink-muted" role="status">
-              Writing your exam… This can take up to a minute. Keep this open.
-            </p>
-          )}
+    <>
+      <Sheet
+        open={open}
+        onClose={() => {
+          if (!busy) onClose();
+        }}
+        title="Take the test"
+        footer={
           <Button loading={busy} onClick={generate}>
             {busy ? "Writing your exam" : "Generate"}
           </Button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-ink-muted">
-          A final exam on {course.topicId} · {course.skill}, written for you
-          now. Answer it here; it's graded when you submit.
-        </p>
-        {failed?.kind === "error" && (
-          <Banner tone="danger" title="Couldn't write the exam.">
-            {failed.message}
-          </Banner>
-        )}
-        {failed?.kind === "offline" && (
-          <Banner tone="offline" title="You're offline.">
-            Writing an exam needs a connection. Your choices are still here.
-          </Banner>
-        )}
-        <Input
-          label="Questions"
-          inputMode="numeric"
-          value={questions}
-          onChange={(event) => setQuestions(event.target.value)}
-          error={tried || questions !== "" ? countError : undefined}
-          hint={`1 to ${EXAM_MAX_QUESTIONS}.`}
-        />
-        <Checkbox
-          checked={showTypes}
-          onChange={(event) => setShowTypes(event.target.checked)}
-        >
-          Choose question types
-        </Checkbox>
-        {showTypes && (
-          <fieldset className="flex flex-col gap-3">
-            <legend className="sr-only">Question types</legend>
-            <div className="grid grid-cols-2 gap-3 tablet:grid-cols-3">
-              {QUESTION_TYPES.map((t) => (
-                <Input
-                  key={t}
-                  label={`${TYPE_NAME[t]} (${QUESTION_TYPE_LABEL[t]})`}
-                  inputMode="numeric"
-                  value={mix[t]}
-                  onChange={(event) =>
-                    setMix((was) => ({ ...was, [t]: event.target.value }))
-                  }
-                />
-              ))}
-            </div>
-            <p
-              className={
-                mixError ? "text-sm text-danger-ink" : "text-sm text-ink-muted"
-              }
-              role={mixError ? "alert" : undefined}
-            >
-              {mixError ?? `Total ${mixTotal} of ${count ?? "?"}.`}
-            </p>
-          </fieldset>
-        )}
-        {lessons.length > 0 && (
-          <fieldset className="flex flex-col gap-1">
-            <legend className="text-sm font-medium">
-              Lessons <span className="text-ink-muted">(optional)</span>
-            </legend>
-            {lessons.map((l) => (
-              <Checkbox
-                key={l.n}
-                checked={chosen.has(l.n)}
-                onChange={() => toggle(l.n)}
-                invalid={Boolean(lessonsError)}
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-ink-muted">
+            A final exam on {course.topicId} · {course.skill}, written for you
+            now. Answer it here; it's graded when you submit.
+          </p>
+          {failed?.kind === "error" && (
+            <Banner tone="danger" title="Couldn't write the exam.">
+              {failed.message}
+            </Banner>
+          )}
+          {failed?.kind === "offline" && (
+            <Banner tone="offline" title="You're offline.">
+              Writing an exam needs a connection. Your choices are still here.
+            </Banner>
+          )}
+          <Input
+            label="Questions"
+            inputMode="numeric"
+            value={questions}
+            onChange={(event) => setQuestions(event.target.value)}
+            error={tried || questions !== "" ? countError : undefined}
+            hint={`1 to ${EXAM_MAX_QUESTIONS}.`}
+          />
+          <Checkbox
+            checked={showTypes}
+            onChange={(event) => setShowTypes(event.target.checked)}
+          >
+            Choose question types
+          </Checkbox>
+          {showTypes && (
+            <fieldset className="flex flex-col gap-3">
+              <legend className="sr-only">Question types</legend>
+              <div className="grid grid-cols-2 gap-3 tablet:grid-cols-3">
+                {QUESTION_TYPES.map((t) => (
+                  <Input
+                    key={t}
+                    label={`${TYPE_NAME[t]} (${QUESTION_TYPE_LABEL[t]})`}
+                    inputMode="numeric"
+                    value={mix[t]}
+                    onChange={(event) =>
+                      setMix((was) => ({ ...was, [t]: event.target.value }))
+                    }
+                  />
+                ))}
+              </div>
+              <p
+                className={
+                  mixError
+                    ? "text-sm text-danger-ink"
+                    : "text-sm text-ink-muted"
+                }
+                role={mixError ? "alert" : undefined}
               >
-                {l.n}. {l.title}
-              </Checkbox>
-            ))}
-            {lessonsError && (
-              <p className="text-sm text-danger-ink" role="alert">
-                {lessonsError}
+                {mixError ?? `Total ${mixTotal} of ${count ?? "?"}.`}
               </p>
-            )}
-          </fieldset>
-        )}
-        <Textarea
-          label="Focus"
-          optional
-          rows={3}
-          value={focus}
-          maxLength={EXAM_FOCUS_MAX_LENGTH}
-          onChange={(event) => setFocus(event.target.value)}
-          error={focusError}
-          hint="What to stress, e.g. more on trade-offs."
-        />
-      </div>
-    </Sheet>
+            </fieldset>
+          )}
+          {lessons.length > 0 && (
+            <fieldset className="flex flex-col gap-1">
+              <legend className="text-sm font-medium">
+                Lessons <span className="text-ink-muted">(optional)</span>
+              </legend>
+              {lessons.map((l) => (
+                <Checkbox
+                  key={l.n}
+                  checked={chosen.has(l.n)}
+                  onChange={() => toggle(l.n)}
+                  invalid={Boolean(lessonsError)}
+                >
+                  {l.n}. {l.title}
+                </Checkbox>
+              ))}
+              {lessonsError && (
+                <p className="text-sm text-danger-ink" role="alert">
+                  {lessonsError}
+                </p>
+              )}
+            </fieldset>
+          )}
+          <Textarea
+            label="Focus"
+            optional
+            rows={3}
+            value={focus}
+            maxLength={EXAM_FOCUS_MAX_LENGTH}
+            onChange={(event) => setFocus(event.target.value)}
+            error={focusError}
+            hint="What to stress, e.g. more on trade-offs."
+          />
+        </div>
+      </Sheet>
+      {/* Over everything, the form included, until the exam arrives or fails. */}
+      <BusyOverlay open={busy} title="Writing your exam…">
+        This can take up to a minute. Keep this screen open.
+      </BusyOverlay>
+    </>
   );
 }
 

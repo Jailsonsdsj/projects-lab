@@ -64,7 +64,9 @@ export function PersonSheet({
     headline: person.headline,
     email: person.email,
     phone: person.phone,
-    location: person.location,
+    city: person.city,
+    region: person.region,
+    country: person.country,
     timezone: person.timezone,
     summary: person.summary,
     languages: languagesText(person.languages),
@@ -90,7 +92,9 @@ export function PersonSheet({
           headline: form.headline,
           email: form.email.trim() || undefined,
           phone: form.phone,
-          location: form.location,
+          city: form.city.trim(),
+          region: form.region.trim(),
+          country: form.country.trim(),
           timezone: form.timezone.trim() || undefined,
           summary: form.summary,
           languages,
@@ -128,10 +132,25 @@ export function PersonSheet({
           autoComplete="tel"
         />
         <Input
-          label="Location"
+          label="City"
           optional
-          value={form.location}
-          onChange={set("location")}
+          value={form.city}
+          onChange={set("city")}
+          autoComplete="address-level2"
+        />
+        <Input
+          label="State or province"
+          optional
+          value={form.region}
+          onChange={set("region")}
+          autoComplete="address-level1"
+        />
+        <Input
+          label="Country"
+          optional
+          value={form.country}
+          onChange={set("country")}
+          autoComplete="country-name"
         />
         <Input
           label="Time zone"

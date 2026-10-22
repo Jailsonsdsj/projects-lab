@@ -130,7 +130,12 @@ export const updatePersonInputSchema = z
   .object({
     fullName: nameSchema.optional(),
     headline: text(160).optional(),
+    /** Free text, before the address had parts; kept for older callers. */
     location: text(120).optional(),
+    /** The address, as forms ask for it (state or province in `region`). */
+    city: text(80).optional(),
+    region: text(80).optional(),
+    country: text(80).optional(),
     timezone: timezoneSchema.optional(),
     email: z.email().max(254).optional(),
     phone: text(40).optional(),

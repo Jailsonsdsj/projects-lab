@@ -473,7 +473,7 @@ null_each learn_topic "id,code,area_id,skill_id,level,priority,status,note,creat
 null_each learn_course "id,topic_id,level,module,path,recorded_at" "'n1','t1','essential',1,'Study Lab/n/n/n__essential.md','t'"
 null_each learn_exam "id,topic_id,level,attempt,md_path,source,created_at" "'n1','t1','specialized',1,'Study Lab/n/n/n__specialized__exam-1.md','app','t'"
 null_each learn_exam_paper "exam_id,title,settings_json,questions_json,key_json,draft_json,created_at,updated_at" "'e8','Big-O','{}','[]','[]','[]','t','t'"
-null_each career_person "id,full_name,headline,location,timezone,email,phone,summary,languages_json,updated_at" "'person','','','','','','','','[]','t'"
+null_each career_person "id,full_name,headline,location,city,region,country,timezone,email,phone,summary,languages_json,updated_at" "'person','','','','','','','','','','','[]','t'"
 null_each career_link "id,kind,label,url,position,created_at" "'n1','other','L','https://a.example',0,'t'"
 null_each career_education "id,institution,degree,field,start_on,notes,position,created_at" "'n1','U','BSc','','2015','',0,'t'"
 null_each career_experience "id,organization,title,kind,start_on,location,summary,position,created_at" "'n1','A','B','job','2020','','',0,'t'"

@@ -39,7 +39,12 @@ export interface ProfileFact {
 export interface ProfilePerson {
   fullName: string;
   headline: string;
+  /** Derived: "City, State, Country", or the free text written before the parts. */
   location: string;
+  city: string;
+  /** State or province. */
+  region: string;
+  country: string;
   timezone: string;
   email: string;
   phone: string;
@@ -108,6 +113,9 @@ const EMPTY_PERSON: ProfilePerson = {
   fullName: "",
   headline: "",
   location: "",
+  city: "",
+  region: "",
+  country: "",
   timezone: "",
   email: "",
   phone: "",
@@ -121,6 +129,9 @@ type PersonRow = {
   fullName: string;
   headline: string;
   location: string;
+  city: string;
+  region: string;
+  country: string;
   timezone: string;
   email: string;
   phone: string;
@@ -144,7 +155,14 @@ const toPerson = (row: PersonRow | null): ProfilePerson =>
     ? {
         fullName: row.fullName,
         headline: row.headline,
-        location: row.location,
+        // Derived from the parts when there are any (CLAUDE.md: derived state
+        // is computed at read time); the free text written before them else.
+        location:
+          [row.city, row.region, row.country].filter(Boolean).join(", ") ||
+          row.location,
+        city: row.city,
+        region: row.region,
+        country: row.country,
         timezone: row.timezone,
         email: row.email,
         phone: row.phone,
@@ -155,7 +173,7 @@ const toPerson = (row: PersonRow | null): ProfilePerson =>
       }
     : EMPTY_PERSON;
 
-const PERSON_SQL = `SELECT full_name AS fullName, headline, location, timezone, email, phone,
+const PERSON_SQL = `SELECT full_name AS fullName, headline, location, city, region, country, timezone, email, phone,
   summary, languages_json AS languagesJson, photo_type AS photoType, updated_at AS updatedAt
   FROM career_person WHERE id = '${PERSON}'`;
 
@@ -247,6 +265,9 @@ export async function updatePerson(
       ["full_name", input.fullName],
       ["headline", input.headline],
       ["location", input.location],
+      ["city", input.city],
+      ["region", input.region],
+      ["country", input.country],
       ["timezone", input.timezone],
       ["email", input.email],
       ["phone", input.phone],

@@ -12,7 +12,10 @@ const PROFILE = {
   person: {
     fullName: "Sam Rivera",
     headline: "AI engineer",
-    location: "Recife",
+    location: "Recife, Pernambuco, Brazil",
+    city: "Recife",
+    region: "Pernambuco",
+    country: "Brazil",
     timezone: "America/Recife",
     email: "sam.rivera@example.com",
     phone: "",
@@ -127,7 +130,10 @@ test("copies each field, Copied holds then goes back", async ({ page }) => {
   await expect(page.locator(".copy__label")).toHaveText([
     "Name",
     "Email",
-    "LinkedIn URL",
+    "City",
+    "State/Province",
+    "Country",
+    "LinkedIn",
     "Notice period",
     "Why this company?",
   ]);

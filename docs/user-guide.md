@@ -64,14 +64,14 @@ Courses Claude recorded, grouped by area, in progress first. Tap one to read it.
 - **Quick check** (end of each lesson): answer and it checks itself against the lesson's answer key. Multiple choice (code questions too): tap an option and the right one turns green, yours red if it's wrong, with the key's explanation. True or false: mark each statement **True** or **False**; each turns green or red at once, and when all are marked you get the score and the explanation. Open questions: jot an answer in **Your answer** (not saved), tap **Show model answer**, then **Got it** or **Missed it** marks it green or red. **Try again** clears a question. Nothing is recorded: it's practice.
 
 - **Outline** ("In this lesson", the lessons, the course): on phone, the list button opens it as a sheet. On tablet and desktop it's a column on the left; the **sidebar button** at the top left (as in Preview) hides it so the text uses the whole width, and shows it again. The reader remembers your choice on that device. Its **Exams** section lists this course's attempts: the grade, "Awaiting grade" (a Claude Code exam not graded yet) or "To answer" (an exam made in the app).
-- **Take the test** (the header's button on tablet, the medal icon on phone, and at the end of the last page): the app writes a final exam for this course. Choose the number of questions (1–20, 10 by default) and, optionally, how many of each type (the counts must add up), which lessons to cover, and a focus. **Generate** takes up to a minute; the exam is saved beside the course in `study-materials` and opens. Each exam is written by the AI and billed to your Anthropic API account.
+- **Take the test** (the header's button on tablet, the medal icon on phone, and at the end of the last page): the app writes a final exam for this course. Choose the number of questions (1–20, 10 by default) and, optionally, how many of each type (the counts must add up), which lessons to cover, and a focus. **Generate** takes up to a minute, and the whole screen waits with it ("Writing your exam…"; nothing can be tapped meanwhile, so the form can't be changed or sent twice); the exam is saved beside the course in `study-materials` and opens. If it fails, the form comes back with the reason and your choices. Each exam is written by the AI and billed to your Anthropic API account.
 
 #### Grades — `/study/grades`
 
 Graded exams, newest first, with the average grade of Done topics. Tap an exam to open it (`/study/exams/:examId`).
 
 - **A Claude Code exam** shows its questions, the results once graded, and **Open the PDF**.
-- **An exam made in the app** opens as a form: choices for multiple choice, True or False for each statement, a text box for open questions, a field for each blank in code. Your answers save themselves a moment after each change ("Saved") and come back when you reopen the exam; offline they save once you're back. **Submit answers** asks to confirm (and how many are unanswered, which score 0), then grades: multiple choice and true or false against the key, open and code answers by the AI. You see the grade, each question with your answer, the correct one, the points and feedback, and below 7.0 the review suggestions (also added to the topic's note). The exam file in `study-materials` gets the same Results. Submitting needs a connection; if grading fails, your answers stay saved.
+- **An exam made in the app** opens as a form: choices for multiple choice, True or False for each statement, a text box for open questions (it grows as you write, and you can drag its corner to make it taller), a field for each blank in code. Your answers save themselves a moment after each change ("Saved") and come back when you reopen the exam; offline they save once you're back. **Submit answers** asks to confirm (and how many are unanswered, which score 0), then grades while the screen waits ("Grading your answers…"): multiple choice and true or false against the key, open and code answers by the AI. You see the grade, each question with your answer, the correct one, the points and feedback, and below 7.0 the review suggestions (also added to the topic's note). The exam file in `study-materials` gets the same Results. Submitting needs a connection; if grading fails, your answers stay saved.
 
 ### Career Lab
 
@@ -93,9 +93,9 @@ Your declared skills by level, each **verified** (Study proved it) or **declared
 
 #### Profile — `/career/profile`
 
-Your photo (upload or remove, up to 2 MB), person and contact, links, experiences with their facts (unverified facts are badged; verify them here), education and languages. Everything edits through sheets.
+Your photo (upload or remove, up to 2 MB), person and contact (name, email, phone, and your address as City, State or province, Country), links, experiences with their facts (unverified facts are badged; verify them here), education and languages. Everything edits through sheets.
 
-**Copy panel:** "Tap Copy, then paste into the form": your standard fields and standard answers, and, for a job you pick, its form answers, self-introduction and salary range. It works offline.
+**Copy panel:** "Tap Copy, then paste into the form": your standard fields (name, email, phone, city, state/province, country, LinkedIn, GitHub, Website, then any other link; empty ones are left out) and standard answers, and, for a job you pick, its form answers, self-introduction and salary range. It works offline.
 
 #### Documents — `/career/documents`
 

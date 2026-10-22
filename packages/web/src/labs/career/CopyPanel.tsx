@@ -24,16 +24,41 @@ export function CopyPanel({ data }: { data: ProfileData }) {
   const [jobId, setJobId] = useState(data.jobs[0]?.id ?? "");
   const kit = data.kits[jobId];
 
+  // What application forms ask first, in the order they ask it: contact,
+  // the address in its parts, then LinkedIn, GitHub and the website (fixed
+  // labels, whatever each link was saved as), then any other link.
+  const linksOf = (kind: string) => links.filter((link) => link.kind === kind);
   const standard = [
     { key: "name", label: "Name", value: person.fullName },
     { key: "email", label: "Email", value: person.email },
     { key: "phone", label: "Phone", value: person.phone },
-    ...links.map((link) => ({
-      key: `link:${link.id}`,
-      label: link.label,
-      value: link.url,
-      mono: true,
-    })),
+    { key: "city", label: "City", value: person.city },
+    { key: "region", label: "State/Province", value: person.region },
+    { key: "country", label: "Country", value: person.country },
+    ...(
+      [
+        ["linkedin", "LinkedIn"],
+        ["github", "GitHub"],
+        ["portfolio", "Website"],
+      ] as const
+    ).flatMap(([kind, label]) =>
+      linksOf(kind).map((link) => ({
+        key: `link:${link.id}`,
+        label,
+        value: link.url,
+        mono: true,
+      })),
+    ),
+    ...links
+      .filter(
+        (link) => !["linkedin", "github", "portfolio"].includes(link.kind),
+      )
+      .map((link) => ({
+        key: `link:${link.id}`,
+        label: link.label,
+        value: link.url,
+        mono: true,
+      })),
     // Labels are unique ignoring case (K-18).
     ...data.answers.map((a) => ({ key: `answer:${a.label}`, ...a })),
   ].filter((field) => field.value !== "");

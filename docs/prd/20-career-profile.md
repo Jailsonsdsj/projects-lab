@@ -6,7 +6,7 @@ The owner's professional profile as structured records: the single source of tru
 
 | Record | Fields | Notes |
 |---|---|---|
-| **Person** (one) | Full name, headline, location, timezone, email, phone, summary (≤ 600 characters), languages (name + level) | Contact details are what the copy panel (`22`) copies |
+| **Person** (one) | Full name, headline, address in parts (city, state or province, country; ≤ 80 characters each), timezone, email, phone, summary (≤ 600 characters), languages (name + level) | Contact details are what the copy panel (`22`) copies. The location is derived at read time: the non-empty parts joined with ", ", or the free-text location saved before the parts existed |
 | **Links** | Label, URL, kind (`linkedin`, `github`, `portfolio`, `scholar`, `other`) | Ordered |
 | **Photo** | One image in R2 (`profile/photo.<ext>`), uploaded in the app with a session | The only upload the app has (R3-1). JPEG, PNG or WebP, ≤ 2 MB; the app shows initials without one |
 | **Education** | Institution, degree, field, start, end (or in progress), notes | Dates as `YYYY-MM` or `YYYY` |

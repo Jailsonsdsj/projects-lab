@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Badge,
   Banner,
+  BusyOverlay,
   Button,
   Dialog,
   Input,
@@ -248,11 +249,9 @@ function AnswerForm({
           Submitting needs a connection. Your answers are saved here.
         </Banner>
       )}
-      {submitting && (
-        <p className="text-sm text-ink-muted" role="status">
-          Grading your answers… This can take up to a minute.
-        </p>
-      )}
+      <BusyOverlay open={submitting} title="Grading your answers…">
+        This can take up to a minute. Keep this screen open.
+      </BusyOverlay>
       <Button
         size="lg"
         loading={submitting}
@@ -384,6 +383,7 @@ function AnswerField({
       <Textarea
         label="Your answer"
         rows={6}
+        resizable
         maxLength={4000}
         disabled={disabled}
         value={answer.text}
