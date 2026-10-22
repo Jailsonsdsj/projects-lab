@@ -33,6 +33,7 @@ import {
   updateTopic,
 } from "./backlog";
 import { generateExam } from "./exam-app";
+import { deleteExam, restoreExam } from "./exam-delete";
 import { readPaper, saveDraft, submitExam } from "./exam-grade";
 import {
   courseToRead,
@@ -339,6 +340,36 @@ export function backlogRoutes() {
       return refused(c, error);
     }
   });
+
+  // Deleting an exam (ST-14): hidden from every read at once; Undo restores
+  // it until the nightly run removes its files.
+  app.delete(
+    "/exams/:examId",
+    idempotent("DELETE /api/study/exams/:examId"),
+    async (c) => {
+      try {
+        return c.json(
+          await deleteExam(database(c.env), c.req.param("examId"), new Date()),
+        );
+      } catch (error) {
+        return refused(c, error);
+      }
+    },
+  );
+
+  app.post(
+    "/exams/:examId/restore",
+    idempotent("POST /api/study/exams/:examId/restore"),
+    async (c) => {
+      try {
+        return c.json(
+          await restoreExam(database(c.env), c.req.param("examId")),
+        );
+      } catch (error) {
+        return refused(c, error);
+      }
+    },
+  );
 
   app.post("/grades", idempotent("POST /api/study/grades"), async (c) => {
     const parsed = recordGradeInputSchema.safeParse(await body(c));

@@ -169,7 +169,9 @@ learn_exam(
   source,                                -- claude | app (S-22); existing exams are claude
   created_at,
   grade?,                                -- integer tenths 0..100 (S-16)
-  graded_at?
+  graded_at?,
+  deleted_at?,                           -- deleted by the owner (ST-14): out of every read; null again on Undo (S-23, S-24, S-26)
+  files_removed_at?                      -- its files removed from study-materials by the nightly run; then it stays deleted (S-25, S-26)
 )
 
 -- An exam made in the app (12 § Exams in the app, ST-13): what the model wrote,
@@ -216,6 +218,10 @@ Every column above without `?` is `NOT NULL`.
 | S-20 | The draft freezes once the answers are submitted | `BEFORE UPDATE OF draft_json` trigger | `0016_exam_source_and_paper_triggers` (ST-13b) |
 | S-21 | `submitted_at` and `results_json` are set together, once, and the results are JSON (a paper may be written submitted, as a restore does) | `BEFORE INSERT` and `BEFORE UPDATE` triggers; the other JSON columns `CHECK (json_valid(…))` | `0015_exam_source_and_paper`, `0016_…_triggers` (ST-13b) |
 | S-22 | `learn_exam.source` is `claude` or `app` and never changes; only an `app` exam has no `.pdf`, and a `.pdf` is under `Study Lab/` | `CHECK (source IN (…))`; `BEFORE INSERT` and `BEFORE UPDATE OF pdf_path, source` triggers | `0015_exam_source_and_paper`, `0016_…_triggers` (ST-13b) |
+| S-23 | An exam is created live: no `deleted_at` or `files_removed_at` on insert (a restore writes them afterwards: grade, then deleted, then files removed) | `BEFORE INSERT` trigger | `0019_exam_deleted_triggers` (ST-14a) |
+| S-24 | A deleted exam isn't graded: its grade and `graded_at` don't change while `deleted_at` is set | `BEFORE UPDATE OF grade, graded_at` trigger | `0019_exam_deleted_triggers` (ST-14a) |
+| S-25 | `files_removed_at` is set only on a deleted exam, and once | `BEFORE UPDATE OF files_removed_at` trigger | `0019_exam_deleted_triggers` (ST-14a) |
+| S-26 | Once its files are removed, an exam stays deleted | `BEFORE UPDATE OF deleted_at` trigger | `0019_exam_deleted_triggers` (ST-14a) |
 
 **Build notes.** The seven areas are seeded by `0010_study_areas` (fixed IDs `area-cs` … `area-se`). The tables live in `api/src/labs/study/schema.ts`, which `drizzle.config.ts` reads after core's. SQLite's INTEGER affinity turns numeric text (`'1'`, `'85'`) into integers, so only non-numeric text reaches the `typeof` checks. A topic's code is claimed in one `db.batch()`: `UPDATE learn_area SET next_seq = next_seq + 1 WHERE id = ?`, then `INSERT INTO learn_topic (…) SELECT …, prefix || '-' || printf('%02d', next_seq - 1), … FROM learn_area WHERE id = ?`, never read-then-write. All Study probes join `invariants.test.ts` and `verify-triggers.sh`.
 

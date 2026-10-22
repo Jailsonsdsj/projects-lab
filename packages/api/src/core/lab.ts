@@ -63,6 +63,8 @@ export interface ApiLab {
   /** Mounted at /api/<id>, behind requireAuth. */
   routes: Hono<LabEnv>;
   tools: readonly LabTool[];
+  /** Nightly work, after the platform's pruning (index.ts `scheduled`); its result is logged. */
+  scheduled?(env: Env, nowMs: number): Promise<unknown>;
 }
 
 /**

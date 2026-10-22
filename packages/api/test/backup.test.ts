@@ -117,6 +117,23 @@ beforeAll(async () => {
     db().prepare(
       "UPDATE learn_exam SET grade = 70, graded_at = '2026-10-06T10:00:00.000Z' WHERE id = 'e3'",
     ),
+    // Two deleted exams (ST-14): e5 graded, then its files removed; e6 not.
+    ...[5, 6].map((n) =>
+      db()
+        .prepare(
+          "INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at) VALUES (?, ?, 'essential', ?, ?, ?, 't')",
+        )
+        .bind(`e${n}`, topic?.id, n, path(n, "md"), path(n, "pdf")),
+    ),
+    db().prepare(
+      "UPDATE learn_exam SET grade = 40, graded_at = '2026-10-07T10:00:00.000Z' WHERE id = 'e5'",
+    ),
+    db().prepare(
+      "UPDATE learn_exam SET deleted_at = '2026-10-08T10:00:00.000Z' WHERE id IN ('e5', 'e6')",
+    ),
+    db().prepare(
+      "UPDATE learn_exam SET files_removed_at = '2026-10-09T03:00:00.000Z' WHERE id = 'e5'",
+    ),
     db()
       .prepare("UPDATE learn_topic SET status = 'done' WHERE id = ?")
       .bind(topic?.id),

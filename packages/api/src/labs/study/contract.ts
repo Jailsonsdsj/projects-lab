@@ -79,6 +79,7 @@ async function topicRows(
               e.level, e.attempt, e.grade, e.graded_at AS gradedAt
        FROM learn_topic t
        LEFT JOIN learn_exam e ON e.topic_id = t.id AND e.grade IS NOT NULL
+         AND e.deleted_at IS NULL
        WHERE t.deleted_at IS NULL AND ${where}`,
     )
     .bind(...params)

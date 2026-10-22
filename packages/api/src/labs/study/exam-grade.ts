@@ -54,7 +54,7 @@ async function loadPaper(db: D1Database, examId: string): Promise<PaperRow> {
        JOIN learn_topic t ON t.id = e.topic_id
        JOIN skill s ON s.id = t.skill_id
        LEFT JOIN learn_exam_paper p ON p.exam_id = e.id
-       WHERE e.id = ?`,
+       WHERE e.id = ? AND e.deleted_at IS NULL`,
     )
     .bind(examId)
     .first<PaperRow & { title: string | null }>();
@@ -330,6 +330,12 @@ export async function submitExam(
       `grade(${row.topicId}): withdraw (not recorded)`,
       committed.sha,
     ).catch(() => undefined);
+    // Deleted while it was being graded (S-24).
+    if (String(error).includes("learn_exam_deleted"))
+      throw new ToolError(
+        "conflict",
+        "This exam was deleted while it was being graded; nothing was recorded.",
+      );
     throw error;
   }
   return paperResponse(await loadPaper(db, examId));

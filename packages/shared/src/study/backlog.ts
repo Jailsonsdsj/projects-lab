@@ -30,6 +30,11 @@ export const NOTE_MAX_LENGTH = 120;
 /** A skill is verified for Career at a Done topic with at least this grade (A-8). */
 export const VERIFIED_MIN_GRADE = 70;
 export const SPECIALIZED_MAX_MODULES = 4;
+/**
+ * A deleted exam's files leave study-materials at the nightly run once it has
+ * been deleted this long (ST-14): an Undo just before the run can't race it.
+ */
+export const DELETED_EXAM_FILES_AFTER_MINUTES = 60;
 
 const PREFIX = /^[A-Z]{2}$/;
 const CODE = /^([A-Z]{2})-(\d{2,})$/;

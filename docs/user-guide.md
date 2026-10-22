@@ -216,7 +216,7 @@ Read tools change nothing. Write tools take an optional `idempotencyKey` and are
 | `study_list_courses` | read | Recorded courses, optionally for one topic |
 | `study_record_exam` | write | Records an exam's Markdown and PDF |
 | `study_record_grade` | write | Records or corrects a grade; the topic becomes Done |
-| `study_list_exams` | read | Exams and grades, optionally for one topic |
+| `study_list_exams` | read | Exams and grades, optionally for one topic (exams you deleted aren't listed) |
 
 **Career Lab**
 

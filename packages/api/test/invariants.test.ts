@@ -37,6 +37,17 @@ beforeAll(async () => {
       `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, source, created_at) VALUES ('ae3', 't1', 'fast_track', 4, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__fast-track__exam-4.md', NULL, 'app', 't')`,
       `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at, submitted_at, results_json) VALUES ('ae1', 'Big-O', '{}', '[]', '[]', '[]', 't', 't', 's', '[]')`,
       `INSERT INTO learn_exam_paper (exam_id, title, settings_json, questions_json, key_json, draft_json, created_at, updated_at) VALUES ('ae3', 'Big-O', '{}', '[]', '[]', '[]', 't', 't')`,
+      // Deleted exams (ST-14a, S-23 to S-26), on a topic of their own: de1
+      // graded then deleted, de2 deleted with its files removed, de3 live.
+      // Only those tests touch them.
+      `INSERT INTO learn_topic (id, code, area_id, skill_id, created_at, updated_at) VALUES ('dt1', 'SE-01', 'area-se', 'ss4', 't', 't')`,
+      `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at) VALUES ('de1', 'dt1', 'specialized', 1, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-1.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-1.pdf', 't')`,
+      `UPDATE learn_exam SET grade = 60, graded_at = 'g' WHERE id = 'de1'`,
+      `UPDATE learn_exam SET deleted_at = 'd' WHERE id = 'de1'`,
+      `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at) VALUES ('de2', 'dt1', 'specialized', 2, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-2.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-2.pdf', 't')`,
+      `UPDATE learn_exam SET deleted_at = 'd' WHERE id = 'de2'`,
+      `UPDATE learn_exam SET files_removed_at = 'r' WHERE id = 'de2'`,
+      `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at) VALUES ('de3', 'dt1', 'specialized', 3, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-3.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-3.pdf', 't')`,
       // Career Lab (CA-02a): a person, an experience with a fact, an education,
       // a declared skill, a scored and an unscored job with requirements and an event.
       `INSERT INTO skill (id, name, created_at) VALUES ('cs1', 'TypeScript', 't')`,
@@ -412,6 +423,18 @@ describe("permitted writes succeed", () => {
       "S-21 submitted with results",
       `UPDATE learn_exam_paper SET submitted_at = 's', results_json = '[]' WHERE exam_id = 'ae4'`,
     ],
+    [
+      "S-23 an exam deleted",
+      `UPDATE learn_exam SET deleted_at = 'd' WHERE id = 'de3'`,
+    ],
+    [
+      "S-26 restored before its files are removed",
+      `UPDATE learn_exam SET deleted_at = NULL WHERE id = 'de3'`,
+    ],
+    [
+      "S-25 files removed from a deleted exam",
+      `UPDATE learn_exam SET files_removed_at = 'r' WHERE id = 'de1'`,
+    ],
   ])("%s", async (_, sql) => {
     await expect(run(sql)).resolves.toBeDefined();
   });
@@ -760,6 +783,46 @@ const forbidden: [string, string, string][] = [
     "S-22 an app exam's PDF outside Study Lab",
     "learn_exam_pdf",
     `UPDATE learn_exam SET pdf_path = 'exam.pdf' WHERE id = 'ae1'`,
+  ],
+  [
+    "S-23 an exam created deleted",
+    "learn_exam_deleted: an exam is created live",
+    `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at, deleted_at) VALUES ('xde1', 'dt1', 'specialized', 4, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-4.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-4.pdf', 't', 'd')`,
+  ],
+  [
+    "S-23 an exam created with its files removed",
+    "learn_exam_deleted: an exam is created live",
+    `INSERT INTO learn_exam (id, topic_id, level, attempt, md_path, pdf_path, created_at, files_removed_at) VALUES ('xde2', 'dt1', 'specialized', 4, 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-4.md', 'Study Lab/cs-fundamentals/big-o-notation/big-o-notation__specialized__exam-4.pdf', 't', 'r')`,
+  ],
+  [
+    "S-24 a deleted exam's grade changed",
+    "learn_exam_deleted: a deleted exam is not graded",
+    `UPDATE learn_exam SET grade = 70 WHERE id = 'de1'`,
+  ],
+  [
+    "S-24 a deleted exam graded",
+    "learn_exam_deleted: a deleted exam is not graded",
+    `UPDATE learn_exam SET grade = 70, graded_at = 'g' WHERE id = 'de2'`,
+  ],
+  [
+    "S-25 files removed from a live exam",
+    "learn_exam_files_removed: only from a deleted exam, once",
+    `UPDATE learn_exam SET files_removed_at = 'r' WHERE id = 'e1'`,
+  ],
+  [
+    "S-25 the removal moved",
+    "learn_exam_files_removed: only from a deleted exam, once",
+    `UPDATE learn_exam SET files_removed_at = 'r2' WHERE id = 'de2'`,
+  ],
+  [
+    "S-25 the removal cleared",
+    "learn_exam_files_removed: only from a deleted exam, once",
+    `UPDATE learn_exam SET files_removed_at = NULL WHERE id = 'de2'`,
+  ],
+  [
+    "S-26 restored after its files are removed",
+    "learn_exam_deleted: its files are removed, so it stays deleted",
+    `UPDATE learn_exam SET deleted_at = NULL WHERE id = 'de2'`,
   ],
   [
     "S-18 a paper for a Claude exam",

@@ -150,7 +150,7 @@ export const studyTools = [
     name: "study_list_exams",
     kind: "read",
     description:
-      "Lists exam attempts, most recently graded first, optionally for one topic: level, attempt, paths, and the grade in tenths (null while awaiting one).",
+      "Lists exam attempts, most recently graded first, optionally for one topic: level, attempt, paths, and the grade in tenths (null while awaiting one). Exams the owner deleted in the app aren't listed.",
     input: listExamsInputSchema,
     async run({ topicId }, ctx) {
       return listExams(ctx.db, topicId);

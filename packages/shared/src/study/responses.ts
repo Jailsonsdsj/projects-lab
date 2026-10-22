@@ -123,3 +123,19 @@ export const examReadResponseSchema = z.object({
   }),
 });
 export type ExamRead = z.infer<typeof examReadResponseSchema>["exam"];
+
+/**
+ * DELETE /api/study/exams/:examId and POST …/restore (ST-14): the exam, and
+ * when it was deleted (null once restored). A deleted exam leaves every read;
+ * its files leave study-materials at the next nightly run.
+ */
+export const examDeletionResponseSchema = z.object({
+  exam: z.object({
+    examId: z.string(),
+    topicId: z.string(),
+    level: z.enum(COURSE_LEVELS),
+    attempt: z.number().int(),
+    deletedAt: z.string().nullable(),
+  }),
+});
+export type ExamDeletion = z.infer<typeof examDeletionResponseSchema>["exam"];

@@ -77,7 +77,7 @@ flowchart LR
 | What | Written by | Stored in | The app's access |
 |---|---|---|---|
 | Course and exam **content** (Markdown, exam PDF, images) | Claude Code, by `git push` | `study-materials` repo | Read-only |
-| An exam taken **in the app** (its Markdown: questions, then Results) | The Worker, through the Contents API with `GITHUB_WRITE_TOKEN` (ST-13); `core/github-write.ts`, reached only through `labs/study/exam-files.ts`, which allows exam files only | `study-materials` repo, beside the course | Writes those files only |
+| An exam taken **in the app** (its Markdown: questions, then Results), and the removal of a **deleted** exam's files (ST-14) | The Worker, through the Contents API with `GITHUB_WRITE_TOKEN` (ST-13); `core/github-write.ts`, reached only through `labs/study/exam-files.ts`, which writes an exam's `.md` only and removes an exam's `.md` or `.pdf` only, at the nightly run | `study-materials` repo, beside the course | Writes those files only |
 | Everything else: backlog, grades, profile, skills, jobs, openings | You (web UI → `/api`) or Claude (MCP → `/mcp`) | D1, plus R2 for your profile photo | Read-write |
 | Resumes, cover letters, any other career file | Claude, on demand, from the profile | **Not stored**: returned to you (§6.4) | — |
 
@@ -96,7 +96,7 @@ flowchart LR
 | Caching | Not specified | **Don't rely on the Workers Cache API**: on a `workers.dev` hostname it can't be counted on. Content is addressed by git blob SHA and cached **in the client** as immutable. See §7 |
 | R2 | Images | One bucket, `projects-lab-images`, profile photo only; generated documents are never stored (§6.4). **Never video** |
 | Video | — | Google Drive. You upload; the app stores the link and embeds Drive's player |
-| Cron | Prune job | One Cron Trigger, daily prune. The job search is **not** a Worker cron; it's a Claude scheduled task (§8) |
+| Cron | Prune job, then each lab's nightly work | One Cron Trigger, daily at 03:00 UTC: the prune, then every lab's optional `scheduled` hook (`core/lab.ts`; today Study's removal of deleted exams' files, ST-14). One lab failing doesn't stop the next; any failure fails the run in the logs. The job search is **not** a Worker cron; it's a Claude scheduled task (§8) |
 | Email | — | None sent by the app. The job digest goes out from the scheduled task through your Gmail connector |
 | Layouts | Phone | **Phone and tablet** designed. Desktop uses the tablet layout until daily use asks for more (assumption A-1) |
 | Design | Claude Design handoff | Reuse sticker-collector's token structure, component set and token guard, with a **new, calmer theme** and a **per-lab accent**. See §9 |

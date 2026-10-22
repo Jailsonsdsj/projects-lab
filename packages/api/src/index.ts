@@ -82,5 +82,18 @@ export default {
   async scheduled(controller, env) {
     const pruned = await pruneOldRows(database(env), controller.scheduledTime);
     console.log("pruned", pruned);
+    // Each lab's nightly work; one failing doesn't stop the next, and any
+    // failure is thrown at the end so the run shows as failed in the logs.
+    const failures: unknown[] = [];
+    for (const lab of [study, career]) {
+      if (!lab.scheduled) continue;
+      try {
+        console.log(lab.id, await lab.scheduled(env, controller.scheduledTime));
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+    if (failures.length > 0)
+      throw new AggregateError(failures, "a lab's nightly work failed");
   },
 } satisfies ExportedHandler<Env>;
