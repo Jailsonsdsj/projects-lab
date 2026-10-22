@@ -223,7 +223,7 @@ Read tools change nothing. Write tools take an optional `idempotencyKey` and are
 | Tool | Kind | What it does |
 |---|---|---|
 | `career_get_profile` | read | The whole profile, compact |
-| `career_update_person` | write | Name, headline, contact, summary, languages |
+| `career_update_person` | write | Name, headline, contact, address (city, state or province, country), summary, languages |
 | `career_set_links` | write | Replaces the profile links |
 | `career_save_experience` | write | Adds or edits an experience |
 | `career_save_education` | write | Adds or edits an education entry |

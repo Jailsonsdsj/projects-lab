@@ -130,6 +130,33 @@ dialog.dialog::backdrop {
   padding-top: env(safe-area-inset-top);
 }
 
+/* iPadOS 26+, installed on the Home Screen, blurs the page under the status
+   bar unless a fixed box covers the top edge (WebKit samples just below its
+   midpoint: at least 90% of the width, over ten pixels tall) and then fills the
+   bar with that box's colour. The tablet layout has no top header, so this
+   band is that box: the ground's colour, painting nothing (background-clip:
+   text with no text), taking no taps. It sits in index.html after #root, so
+   it exists from the first frame and paints above the page without a
+   z-index. The phone layout's sticky header already spans the top. */
+.status-band {
+  display: none;
+}
+@media (display-mode: standalone) {
+  @supports (-webkit-touch-callout: none) {
+    .status-band {
+      @variant tablet {
+        display: block;
+        position: fixed;
+        inset: 0 0 auto;
+        height: var(--space-3);
+        background-color: var(--color-ground);
+        background-clip: text;
+        pointer-events: none;
+      }
+    }
+  }
+}
+
 /* A text field's focus is its box's border (.input:focus-within): the
    app-wide :focus-visible ring (.pl :focus-visible, more specific than the
    bundle's .input > input { outline: none }) drew a second ring inside it. */
