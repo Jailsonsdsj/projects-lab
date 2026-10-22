@@ -513,6 +513,9 @@ dialog.is-closing::backdrop {
   @variant tablet {
     display: flex;
     align-items: flex-start;
+    /* The outline slides out past the left edge: clipped there, not scrolled
+       to (clip, unlike hidden, keeps the column sticky). */
+    overflow-x: clip;
   }
 }
 .reader__main {
@@ -560,6 +563,16 @@ dialog.is-closing::backdrop {
   gap: var(--space-6);
   padding: var(--space-10) var(--space-4) var(--space-6);
   border-right: var(--border-thin) solid var(--color-border);
+  /* Shown or hidden, it slides like a sheet: in decelerating, out
+     accelerating, and the text widens or narrows with it. */
+  transition: margin-left var(--duration-sheet-in) var(--ease-enter);
+}
+.reader__aside.is-hidden {
+  margin-left: calc(-1 * var(--size-outline));
+  transition: margin-left var(--duration-sheet-out) var(--ease-exit);
+}
+.reader .prose {
+  transition: max-width var(--duration-sheet-in) var(--ease-enter);
 }
 /* Outline hidden: the text takes the width, padding kept, up to the app's
    maximum and centred beyond it (a desktop line stays readable). */
@@ -568,7 +581,17 @@ dialog.is-closing::backdrop {
   margin-inline: auto;
 }
 .reader--wide .prose {
-  max-width: none;
+  /* 100%, not none, so the line widens with the slide. */
+  max-width: 100%;
+  transition: max-width var(--duration-sheet-out) var(--ease-exit);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader__aside,
+  .reader__aside.is-hidden,
+  .reader .prose,
+  .reader--wide .prose {
+    transition: none;
+  }
 }
 /* Not `.outline`: that is Tailwind's outline-style utility. */
 .reader__outline {

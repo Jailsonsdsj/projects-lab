@@ -227,6 +227,11 @@ describe("Course reader", () => {
     expect(
       screen.queryByRole("complementary", { name: "Lesson outline" }),
     ).toBeNull();
+    // Still there, to slide out (the CSS moves .is-hidden past the left
+    // edge), but out of reach: inert, so nothing in it takes focus.
+    expect(aside).toBeInTheDocument();
+    expect(aside).toHaveClass("reader__aside", "is-hidden");
+    expect(aside).toHaveAttribute("inert");
     const show = screen.getByRole("button", { name: "Show lesson outline" });
     expect(show).toHaveAttribute("aria-expanded", "false");
     expect(document.querySelector(".reader")).toHaveClass("reader--wide");
@@ -241,9 +246,11 @@ describe("Course reader", () => {
     await user.click(
       screen.getByRole("button", { name: "Show lesson outline" }),
     );
-    expect(
-      await screen.findByRole("complementary", { name: "Lesson outline" }),
-    ).toBeInTheDocument();
+    const back = await screen.findByRole("complementary", {
+      name: "Lesson outline",
+    });
+    expect(back).not.toHaveClass("is-hidden");
+    expect(back).not.toHaveAttribute("inert");
     expect(document.querySelector(".reader")).not.toHaveClass("reader--wide");
   });
 

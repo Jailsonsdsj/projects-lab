@@ -261,7 +261,6 @@ function Reader({ course, parsed }: Loaded) {
   const lessons = parsed.pages.flatMap((p) =>
     p.kind === "lesson" ? [{ n: p.n, title: p.title }] : [],
   );
-  const outlineShown = tablet && pinned;
   const last = parsed.pages.length - 1;
   const requested = Number(params.get("p") ?? 0);
   const current = Number.isInteger(requested)
@@ -368,11 +367,15 @@ function Reader({ course, parsed }: Loaded) {
         )}
       </div>
       <div className={cx("reader", tablet && !pinned && "reader--wide")}>
-        {outlineShown && (
+        {/* On tablet the column stays mounted so it can slide out and back;
+            hidden, it's out of reach of focus and screen readers. */}
+        {tablet && (
           <aside
             id="reader-outline"
-            className="reader__aside"
+            className={cx("reader__aside", !pinned && "is-hidden")}
             aria-label="Lesson outline"
+            aria-hidden={!pinned || undefined}
+            inert={!pinned}
           >
             <Outline
               course={course}
