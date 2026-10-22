@@ -149,6 +149,58 @@ test("puts the outline on the left; hidden, the text takes the width", async ({
   await expect(aside).toBeVisible();
 });
 
+test("keeps the outline beside the text while it scrolls; a long outline scrolls on its own", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name === "phone", "no outline column on phone");
+  await page.goto("/study/courses/course-bigo?p=2");
+  await expect(page.getByText("📖 Lesson 2 of 3")).toBeVisible();
+  const box = () =>
+    page.evaluate(() => {
+      const aside = document.getElementById("reader-outline") as HTMLElement;
+      const head = document.querySelector(".reader__head") as HTMLElement;
+      const r = aside.getBoundingClientRect();
+      return {
+        top: r.top,
+        bottom: r.bottom,
+        head: head.getBoundingClientRect().bottom,
+        scrollY: window.scrollY,
+        overflows: aside.scrollHeight > aside.clientHeight,
+        scrollTop: aside.scrollTop,
+      };
+    });
+  const before = await box();
+  const height = page.viewportSize()?.height ?? 0;
+  // Pinned below the header, down to the bottom of the screen.
+  expect(before.top).toBeCloseTo(before.head, 0);
+  expect(before.bottom).toBeCloseTo(height, 0);
+
+  // The page scrolls; the column stays.
+  const main = await page.locator(".reader__main").boundingBox();
+  await page.mouse.move((main?.x ?? 0) + (main?.width ?? 0) / 2, height / 2);
+  await page.mouse.wheel(0, 1500);
+  await expect.poll(async () => (await box()).scrollY).toBeGreaterThan(500);
+  const scrolled = await box();
+  expect(scrolled.top).toBeCloseTo(before.top, 0);
+  expect(scrolled.bottom).toBeCloseTo(height, 0);
+
+  // A long outline scrolls inside its column, and the page stays put.
+  if (scrolled.overflows) {
+    const aside = await page.locator("#reader-outline").boundingBox();
+    await page.mouse.move((aside?.x ?? 0) + 40, height / 2);
+    await page.mouse.wheel(0, 3000);
+    await expect.poll(async () => (await box()).scrollTop).toBeGreaterThan(0);
+    // At its end, scrolling on doesn't hand over to the page. (The page
+    // itself settles a little after a long scroll, at no fixed moment, so
+    // this checks the rule rather than the page's position.)
+    expect(
+      await page
+        .locator("#reader-outline")
+        .evaluate((el) => getComputedStyle(el).overscrollBehaviorY),
+    ).toBe("contain");
+  }
+});
+
 test("with reduced motion the outline goes and comes back at once", async ({
   page,
 }, info) => {

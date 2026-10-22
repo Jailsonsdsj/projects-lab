@@ -554,10 +554,22 @@ dialog.is-closing::backdrop {
 }
 .reader__aside {
   position: sticky;
-  top: calc(var(--size-header) + env(safe-area-inset-top));
+  /* Under the header and its bottom border. */
+  top: calc(var(--size-header) + var(--border-thin) + env(safe-area-inset-top));
   flex: none;
   width: var(--size-outline);
-  align-self: stretch;
+  /* The screen below the header, not the text's length: stretched to the
+     text, a sticky column has nowhere to stick and scrolls away with it.
+     Pinned this tall, its divider still runs down the screen, and a long
+     outline scrolls on its own without moving the page. */
+  height: calc(
+    100dvh -
+    var(--size-header) -
+    var(--border-thin) -
+    env(safe-area-inset-top)
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);

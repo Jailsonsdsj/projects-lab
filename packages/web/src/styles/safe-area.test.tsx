@@ -43,7 +43,7 @@ describe("the top of the screen", () => {
       /@variant tablet \{[^}]*padding-top: env\(safe-area-inset-top\)/,
     );
     expect(rule(".reader__aside")).toContain(
-      "top: calc(var(--size-header) + env(safe-area-inset-top))",
+      "top: calc(var(--size-header) + var(--border-thin) + env(safe-area-inset-top))",
     );
     expect(css).toContain(
       "max-height: calc(100dvh - var(--space-12) - env(safe-area-inset-top));",
