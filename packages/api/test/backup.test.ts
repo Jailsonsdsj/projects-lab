@@ -238,6 +238,8 @@ beforeAll(async () => {
         { kind: "fact", id: kept },
         { kind: "fact", id: gone },
       ],
+      // A resume's ATS check (CA-17), kept on the kit saved below.
+      ats: { score: 84, missing: ["Docker"] },
     },
     "PUT",
   );

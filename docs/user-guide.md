@@ -178,7 +178,7 @@ Paste the posting and ask Claude to map it. Claude extracts the requirements (re
 
 #### Write a resume or cover letter (any surface)
 
-Ask "Write my resume for *job*" (or copy the prompt from Documents). Claude calls `career_document_brief`, asks you to confirm any unverified fact first, writes the document in the posting's language and gives you the file, then saves what it used with `career_save_selection`. The self-introduction, salary range and form answers are saved with `career_save_job_kit` after you agree on them.
+Ask "Write my resume for *job*" (or copy the prompt from Documents). Claude calls `career_document_brief`, asks you to confirm any unverified fact first, writes the document in the posting's language and gives you the file, then saves what it used with `career_save_selection`. **A resume must pass the ATS check: 80% or more** of the job's keywords (its required skills count double), scored the same way on every surface. If your evidence can't reach 80% (the job needs skills your profile doesn't show), Claude says so before writing, lists what's missing, offers to add it to your Study backlog, and writes only if you tell it to; it never pads. It then tells you the score and the missing keywords, and saves them on the job's kit. The self-introduction, salary range and form answers are saved with `career_save_job_kit` after you agree on them.
 
 #### Weekly job search (routine)
 
@@ -239,8 +239,8 @@ Read tools change nothing. Write tools take an optional `idempotencyKey` and are
 | `career_update_requirement` | write | A requirement's type or skill |
 | `career_send_gaps` | write | Sends gaps to the Study backlog |
 | `career_remove_job` | write | Stops tracking a job; its Study topics stay |
-| `career_document_brief` | read | Everything a document for a job is written from |
-| `career_save_selection` | write | Which items a document used |
+| `career_document_brief` | read | Everything a document for a job is written from; for a resume, the ATS keywords, formula and ceiling |
+| `career_save_selection` | write | Which items a document used, and a resume's ATS score |
 | `career_save_job_kit` | write | Self-introduction, salary range and form answers |
 | `career_save_standard_answers` | write | Your standard form answers |
 | `career_get_search_criteria` | read | The job search criteria (edited only in the app) |

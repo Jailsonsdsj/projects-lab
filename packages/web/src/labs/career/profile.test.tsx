@@ -104,6 +104,7 @@ const kit = (jobId: string, over: Partial<JobKit> = {}): JobKit => ({
   salary: null,
   answers: [],
   selection: null,
+  ats: null,
   ...over,
 });
 const KITS = {

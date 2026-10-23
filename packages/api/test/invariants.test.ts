@@ -320,6 +320,22 @@ describe("permitted writes succeed", () => {
       `UPDATE career_job_kit SET salary_min = NULL, salary_max = NULL, salary_currency = NULL, salary_period = NULL WHERE job_id = 'cj1'`,
     ],
     [
+      "K-29 a resume scored",
+      `UPDATE career_job_kit SET ats_score = 86, ats_missing_json = '["Kubernetes"]', ats_scored_at = 's' WHERE job_id = 'cj1'`,
+    ],
+    [
+      "K-29 scored 0",
+      `UPDATE career_job_kit SET ats_score = 0, ats_scored_at = 's2' WHERE job_id = 'cj1'`,
+    ],
+    [
+      "K-29 scored 100, nothing missing",
+      `UPDATE career_job_kit SET ats_score = 100, ats_missing_json = '[]', ats_scored_at = 's3' WHERE job_id = 'cj1'`,
+    ],
+    [
+      "K-29 score cleared with its time",
+      `UPDATE career_job_kit SET ats_score = NULL, ats_scored_at = NULL WHERE job_id = 'cj1'`,
+    ],
+    [
       "K-16 salary set again, from 0",
       `UPDATE career_job_kit SET salary_min = 0, salary_max = 60, salary_currency = 'USD', salary_period = 'hour' WHERE job_id = 'cj1'`,
     ],
@@ -823,6 +839,61 @@ const forbidden: [string, string, string][] = [
     "S-26 restored after its files are removed",
     "learn_exam_deleted: its files are removed, so it stays deleted",
     `UPDATE learn_exam SET deleted_at = NULL WHERE id = 'de2'`,
+  ],
+  [
+    "K-29 a score without its time",
+    "career_job_kit_ats",
+    `UPDATE career_job_kit SET ats_score = 80 WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-29 a time without a score",
+    "career_job_kit_ats",
+    `UPDATE career_job_kit SET ats_scored_at = 's' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-29 score 101",
+    "career_job_kit_ats",
+    `UPDATE career_job_kit SET ats_score = 101, ats_scored_at = 's' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-29 score -1",
+    "career_job_kit_ats",
+    `UPDATE career_job_kit SET ats_score = -1, ats_scored_at = 's' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-29 score as a float",
+    "career_job_kit_ats",
+    `UPDATE career_job_kit SET ats_score = 85.5, ats_scored_at = 's' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-29 score as text",
+    "career_job_kit_ats",
+    `UPDATE career_job_kit SET ats_score = 'high', ats_scored_at = 's' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-29 a kit inserted scored without a time",
+    "career_job_kit_ats",
+    `INSERT INTO career_job_kit (job_id, ats_score, updated_at) VALUES ('cj9', 80, 't')`,
+  ],
+  [
+    "K-30 missing not JSON",
+    "career_job_kit_ats_missing",
+    `UPDATE career_job_kit SET ats_missing_json = 'Kubernetes' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-30 missing an object",
+    "career_job_kit_ats_missing",
+    `UPDATE career_job_kit SET ats_missing_json = '{"k": "Kubernetes"}' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-30 missing a number",
+    "career_job_kit_ats_missing",
+    `UPDATE career_job_kit SET ats_missing_json = '[1]' WHERE job_id = 'cj1'`,
+  ],
+  [
+    "K-30 a kit inserted with missing not an array",
+    "career_job_kit_ats_missing",
+    `INSERT INTO career_job_kit (job_id, ats_missing_json, updated_at) VALUES ('cj9', '"x"', 't')`,
   ],
   [
     "S-18 a paper for a Claude exam",
@@ -1927,7 +1998,11 @@ const notNull: [string, string[], string[]][] = [
     ["job_id", "item_kind", "item_id", "variant", "position"],
     ["'cj2'", "'fact'", "'cf1'", "'ai'", "0"],
   ],
-  ["career_job_kit", ["job_id", "intro", "updated_at"], ["'cj3'", "''", "'t'"]],
+  [
+    "career_job_kit",
+    ["job_id", "intro", "ats_missing_json", "updated_at"],
+    ["'cj3'", "''", "'[]'", "'t'"],
+  ],
   [
     "career_form_answer",
     ["id", "job_id", "question", "answer", "position"],

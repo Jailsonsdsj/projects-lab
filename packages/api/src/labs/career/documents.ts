@@ -3,6 +3,11 @@
 // the file), each job's application kit, and the standard answers the copy
 // panel copies. Documents themselves are never stored (R3-1).
 import {
+  ATS_MIN_SCORE,
+  ATS_RULES,
+  ATS_SCORING,
+  atsCeiling,
+  atsKeywords,
   DOCUMENT_LAYOUT,
   type DocumentKind,
   type FactRef,
@@ -140,6 +145,42 @@ export async function documentBrief(
     jobSkills,
   );
 
+  // A resume's ATS check (CA-17): the job's keywords, the formula, and the
+  // best score the owner's evidence allows (a verified fact for the skill, a
+  // declared skill, or one Study verified).
+  let ats = null;
+  if (kind === "resume") {
+    const requirementSkills = [...jobSkills];
+    const { results: aliasRows } = requirementSkills.length
+      ? await db
+          .prepare(
+            "SELECT id, aliases_json AS aliasesJson FROM skill WHERE id IN (SELECT value FROM json_each(?))",
+          )
+          .bind(JSON.stringify(requirementSkills))
+          .all<{ id: string; aliasesJson: string }>()
+      : { results: [] };
+    const aliases = new Map(
+      aliasRows.map((row) => [row.id, JSON.parse(row.aliasesJson) as string[]]),
+    );
+    const keywords = atsKeywords(job.requirements, aliases);
+    const evidenced = new Set([
+      ...facts.flatMap((f) => f.skillIds),
+      ...declared.keys(),
+      ...verified,
+    ]);
+    const ceiling = atsCeiling(keywords, evidenced);
+    ats = {
+      minScore: ATS_MIN_SCORE,
+      scoring: ATS_SCORING,
+      keywords: keywords.map(({ skillId: _, ...k }) => k),
+      ceiling: {
+        score: ceiling.score,
+        missing: ceiling.missing.map((k) => k.requirement),
+      },
+      rules: [...ATS_RULES],
+    };
+  }
+
   return {
     kind,
     job: {
@@ -177,6 +218,8 @@ export async function documentBrief(
     selection,
     rules: [...WRITING_RULES],
     layout: [...DOCUMENT_LAYOUT],
+    // Resumes only (CA-17); null for a cover letter or another document.
+    ats,
   };
 }
 
@@ -205,7 +248,8 @@ const LIVE: Record<SelectionItemKind, string> = {
  */
 export async function saveSelection(
   db: D1Database,
-  { jobId, items, variant }: z.infer<typeof saveSelectionInputSchema>,
+  { jobId, items, variant, ats }: z.infer<typeof saveSelectionInputSchema>,
+  now: Date,
 ): Promise<Selection> {
   await requireLiveJob(db, jobId);
   const kinds = Object.keys(LIVE) as SelectionItemKind[];
@@ -249,6 +293,26 @@ export async function saveSelection(
         )
         .bind(jobId, item.kind, item.id, variant, position),
     ),
+    // The resume's ATS check, kept on the kit (CA-17): a number and a list,
+    // never the file. Saved without one, the last score stays.
+    ...(ats
+      ? [
+          db
+            .prepare(
+              `INSERT INTO career_job_kit (job_id, ats_score, ats_missing_json, ats_scored_at, updated_at)
+               VALUES (?1, ?2, ?3, ?4, ?4)
+               ON CONFLICT (job_id) DO UPDATE SET ats_score = excluded.ats_score,
+                 ats_missing_json = excluded.ats_missing_json,
+                 ats_scored_at = excluded.ats_scored_at, updated_at = excluded.updated_at`,
+            )
+            .bind(
+              jobId,
+              ats.score,
+              JSON.stringify(ats.missing),
+              now.toISOString(),
+            ),
+        ]
+      : []),
   ]);
   return { variant, items };
 }
@@ -263,6 +327,8 @@ export interface JobKit {
     variant: string;
     items: (SelectionItem & { label: string })[];
   } | null;
+  /** The last resume's ATS check (CA-17). */
+  ats: { score: number; missing: string[]; scoredAt: string } | null;
 }
 
 /** The Documents tab's view of a job: what the application copies and what the last document used. */
@@ -275,7 +341,8 @@ export async function getJobKit(
     db
       .prepare(
         `SELECT intro, salary_min AS min, salary_max AS max, salary_currency AS currency,
-           salary_period AS period FROM career_job_kit WHERE job_id = ?`,
+           salary_period AS period, ats_score AS atsScore, ats_missing_json AS atsMissingJson,
+           ats_scored_at AS atsScoredAt FROM career_job_kit WHERE job_id = ?`,
       )
       .bind(jobId),
     db
@@ -302,6 +369,9 @@ export async function getJobKit(
     max: number | null;
     currency: string | null;
     period: string | null;
+    atsScore: number | null;
+    atsMissingJson: string;
+    atsScoredAt: string | null;
   }>(kit)[0];
   const selected = rows<SelectionItem & { variant: string; label: string }>(
     items,
@@ -325,6 +395,14 @@ export async function getJobKit(
           items: selected.map(({ kind, id, label }) => ({ kind, id, label })),
         }
       : null,
+    ats:
+      row && row.atsScore !== null && row.atsScoredAt !== null
+        ? {
+            score: row.atsScore,
+            missing: JSON.parse(row.atsMissingJson) as string[],
+            scoredAt: row.atsScoredAt,
+          }
+        : null,
   };
 }
 

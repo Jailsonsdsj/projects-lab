@@ -289,7 +289,9 @@ describe("Deleting an exam", () => {
       () => new Response("boom", { status: 500 }),
       () => json({ exam: { ...exam(), deletedAt: null } }),
     ];
-    const { sent } = api(undefined, () => (answers.shift() ?? answers[0])!());
+    const { sent } = api(undefined, () =>
+      (answers.shift() ?? (() => new Response("spent", { status: 500 })))(),
+    );
     const user = userEvent.setup();
     await deleteThenUndo(user);
     expect(

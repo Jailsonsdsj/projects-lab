@@ -36,6 +36,7 @@ const KITS: Record<string, JobKit> = {
         { kind: "experience", id: "x1", label: "Engineer · Acme" },
       ],
     },
+    ats: null,
   },
   globex: {
     jobId: "globex",
@@ -43,6 +44,7 @@ const KITS: Record<string, JobKit> = {
     salary: null,
     answers: [],
     selection: null,
+    ats: null,
   },
 };
 

@@ -178,6 +178,18 @@ type Brief = {
   selection: { variant: string; items: { kind: string; id: string }[] } | null;
   rules: string[];
   layout: string[];
+  ats: {
+    minScore: number;
+    scoring: string;
+    keywords: {
+      requirement: string;
+      type: string;
+      weight: number;
+      terms: string[];
+    }[];
+    ceiling: { score: number; missing: string[] };
+    rules: string[];
+  } | null;
 };
 const brief = async (kind = "resume") =>
   ok<Brief>(await api(`/jobs/${ids.job}/brief?kind=${kind}`));
@@ -229,6 +241,121 @@ describe("the document brief", () => {
     expect(b.selection).toBeNull();
     expect((await api(`/jobs/${ids.job}/brief?kind=poem`)).status).toBe(400);
     expect((await api("/jobs/nope/brief?kind=resume")).status).toBe(404);
+  });
+});
+
+describe("the ATS check (CA-17)", () => {
+  it("gives a resume's brief the keywords, the formula and the ceiling; a cover letter's none", async () => {
+    await db()
+      .prepare(
+        "UPDATE skill SET aliases_json = '[\"Docker Engine\"]' WHERE name = 'Docker'",
+      )
+      .run();
+    const b = await brief();
+    expect(b.ats).toEqual({
+      minScore: 80,
+      scoring: expect.stringContaining("whole word"),
+      keywords: [
+        {
+          requirement: "TypeScript",
+          type: "required",
+          weight: 2,
+          terms: ["TypeScript"],
+        },
+        {
+          requirement: "Avaliação de LLMs",
+          type: "required",
+          weight: 2,
+          terms: ["LLM evaluation"],
+        },
+        {
+          requirement: "Docker",
+          type: "nice",
+          weight: 1,
+          terms: ["Docker", "Docker Engine"],
+        },
+      ],
+      // TypeScript: a declared skill and verified facts. LLM evaluation:
+      // verified in Study. Docker: nothing. 4 of 5.
+      ceiling: { score: 80, missing: ["Docker"] },
+      rules: expect.arrayContaining([
+        expect.stringMatching(
+          /^Before writing: if ceiling.score is below 80, stop/,
+        ),
+      ]),
+    });
+    expect((await brief("cover_letter")).ats).toBeNull();
+    expect((await brief("other")).ats).toBeNull();
+  });
+
+  it("shows when the owner's evidence can't reach 80%: the ceiling and what holds it down", async () => {
+    const job = (
+      await post<{ job: { id: string } }>("/jobs", {
+        company: "Kubeco",
+        role: "Platform Engineer",
+        language: "en",
+        posting: "We run Kubernetes in Go.",
+        requirements: [
+          {
+            text: "Kubernetes in production",
+            type: "required",
+            skill: "Kubernetes",
+          },
+          { text: "Go", type: "required", skill: "Go" },
+          { text: "TypeScript tooling", type: "nice", skill: "TypeScript" },
+          { text: "Calm under pressure", type: "not_mapped" },
+        ],
+        fit: { constraints: 20, skills: 5, growth: 15, pay: 10, signal: 10 },
+      })
+    ).job.id;
+    const ceiling = async () =>
+      (await ok<Brief>(await api(`/jobs/${job}/brief?kind=resume`))).ats;
+    const before = await ceiling();
+    expect(before?.keywords.map((k) => k.requirement)).toEqual([
+      "Kubernetes in production",
+      "Go",
+      "TypeScript tooling",
+    ]);
+    // Only TypeScript (nice) has evidence: 1 of 5.
+    expect(before?.ceiling).toEqual({
+      score: 20,
+      missing: ["Kubernetes in production", "Go"],
+    });
+    // A skill Study verified counts as evidence on its own: 3 of 5.
+    await verifyInStudy("Go", "BE");
+    expect((await ceiling())?.ceiling).toEqual({
+      score: 60,
+      missing: ["Kubernetes in production"],
+    });
+  });
+
+  it("keeps a resume's score on the job's kit; a selection saved without one leaves it", async () => {
+    const kit = async () =>
+      (await ok<{ kit: { ats: unknown } }>(await api(`/jobs/${ids.job}/kit`)))
+        .kit.ats;
+    expect(await kit()).toBeNull();
+    const save = (ats?: unknown) =>
+      api(`/jobs/${ids.job}/selection`, {
+        method: "PUT",
+        body: { items: [{ kind: "fact", id: ids.both }], variant: "ai", ats },
+      });
+    await ok(await save({ score: 86, missing: ["Docker"] }));
+    expect(await kit()).toEqual({
+      score: 86,
+      missing: ["Docker"],
+      scoredAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+    });
+    await ok(await save());
+    expect(await kit()).toMatchObject({ score: 86, missing: ["Docker"] });
+
+    for (const bad of [
+      { score: 101, missing: [] },
+      { score: 85.5, missing: [] },
+      { score: 80, missing: [""] },
+      { score: 80, missing: Array.from({ length: 51 }, (_, i) => `k${i}`) },
+    ])
+      expect((await save(bad)).status).toBe(400);
+    expect(await kit()).toMatchObject({ score: 86 });
   });
 });
 
@@ -386,11 +513,17 @@ describe("over MCP", () => {
     expect(b.value.askFirst.map((f: { id: string }) => f.id)).toEqual([
       ids.unverifiedNeeded,
     ]);
+    expect(b.value.ats).toMatchObject({ minScore: 80, ceiling: { score: 80 } });
     const selection = await callTool(token, "career_save_selection", {
       jobId: ids.job,
       variant: "ai",
       items: [{ kind: "fact", id: ids.both }],
+      ats: { score: 91, missing: [] },
     });
+    expect(
+      (await ok<{ kit: { ats: unknown } }>(await api(`/jobs/${ids.job}/kit`)))
+        .kit.ats,
+    ).toMatchObject({ score: 91, missing: [] });
     expect(selection.value).toEqual({
       selection: { variant: "ai", items: [{ kind: "fact", id: ids.both }] },
     });

@@ -313,6 +313,8 @@ career_job_kit(
   intro,                                 -- default ''; at most 1,500 characters (K-17)
   salary_min?, salary_max?,              -- integers, whole currency units (K-16)
   salary_currency?, salary_period?,      -- ISO code; hour | month | year (K-16)
+  ats_score?, ats_scored_at?,            -- the last resume's ATS check, whole percent 0..100, set together (K-29, CA-17)
+  ats_missing_json,                      -- default '[]': the keywords it missed, a JSON array of strings (K-30)
   updated_at
 )
 career_form_answer(id, job_id, question, answer, position)       -- answer at most 2,000 characters (K-17)
@@ -383,5 +385,7 @@ Every column above without `?` is `NOT NULL`.
 | K-26 | A Drive file ID is 10–100 characters of letters, digits, `-` and `_` | Trigger (nullable) |
 | K-27 | An answer's story and job exist | FK |
 | K-28 | A drill's mode is one of the list | `CHECK` |
+| K-29 | A kit's ATS score and its time are set together, and the score is a whole 0–100 | `BEFORE INSERT` and `BEFORE UPDATE` triggers (not a `CHECK`: one on the existing table would rebuild it, and the score is nullable) | `0021_job_kit_ats_triggers` (CA-17a) |
+| K-30 | A kit's missing ATS keywords are a JSON array of strings | `BEFORE INSERT` and `BEFORE UPDATE` triggers | `0021_job_kit_ats_triggers` (CA-17a) |
 
 **Build notes.** The master-resume import (`20`) follows ST-10: a tested parser, guarded SQL the owner runs once. The Study contract's `ensureTopics` carries the area Claude chooses (ST-03).

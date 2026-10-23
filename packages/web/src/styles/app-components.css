@@ -380,64 +380,6 @@ dialog.is-closing::backdrop {
   line-height: var(--leading-tight);
 }
 
-/* A card whose body opens from its title (Settings' Change passphrase): the
-   title is the button, its chevron turns, and the body (Slide) slides down
-   and up like a sheet: in decelerating, out accelerating. Its height runs to
-   the content's, which Slide measures into --slide-height. Closed, it takes
-   no room: its top padding stands in for the card's gap, cancelled by the
-   margin, and it's hidden, not only clipped. Visibility switches
-   discretely: it stays visible for the whole slide up, then hides; it shows
-   at once on the way down. */
-.disclosure {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  text-align: start;
-  cursor: pointer;
-
-  .icon {
-    flex: none;
-    color: var(--color-ink-muted);
-    transition: transform var(--duration-base) var(--ease-standard);
-  }
-}
-.disclosure[aria-expanded="true"] .icon {
-  transform: rotate(180deg);
-}
-.slide {
-  height: 0;
-  overflow: hidden;
-  margin-top: calc(-1 * var(--space-4));
-  /* Room for focus rings, which the hidden overflow would otherwise cut. */
-  margin-inline: calc(-1 * var(--space-1));
-  visibility: hidden;
-  transition:
-    height var(--duration-sheet-out) var(--ease-exit),
-    visibility var(--duration-sheet-out);
-}
-.slide.is-open {
-  height: var(--slide-height);
-  visibility: visible;
-  transition:
-    height var(--duration-sheet-in) var(--ease-enter),
-    visibility var(--duration-sheet-in);
-}
-.slide__inner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-1) var(--space-1);
-}
-@media (prefers-reduced-motion: reduce) {
-  .disclosure .icon,
-  .slide,
-  .slide.is-open {
-    transition: none;
-  }
-}
-
 /* ── Claude's sign-in: client mark, scope rows, consent card ──────────────
    Drawn in the bundle's Allow Claude screens with literal sizes, two of them
    between tokens: the scope text and padding take the nearest (--text-base,
@@ -830,4 +772,62 @@ dialog.is-closing::backdrop {
 .req + .req,
 .treq + .treq {
   border-top: var(--border-thin) solid var(--color-border);
+}
+
+/* A card whose body opens from its title (Settings' Change passphrase): the
+   title is the button, its chevron turns, and the body (Slide) slides down
+   and up like a sheet: in decelerating, out accelerating. Its height runs to
+   the content's, which Slide measures into --slide-height. Closed, it takes
+   no room: its top padding stands in for the card's gap, cancelled by the
+   margin, and it's hidden, not only clipped. Visibility switches
+   discretely: it stays visible for the whole slide up, then hides; it shows
+   at once on the way down. */
+.disclosure {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: start;
+  cursor: pointer;
+
+  .icon {
+    flex: none;
+    color: var(--color-ink-muted);
+    transition: transform var(--duration-base) var(--ease-standard);
+  }
+}
+.disclosure[aria-expanded="true"] .icon {
+  transform: rotate(180deg);
+}
+.slide {
+  height: 0;
+  overflow: hidden;
+  margin-top: calc(-1 * var(--space-4));
+  /* Room for focus rings, which the hidden overflow would otherwise cut. */
+  margin-inline: calc(-1 * var(--space-1));
+  visibility: hidden;
+  transition:
+    height var(--duration-sheet-out) var(--ease-exit),
+    visibility var(--duration-sheet-out);
+}
+.slide.is-open {
+  height: var(--slide-height);
+  visibility: visible;
+  transition:
+    height var(--duration-sheet-in) var(--ease-enter),
+    visibility var(--duration-sheet-in);
+}
+.slide__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-1) var(--space-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .disclosure .icon,
+  .slide,
+  .slide.is-open {
+    transition: none;
+  }
 }
