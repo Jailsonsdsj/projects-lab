@@ -167,6 +167,10 @@ describe("deleting an exam", () => {
     const next = await record(2);
     expect(next.status).toBe(200);
     expect(await next.json()).toMatchObject({ attempt: 2 });
+    // Every test here restores what it deleted: the nightly tests below run
+    // on a fixed clock, and an exam left deleted at the real time becomes due
+    // there once that clock passes it (it did, in CI on 2026-10-26).
+    expect((await restore("c1")).status).toBe(200);
   });
 
   it("isn't graded, through the app or Claude, and Claude doesn't list it", async () => {
