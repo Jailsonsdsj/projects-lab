@@ -24,6 +24,25 @@ After writing, Claude saves what it used with `career_save_selection { jobId, it
 5. **A cover note is at most 150 words, three paragraphs**: why this problem, the one most relevant piece of evidence, availability (hours, timezone, start) stated plainly.
 6. **If the posting needs a core skill the owner lacks, say so before writing**, not after.
 
+## ATS check (CA-17; resumes only)
+
+The owner's rule: **a delivered resume scores at least 80%** for the job's ATS keywords, without padding. The app never sees the resume (R3-1), so the brief carries what every surface needs to score its draft the same way (`shared/career/ats.ts`):
+
+- **Keywords:** one per requirement mapped to a skill (unmapped ones aren't scored): the skill's name and its aliases ("PostgreSQL", "Postgres", "PG"); **required weighs 2, nice-to-have 1**.
+- **Formula:** a keyword is covered when any of its terms appears as a whole word (no letter or digit right before or after it, so "Java" isn't in "JavaScript" and "C++" still counts), ignoring case and accents. Score = covered weight / all weight, a whole percent **rounded down** (79.9 fails). Pass: **80** (`ATS_MIN_SCORE`).
+- **The ceiling:** the best score an honest resume can reach, computed by the app before anything is written: only keywords whose skill the owner has evidence for count (a verified fact for it, a declared skill, or a skill Study verified), with the requirements that hold it down.
+
+The rules the brief returns with it (`ats.rules`):
+
+1. **Ceiling below 80: stop before writing.** Tell the owner the ceiling and the missing requirements, offer to send them to the Study backlog (`career_send_gaps`), and write only if the owner says to go ahead below 80%. Never pad.
+2. **Score the draft**; below 80, revise with true facts only (the posting's exact term where a fact genuinely shows it, a skill the owner has) and score again. Never deliver below 80 unless the owner accepted it beforehand.
+3. Keywords in the posting's exact spelling; an acronym and its full form once; keywords in context (summary, bullets), not only in the skills list.
+4. Standard section headings (Summary, Experience, Education, Skills, Languages), in the posting's language.
+5. Real text only: no tables, text boxes, columns, images or icons; nothing that matters in a header or footer; contact details in the body.
+6. One date format throughout; plain bullets.
+7. A text-based PDF or a DOCX, never a scan.
+8. Tell the owner the score and the missing keywords, and save them with `career_save_selection`'s `ats`: the **job's kit** keeps the last resume's score, missing keywords and when (a number and a list, never the file), and the Documents tab shows them (CA-17b).
+
 ## Layout (returned by the brief)
 
 One column, the owner's name and links at the top, sections in this order: summary, experience (facts as bullets), education, skills, languages; one font named (Helvetica in a PDF, a standard font with nothing to embed; Arial in a DOCX) so every surface renders the same (SP-02 saw one PDF switch fonts mid-title), 2 cm margins, and the filename `<Name>__<company>__<kind>.<pdf|docx>`. PDF by default, DOCX when the form asks for Word. Claude builds the file in its own sandbox (SP-02: every surface can hand it to the owner).
@@ -56,14 +75,14 @@ There are no stored documents, so the tab is each job's **application kit**: the
 
 | Tool | Kind | Input | Returns |
 |---|---|---|---|
-| `career_document_brief` | read | `{ jobId, kind }` | Job, fitting items, `ask_first`, saved selection, rules, layout |
-| `career_save_selection` | write | `{ jobId, items: [{ kind, id }], variant }` | `{ jobId, selection }` |
+| `career_document_brief` | read | `{ jobId, kind }` | Job, fitting items, `ask_first`, saved selection, rules, layout; for a resume, `ats` (keywords, formula, pass mark, ceiling, rules) |
+| `career_save_selection` | write | `{ jobId, items: [{ kind, id }], variant, ats?: { score, missing[] } }` (a resume's ATS check: whole percent, at most 50 keywords) | `{ jobId, selection }` |
 | `career_save_job_kit` | write | `{ jobId, intro?, salary?, answers? }` | `{ jobId, kit }` |
 | `career_save_standard_answers` | write | `{ answers: [{ label, value }] }` | `{ answers }` |
 
 ## Invariants (merged into `99-data-model.md`)
 
-K-15 to K-19: selection items exist and belong to the profile, salary minimum ≤ maximum with a known currency and period, text lengths, standard answer labels unique.
+K-15 to K-19: selection items exist and belong to the profile, salary minimum ≤ maximum with a known currency and period, text lengths, standard answer labels unique. K-29, K-30 (CA-17): a kit's ATS score and its time are set together, the score a whole 0–100; the missing keywords a JSON array of strings.
 
 ## Decisions
 
@@ -75,6 +94,7 @@ Approved by the owner on 2026-10-19 as proposed, **flagged to refine later** (CA
 4. **The Documents tab is the per-job application kit** and a prompt to copy, since nothing is stored.
 5. **Standard answers** (notice period, authorization, start) live on the profile and appear first in the copy panel.
 6. **A font is named in the layout** so every surface renders the same.
+7. **ATS (CA-17, 2026-10-23):** a resume scores at least 80% by the brief's formula; when the owner's evidence can't reach it, Claude stops and asks before writing, never pads; the last score is shown on the job's kit. Cover letters aren't scored.
 
 ---
 

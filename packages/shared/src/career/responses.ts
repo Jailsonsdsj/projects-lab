@@ -205,6 +205,16 @@ export const jobKitSchema = z.object({
       ),
     })
     .nullable(),
+  /** The last resume's ATS check (CA-17); null until one is saved (and in a
+   *  kit read before CA-17, still in the offline copy). */
+  ats: z
+    .object({
+      score: z.number().int(),
+      missing: z.array(z.string()),
+      scoredAt: z.string(),
+    })
+    .nullable()
+    .default(null),
 });
 export type JobKit = z.infer<typeof jobKitSchema>;
 

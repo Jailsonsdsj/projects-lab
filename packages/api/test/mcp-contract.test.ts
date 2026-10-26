@@ -354,5 +354,8 @@ describe("the MCP contract", () => {
       expect(again, `${name} replayed`).toEqual(first);
       expect(await everything(), `${name} replay wrote`).toBe(before);
     }
-  });
+    // Every tool, writes twice with a whole-database read each time: about 4 s
+    // on CI's runner before CA-17, past Vitest's 5 s default after. It grows
+    // with each tool, so it gets its own budget.
+  }, 30_000);
 });

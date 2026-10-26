@@ -32,6 +32,7 @@ const KIT: JobKit = {
   salary: null,
   answers: [],
   selection: null,
+  ats: null,
 };
 const answer = (id: string, over: Partial<Answer> = {}): Answer => ({
   id,

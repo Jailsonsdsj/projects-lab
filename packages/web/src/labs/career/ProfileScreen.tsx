@@ -202,8 +202,14 @@ export function ProfileScreen() {
   const [editing, setEditing] = useState<(Editing & { opened: number }) | null>(
     null,
   );
-  const edit = (next: Editing) =>
-    setEditing({ ...next, opened: (editing?.opened ?? 0) + 1 });
+  // Each opening gets a number never used before, the sheet's key: a fresh
+  // form every time. (Counting from `editing` restarted at 1 once a sheet
+  // closed, so the next one kept the last one's text.)
+  const openings = useRef(0);
+  const edit = (next: Editing) => {
+    openings.current += 1;
+    setEditing({ ...next, opened: openings.current });
+  };
   const changed = (message: string) => {
     setEditing(null);
     setRefresh((n) => n + 1);

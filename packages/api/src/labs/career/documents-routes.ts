@@ -68,7 +68,7 @@ export function documentRoutes(study: Study) {
     idempotent("PUT /api/career/jobs/:id/selection"),
     forJob(
       saveSelectionInputSchema,
-      (db, input) => saveSelection(db, input),
+      (db, input) => saveSelection(db, input, new Date()),
       (selection) => ({ selection }),
     ),
   );

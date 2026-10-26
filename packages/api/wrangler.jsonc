@@ -58,11 +58,5 @@
       "binding": "OAUTH_KV",
       "id": "fc71f8aaf21c4276be39802ce915948e"
     }
-  ],
-  "env": {
-    // Bindings are not inherited by environments; preview's D1, R2 and KV are added in G-03.
-    "preview": {
-      "name": "projects-lab-preview"
-    }
-  }
+  ]
 }

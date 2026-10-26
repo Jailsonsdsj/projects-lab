@@ -47,7 +47,7 @@ describe("the learn_exam rebuild", () => {
       .all<{ source: string }>();
     expect(sources.results).toEqual([{ source: "claude" }]);
 
-    // Its triggers came back with it.
+    // Its triggers came back with it (and ST-14's were added since: 0019).
     const names = (
       await db()
         .prepare(
@@ -57,10 +57,14 @@ describe("the learn_exam rebuild", () => {
     ).results.map((r) => r.name);
     expect(names).toEqual([
       "learn_exam_attempt_next",
+      "learn_exam_created_live",
       "learn_exam_created_ungraded",
+      "learn_exam_deleted_not_graded",
+      "learn_exam_files_removed_once",
       "learn_exam_grade_once",
       "learn_exam_pdf_layout",
       "learn_exam_pdf_layout_update",
+      "learn_exam_removed_stays_deleted",
     ]);
     await expect(
       db()

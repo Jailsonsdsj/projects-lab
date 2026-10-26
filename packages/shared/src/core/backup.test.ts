@@ -66,6 +66,47 @@ describe("restoreStatements", () => {
     ]);
   });
 
+  it("loads a deleted exam live, grades it, then deletes it and marks its files removed", () => {
+    const sql = restoreStatements(
+      backup({
+        learn_exam: [
+          {
+            id: "e1",
+            topic_id: "t1",
+            level: "essential",
+            attempt: 1,
+            grade: 60,
+            graded_at: "g1",
+            deleted_at: "d1",
+            files_removed_at: "r1",
+          },
+          {
+            id: "e2",
+            topic_id: "t1",
+            level: "essential",
+            attempt: 2,
+            grade: null,
+            graded_at: null,
+            deleted_at: "d2",
+            files_removed_at: null,
+          },
+        ],
+      }),
+    );
+    expect(sql).toEqual([
+      expect.stringMatching(
+        /^INSERT INTO learn_exam .*'e1'.*NULL, NULL, NULL, NULL\)$/,
+      ),
+      "UPDATE learn_exam SET grade = 60, graded_at = 'g1' WHERE id = 'e1'",
+      "UPDATE learn_exam SET deleted_at = 'd1' WHERE id = 'e1'",
+      "UPDATE learn_exam SET files_removed_at = 'r1' WHERE id = 'e1'",
+      expect.stringMatching(
+        /^INSERT INTO learn_exam .*'e2'.*NULL, NULL, NULL, NULL\)$/,
+      ),
+      "UPDATE learn_exam SET deleted_at = 'd2' WHERE id = 'e2'",
+    ]);
+  });
+
   it("loads a removed fact live and marks it removed last (a selection may cite it)", () => {
     const sql = restoreStatements(
       backup({

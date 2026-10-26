@@ -371,6 +371,12 @@ export const careerJobKit = sqliteTable(
     salaryMax: integer("salary_max"),
     salaryCurrency: text("salary_currency"),
     salaryPeriod: text("salary_period"),
+    // The last resume's ATS check (CA-17): a whole percent 0..100 and when,
+    // set together, and the keywords it missed as a JSON array (K-29, K-30,
+    // triggers: no CHECK on the existing table, which would rebuild it).
+    atsScore: integer("ats_score"),
+    atsMissingJson: text("ats_missing_json").notNull().default("[]"),
+    atsScoredAt: text("ats_scored_at"),
     updatedAt: text("updated_at").notNull(),
   },
   (t) => [

@@ -42,6 +42,7 @@ import {
   Sheet,
   SideRail,
   Skeleton,
+  Slide,
   StatCard,
   Tabs,
   Textarea,
@@ -88,7 +89,7 @@ const LABS = [
     id: "platform",
     name: "Home",
     description: "Both labs at a glance",
-    icon: "home",
+    icon: "monitor",
     href: "#home",
   },
   {
@@ -166,6 +167,30 @@ function TabsDemo() {
         { id: "archived", label: "Archived", disabled: true },
       ]}
     />
+  );
+}
+
+function SlideDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="card">
+      <h2>
+        <button
+          type="button"
+          className="disclosure"
+          aria-expanded={open}
+          aria-controls="dev-slide"
+          onClick={() => setOpen(!open)}
+        >
+          Change passphrase
+          <Icon name="chevron-down" />
+        </button>
+      </h2>
+      <Slide id="dev-slide" open={open}>
+        <Input label="Current passphrase" type="password" />
+        <Button className="self-start">Save passphrase</Button>
+      </Slide>
+    </div>
   );
 }
 
@@ -1103,6 +1128,12 @@ export const CATALOG: readonly CatalogEntry[] = [
         node: <Skeleton shape="block" width="100%" size="var(--size-row)" />,
       },
     ],
+  },
+  {
+    name: "Slide",
+    summary:
+      "A body that slides open from a control (a card's .disclosure title): height to its content, measured; hidden and inert when closed; no slide under reduced motion.",
+    examples: [{ label: "closed, tap to open", node: <SlideDemo /> }],
   },
   {
     name: "ImageTile",

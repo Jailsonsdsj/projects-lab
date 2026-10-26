@@ -130,6 +130,33 @@ dialog.dialog::backdrop {
   padding-top: env(safe-area-inset-top);
 }
 
+/* iPadOS 26+, installed on the Home Screen, blurs the page under the status
+   bar unless a fixed box covers the top edge (WebKit samples just below its
+   midpoint: at least 90% of the width, over ten pixels tall) and then fills the
+   bar with that box's colour. The tablet layout has no top header, so this
+   band is that box: the ground's colour, painting nothing (background-clip:
+   text with no text), taking no taps. It sits in index.html after #root, so
+   it exists from the first frame and paints above the page without a
+   z-index. The phone layout's sticky header already spans the top. */
+.status-band {
+  display: none;
+}
+@media (display-mode: standalone) {
+  @supports (-webkit-touch-callout: none) {
+    .status-band {
+      @variant tablet {
+        display: block;
+        position: fixed;
+        inset: 0 0 auto;
+        height: var(--space-3);
+        background-color: var(--color-ground);
+        background-clip: text;
+        pointer-events: none;
+      }
+    }
+  }
+}
+
 /* A text field's focus is its box's border (.input:focus-within): the
    app-wide :focus-visible ring (.pl :focus-visible, more specific than the
    bundle's .input > input { outline: none }) drew a second ring inside it. */
@@ -486,6 +513,9 @@ dialog.is-closing::backdrop {
   @variant tablet {
     display: flex;
     align-items: flex-start;
+    /* The outline slides out past the left edge: clipped there, not scrolled
+       to (clip, unlike hidden, keeps the column sticky). */
+    overflow-x: clip;
   }
 }
 .reader__main {
@@ -524,15 +554,37 @@ dialog.is-closing::backdrop {
 }
 .reader__aside {
   position: sticky;
-  top: calc(var(--size-header) + env(safe-area-inset-top));
+  /* Under the header and its bottom border. */
+  top: calc(var(--size-header) + var(--border-thin) + env(safe-area-inset-top));
   flex: none;
   width: var(--size-outline);
-  align-self: stretch;
+  /* The screen below the header, not the text's length: stretched to the
+     text, a sticky column has nowhere to stick and scrolls away with it.
+     Pinned this tall, its divider still runs down the screen, and a long
+     outline scrolls on its own without moving the page. */
+  height: calc(
+    100dvh -
+    var(--size-header) -
+    var(--border-thin) -
+    env(safe-area-inset-top)
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-10) var(--space-4) var(--space-6);
   border-right: var(--border-thin) solid var(--color-border);
+  /* Shown or hidden, it slides like a sheet: in decelerating, out
+     accelerating, and the text widens or narrows with it. */
+  transition: margin-left var(--duration-sheet-in) var(--ease-enter);
+}
+.reader__aside.is-hidden {
+  margin-left: calc(-1 * var(--size-outline));
+  transition: margin-left var(--duration-sheet-out) var(--ease-exit);
+}
+.reader .prose {
+  transition: max-width var(--duration-sheet-in) var(--ease-enter);
 }
 /* Outline hidden: the text takes the width, padding kept, up to the app's
    maximum and centred beyond it (a desktop line stays readable). */
@@ -541,7 +593,17 @@ dialog.is-closing::backdrop {
   margin-inline: auto;
 }
 .reader--wide .prose {
-  max-width: none;
+  /* 100%, not none, so the line widens with the slide. */
+  max-width: 100%;
+  transition: max-width var(--duration-sheet-out) var(--ease-exit);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader__aside,
+  .reader__aside.is-hidden,
+  .reader .prose,
+  .reader--wide .prose {
+    transition: none;
+  }
 }
 /* Not `.outline`: that is Tailwind's outline-style utility. */
 .reader__outline {
@@ -710,4 +772,62 @@ dialog.is-closing::backdrop {
 .req + .req,
 .treq + .treq {
   border-top: var(--border-thin) solid var(--color-border);
+}
+
+/* A card whose body opens from its title (Settings' Change passphrase): the
+   title is the button, its chevron turns, and the body (Slide) slides down
+   and up like a sheet: in decelerating, out accelerating. Its height runs to
+   the content's, which Slide measures into --slide-height. Closed, it takes
+   no room: its top padding stands in for the card's gap, cancelled by the
+   margin, and it's hidden, not only clipped. Visibility switches
+   discretely: it stays visible for the whole slide up, then hides; it shows
+   at once on the way down. */
+.disclosure {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: start;
+  cursor: pointer;
+
+  .icon {
+    flex: none;
+    color: var(--color-ink-muted);
+    transition: transform var(--duration-base) var(--ease-standard);
+  }
+}
+.disclosure[aria-expanded="true"] .icon {
+  transform: rotate(180deg);
+}
+.slide {
+  height: 0;
+  overflow: hidden;
+  margin-top: calc(-1 * var(--space-4));
+  /* Room for focus rings, which the hidden overflow would otherwise cut. */
+  margin-inline: calc(-1 * var(--space-1));
+  visibility: hidden;
+  transition:
+    height var(--duration-sheet-out) var(--ease-exit),
+    visibility var(--duration-sheet-out);
+}
+.slide.is-open {
+  height: var(--slide-height);
+  visibility: visible;
+  transition:
+    height var(--duration-sheet-in) var(--ease-enter),
+    visibility var(--duration-sheet-in);
+}
+.slide__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-1) var(--space-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .disclosure .icon,
+  .slide,
+  .slide.is-open {
+    transition: none;
+  }
 }

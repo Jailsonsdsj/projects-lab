@@ -42,6 +42,11 @@ async function fill(
   }: { current?: string; next?: string; confirm?: string } = {},
 ) {
   confirm ??= next;
+  // The fields open from the card's title.
+  const title = await screen.findByRole("button", {
+    name: "Change passphrase",
+  });
+  if (title.getAttribute("aria-expanded") === "false") await user.click(title);
   if (current)
     await user.type(screen.getByLabelText("Current passphrase"), current);
   if (next) await user.type(screen.getByLabelText("New passphrase"), next);
@@ -56,6 +61,52 @@ const sent = (call: unknown[] | undefined) => {
 };
 
 describe("Change passphrase", () => {
+  it("keeps its fields closed until the title is tapped; closing clears them", async () => {
+    const user = userEvent.setup();
+    mockApi({ "GET /api/backup": () => json(NO_BACKUP) });
+    openSettings();
+    const title = await screen.findByRole("button", {
+      name: "Change passphrase",
+    });
+    const fields = document.getElementById(
+      title.getAttribute("aria-controls") ?? "",
+    );
+    // Closed: out of reach of taps, Tab and screen readers.
+    expect(title).toHaveAttribute("aria-expanded", "false");
+    expect(fields).toHaveAttribute("inert");
+    expect(fields).toHaveAttribute("aria-hidden", "true");
+    expect(fields).not.toHaveClass("is-open");
+    expect(
+      screen.queryByRole("button", { name: "Save passphrase" }),
+    ).toBeNull();
+
+    await user.click(title);
+    expect(title).toHaveAttribute("aria-expanded", "true");
+    expect(fields).not.toHaveAttribute("inert");
+    expect(fields).toHaveClass("slide", "is-open");
+    await user.type(screen.getByLabelText("Current passphrase"), CURRENT);
+    await user.click(screen.getByRole("button", { name: "Save passphrase" }));
+    expect(screen.getByLabelText("New passphrase")).toHaveAccessibleDescription(
+      /at least/,
+    );
+
+    // Cancel closes and forgets what was typed, errors included.
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(title).toHaveAttribute("aria-expanded", "false");
+    expect(fields).toHaveAttribute("inert");
+    await user.click(title);
+    expect(screen.getByLabelText("Current passphrase")).toHaveValue("");
+    expect(
+      screen.getByLabelText("New passphrase"),
+    ).not.toHaveAccessibleDescription(/at least/);
+
+    // So does the title.
+    await user.type(screen.getByLabelText("New passphrase"), NEXT);
+    await user.click(title);
+    await user.click(title);
+    expect(screen.getByLabelText("New passphrase")).toHaveValue("");
+  });
+
   it("derives both keys here, sends neither passphrase, and swaps this device's session", async () => {
     const user = userEvent.setup();
     const oldToken = sessionToken();
@@ -75,6 +126,10 @@ describe("Change passphrase", () => {
     ).toBeInTheDocument();
     expect(sessionToken()).toBe(newToken);
     expect(screen.getByLabelText("Current passphrase")).toHaveValue("");
+    // Done: the card closes again.
+    expect(
+      screen.getByRole("button", { name: "Change passphrase" }),
+    ).toHaveAttribute("aria-expanded", "false");
 
     const post = sent(actionCalls(fetchMock)[1]);
     expect(post.headers.get("Authorization")).toBe(`Bearer ${oldToken}`);

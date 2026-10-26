@@ -127,6 +127,34 @@
       "when": 1792621465623,
       "tag": "0017_person_address",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1792704641986,
+      "tag": "0018_exam_deleted",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1792704646955,
+      "tag": "0019_exam_deleted_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1792710532457,
+      "tag": "0020_job_kit_ats",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1792710532897,
+      "tag": "0021_job_kit_ats_triggers",
+      "breakpoints": true
     }
   ]
 }

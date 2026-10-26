@@ -108,7 +108,7 @@ interface Calls {
 }
 function api(
   current: () => Record<string, unknown> = () => paper(),
-  submit: () => Response = () =>
+  submit: () => Response | Promise<Response> = () =>
     json({ paper: paper({ submittedAt: "s", result: GRADED }) }),
 ) {
   const calls: Calls = { drafts: [], submits: [] };
@@ -256,6 +256,30 @@ describe("answering an exam made in the app", () => {
     expect(open3).toHaveTextContent("Model answer: Constants and small n.");
     expect(open3).toHaveTextContent("What was missing: small inputs");
     expect(screen.queryByRole("button", { name: "Submit answers" })).toBeNull();
+  });
+
+  it("holds Delete exam while the answers are being graded", async () => {
+    let finish: (response: Response) => void = () => {};
+    api(
+      () => paper(),
+      () => new Promise<Response>((resolve) => (finish = resolve)),
+    );
+    const user = userEvent.setup();
+    open();
+    const del = await screen.findByRole("button", { name: "Delete exam" });
+    expect(del).toBeEnabled();
+    await user.click(
+      await screen.findByRole("button", { name: "Submit answers" }),
+    );
+    await user.click(
+      within(
+        await screen.findByRole("dialog", { name: "Submit your answers?" }),
+      ).getByRole("button", { name: "Submit" }),
+    );
+    await vi.waitFor(() => expect(del).toBeDisabled());
+    finish(json({ paper: paper({ submittedAt: "s", result: GRADED }) }));
+    await screen.findByRole("region", { name: "Grade" });
+    await vi.waitFor(() => expect(del).toBeEnabled());
   });
 
   it("keeps the answers and says why when grading fails, or when offline", async () => {

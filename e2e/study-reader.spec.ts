@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { expect, test } from "./signed-in";
+import { expect, type Page, test } from "./signed-in";
 
 // The course reader (ST-07a) in WebKit at every width, against a mocked API
 // serving the real Big-O course: full screen, the outline (a Sheet on phone,
@@ -115,13 +115,23 @@ test("puts the outline on the left; hidden, the text takes the width", async ({
   expect(asideBox && mainBox && asideBox.x < mainBox.x).toBe(true);
   const narrow = (await prose.boundingBox())?.width ?? 0;
 
-  await page.getByRole("button", { name: "Hide lesson outline" }).click();
+  // It slides out: frame by frame, further left each time, never jumping
+  // straight to the end.
+  const out = await slide(page, "Hide lesson outline");
+  expect(out.length).toBeGreaterThan(3);
+  expect(out.slice(1).every((x, i) => x <= (out[i] as number))).toBe(true);
+  const start = out[0] as number;
+  const end = out.at(-1) as number;
+  expect(end).toBeLessThan(start - 200); // --size-outline is 240px
+  expect(out.some((x) => x < start - 20 && x > end + 20)).toBe(true);
   await expect(aside).toHaveCount(0);
   const viewport = page.viewportSize()?.width ?? 0;
-  const wide = await main.boundingBox();
   const appMax = 1200; // --size-app-max
-  // Up to the app's maximum, centred beyond it.
-  expect(wide?.width).toBeCloseTo(Math.min(viewport, appMax), 0);
+  // Up to the app's maximum, centred beyond it, once the slide ends.
+  await expect
+    .poll(async () => (await main.boundingBox())?.width ?? 0)
+    .toBeCloseTo(Math.min(viewport, appMax), 0);
+  const wide = await main.boundingBox();
   expect(wide?.x).toBeCloseTo(Math.max(0, (viewport - appMax) / 2), 0);
   // The text fills the column: padding kept, no 68ch cap.
   expect((await prose.boundingBox())?.width ?? 0).toBeGreaterThan(narrow);
@@ -131,9 +141,103 @@ test("puts the outline on the left; hidden, the text takes the width", async ({
   }));
   expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
 
-  await page.getByRole("button", { name: "Show lesson outline" }).click();
+  // And back in, frame by frame, to where it started.
+  const back = await slide(page, "Show lesson outline");
+  expect(back.slice(1).every((x, i) => x >= (back[i] as number))).toBe(true);
+  expect(back.some((x) => x > end + 20 && x < start - 20)).toBe(true);
+  expect(back.at(-1)).toBeCloseTo(start, 0);
   await expect(aside).toBeVisible();
 });
+
+test("keeps the outline beside the text while it scrolls; a long outline scrolls on its own", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name === "phone", "no outline column on phone");
+  await page.goto("/study/courses/course-bigo?p=2");
+  await expect(page.getByText("📖 Lesson 2 of 3")).toBeVisible();
+  const box = () =>
+    page.evaluate(() => {
+      const aside = document.getElementById("reader-outline") as HTMLElement;
+      const head = document.querySelector(".reader__head") as HTMLElement;
+      const r = aside.getBoundingClientRect();
+      return {
+        top: r.top,
+        bottom: r.bottom,
+        head: head.getBoundingClientRect().bottom,
+        scrollY: window.scrollY,
+        overflows: aside.scrollHeight > aside.clientHeight,
+        scrollTop: aside.scrollTop,
+      };
+    });
+  const before = await box();
+  const height = page.viewportSize()?.height ?? 0;
+  // Pinned below the header, down to the bottom of the screen.
+  expect(before.top).toBeCloseTo(before.head, 0);
+  expect(before.bottom).toBeCloseTo(height, 0);
+
+  // The page scrolls; the column stays.
+  const main = await page.locator(".reader__main").boundingBox();
+  await page.mouse.move((main?.x ?? 0) + (main?.width ?? 0) / 2, height / 2);
+  await page.mouse.wheel(0, 1500);
+  await expect.poll(async () => (await box()).scrollY).toBeGreaterThan(500);
+  const scrolled = await box();
+  expect(scrolled.top).toBeCloseTo(before.top, 0);
+  expect(scrolled.bottom).toBeCloseTo(height, 0);
+
+  // A long outline scrolls inside its column, and the page stays put.
+  if (scrolled.overflows) {
+    const aside = await page.locator("#reader-outline").boundingBox();
+    await page.mouse.move((aside?.x ?? 0) + 40, height / 2);
+    await page.mouse.wheel(0, 3000);
+    await expect.poll(async () => (await box()).scrollTop).toBeGreaterThan(0);
+    // At its end, scrolling on doesn't hand over to the page. (The page
+    // itself settles a little after a long scroll, at no fixed moment, so
+    // this checks the rule rather than the page's position.)
+    expect(
+      await page
+        .locator("#reader-outline")
+        .evaluate((el) => getComputedStyle(el).overscrollBehaviorY),
+    ).toBe("contain");
+  }
+});
+
+test("with reduced motion the outline goes and comes back at once", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name === "phone", "no outline column on phone");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/study/courses/course-bigo?p=2");
+  await expect(page.getByText("📖 Lesson 2 of 3")).toBeVisible();
+  const out = await slide(page, "Hide lesson outline");
+  // The first frame after the tap is already the last.
+  expect(new Set(out.slice(1)).size).toBe(1);
+  expect(out[1]).toBeLessThan((out[0] as number) - 200);
+});
+
+/** The outline column's left edge on every frame for a while after tapping
+ *  `button`, starting with where it was. */
+async function slide(page: Page, button: string): Promise<number[]> {
+  const xs = page.evaluate(
+    () =>
+      new Promise<number[]>((done) => {
+        const aside = document.getElementById("reader-outline") as HTMLElement;
+        const xs = [aside.getBoundingClientRect().x];
+        const until = performance.now() + 600;
+        const frame = () => {
+          xs.push(aside.getBoundingClientRect().x);
+          if (performance.now() < until) requestAnimationFrame(frame);
+          else done(xs);
+        };
+        // Starts with the tap: the button's click runs the first frame.
+        document.addEventListener("click", () => requestAnimationFrame(frame), {
+          once: true,
+          capture: true,
+        });
+      }),
+  );
+  await page.getByRole("button", { name: button }).click();
+  return xs;
+}
 
 test("keeps a lesson's answers hidden until asked for", async ({ page }) => {
   await page.goto("/study/courses/course-bigo?p=2");

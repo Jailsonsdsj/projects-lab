@@ -71,10 +71,13 @@ type Saving = "idle" | "saving" | "saved" | "offline" | "error";
 export function AppExam({
   examId,
   onGraded,
+  onBusy,
 }: {
   examId: string;
   /** The grade once submitted here, for the viewer's header. */
   onGraded?: (grade: number) => void;
+  /** True while the answers are being graded: the viewer holds Delete. */
+  onBusy?: (busy: boolean) => void;
 }) {
   const load = useCallback(
     async (signal: AbortSignal) => {
@@ -107,6 +110,7 @@ export function AppExam({
   ) : (
     <AnswerForm
       paper={state.data}
+      onBusy={onBusy}
       onGraded={(paper) => {
         setGraded(paper);
         if (paper.result) onGraded?.(paper.result.grade);
@@ -118,14 +122,21 @@ export function AppExam({
 function AnswerForm({
   paper,
   onGraded,
+  onBusy,
 }: {
   paper: ExamPaper;
   onGraded: (paper: ExamPaper) => void;
+  onBusy?: (busy: boolean) => void;
 }) {
   const [answers, setAnswers] = useState<ExamAnswer[]>(paper.draft);
   const [saving, setSaving] = useState<Saving>("idle");
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Graded, the form gives way to the results: not busy any more.
+  useEffect(() => {
+    onBusy?.(submitting);
+    return () => onBusy?.(false);
+  }, [submitting, onBusy]);
   const [failed, setFailed] = useState<
     { kind: "offline" } | { kind: "error"; message: string } | null
   >(null);

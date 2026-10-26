@@ -75,6 +75,7 @@ export { Select } from "./Select";
 export { Sheet, type SheetProps } from "./Sheet";
 export { SideRail, type SideRailProps } from "./SideRail";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
+export { Slide, type SlideProps } from "./Slide";
 export { StatCard, type StatCardProps } from "./StatCard";
 export { type TabItem, Tabs, type TabsProps } from "./Tabs";
 export { Textarea, type TextareaProps } from "./Textarea";

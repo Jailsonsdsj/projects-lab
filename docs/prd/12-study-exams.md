@@ -47,9 +47,21 @@ The same exam, written and graded by the Worker through the Anthropic API (archi
 
 6. **Failures.** Each AI error (`ai_*`, architecture §1) is shown with what to do. A failed grading keeps the answers saved, so the owner can submit again.
 
+## Deleting an exam (ST-14)
+
+Any exam, made in Claude Code or in the app, graded or not. **Only the owner deletes, in the app**; there is no MCP tool.
+
+1. **At once** the exam leaves every read: Grades, the course's exams, the exam viewer and the paper (404), `study_list_exams`, and Career's `skillStatus`. The topic's **grade and Finished date are derived without it**: the most recently graded exam left, or "—" when none is. The topic's **status doesn't change** (a Done topic left with no grade is like one marked Done by hand: not verified).
+2. **Undo** (`POST /exams/:examId/restore`) brings it back with its grade, until its files are removed.
+3. **The nightly run** (the Worker's 03:00 UTC Cron Trigger) removes the files of every exam deleted at least an hour before (`DELETED_EXAM_FILES_AFTER_MINUTES`): the `.md`, and a Claude Code exam's `.pdf`, committed as `remove(<ID>): exam #<n>, deleted in Projects Lab`. A file already gone counts as removed. Then the exam stays deleted (S-26). A removal that fails is retried the next night.
+4. **The row stays**, so attempts keep counting it (S-14): after deleting #4 the next exam is #5, never a second #4 with the old file name. Recording the deleted exam again, or grading it (Claude or the app), is refused with `conflict`.
+
+**Routes** (session only, `/api/study`, Idempotency-Key): `DELETE /exams/:examId` and `POST /exams/:examId/restore`, both answering `{ exam: { examId, topicId, level, attempt, deletedAt } }`; deleting twice or restoring a live exam changes nothing; restoring after the files are removed → 409.
+
 ## Screens
 
 - **In the app** (ST-13e): "Take the test" in the course reader, the course's exams (to answer, graded), the answer screen and the results.
+- **Exam page** (`/study/exams/:examId`, ST-14b): **Delete exam** in the header (a trash icon on phone, "Delete" on tablet), held while an app exam is being graded → danger dialog "Delete exam #n?" → back where the owner came from, toast "<ID> exam #n deleted" with **Undo** ("is back"; a refusal shows the server's reason; a failure offers Retry). Every read on screen reads again after Undo (`announceDataChanged`, `core/read.ts`).
 - **Grades tab** (`/study/grades`): graded exams, newest first: topic, level, attempt ("Retake #2"), grade with one decimal, date. Header: average grade of Done topics (`10` summary). Empty: "No grades yet. Take a final exam in Claude Code with `/final-exam`."
 - **Topic sheet** (`10`): its attempts with grade or "Awaiting grade", each linking to the Markdown (rendered by the reader, `11`) and the PDF (opened by the device's viewer through the content proxy).
 - States per `00-platform`.
@@ -62,7 +74,7 @@ The same exam, written and graded by the Worker through the Anthropic API (archi
 | `study_record_grade` | write | `{ topicId, level, attempt, grade }` (tenths, 0–100; attempts count per level) | `{ examId, grade, topic: { id, status, grade } }` |
 | `study_list_exams` | read | `{ topicId? }` | `{ exams: [{ examId, topicId, attempt, level, mdPath, pdfPath, grade, gradedAt }] }` |
 
-Errors: unknown topic or attempt → `not_found`; an attempt out of sequence → `conflict`; a grade outside 0–100 → schema error.
+Errors: unknown topic or attempt → `not_found`; an attempt out of sequence, or an exam the owner deleted (recorded again or graded) → `conflict`; a grade outside 0–100 → schema error. `study_list_exams` leaves deleted exams out.
 
 ## Cross-lab
 
@@ -70,7 +82,7 @@ Errors: unknown topic or attempt → `not_found`; an attempt out of sequence →
 
 ## Invariants (merged into `99-data-model.md`)
 
-S-13 to S-17: attempt numbering, paths, grade range, and a graded exam that stays graded with its first `graded_at`.
+S-13 to S-17: attempt numbering, paths, grade range, and a graded exam that stays graded with its first `graded_at`. S-23 to S-26 (ST-14): an exam is created live, a deleted one isn't graded, files are marked removed only on a deleted exam and once, and after that it stays deleted.
 
 ## Decisions
 

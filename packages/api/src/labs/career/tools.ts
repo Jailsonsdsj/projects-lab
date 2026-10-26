@@ -252,7 +252,7 @@ const documentTools = (study: Study) => [
     name: "career_document_brief",
     kind: "read",
     description:
-      "Call before writing any document for a job (resume, cover_letter, other): it's the only input a document is written from, on every surface. Returns the job (with the posting's language), the profile's verified facts ranked by the job's skills, `askFirst` (unverified facts this job needs: ask the owner once, at the start; use none unconfirmed), skills posting-first, the last selection, and the writing rules and layout to follow. Build the file in your own sandbox and give it to the owner; never send it to a tool.",
+      "Call before writing any document for a job (resume, cover_letter, other): it's the only input a document is written from, on every surface. Returns the job (with the posting's language), the profile's verified facts ranked by the job's skills, `askFirst` (unverified facts this job needs: ask the owner once, at the start; use none unconfirmed), skills posting-first, the last selection, and the writing rules and layout to follow. For a resume, also ats: the job's keywords, the scoring formula, the pass mark (80%) and the ceiling the owner's evidence allows; below 80% at the ceiling, stop and ask before writing. Build the file in your own sandbox and give it to the owner; never send it to a tool.",
     input: documentBriefInputSchema,
     async run(input, ctx) {
       return documentBrief(ctx.db, study, input);
@@ -262,10 +262,10 @@ const documentTools = (study: Study) => [
     name: "career_save_selection",
     kind: "write",
     description:
-      "After writing a document, saves what it used for that job: the fact, experience, education and skill IDs (never the file) and a variant name (ai, frontend). Replaces the job's last selection. A fact must be verified: confirm an unverified one with the owner and save it verified first.",
+      "After writing a document, saves what it used for that job: the fact, experience, education and skill IDs (never the file) and a variant name (ai, frontend). Replaces the job's last selection. A fact must be verified: confirm an unverified one with the owner and save it verified first. For a resume, also send ats: its score (whole percent, from the brief's formula) and the keywords it misses; the app shows them in the job's kit.",
     input: saveSelectionInputSchema,
     async run(input, ctx) {
-      return { selection: await saveSelection(ctx.db, input) };
+      return { selection: await saveSelection(ctx.db, input, new Date()) };
     },
   }),
   defineTool({

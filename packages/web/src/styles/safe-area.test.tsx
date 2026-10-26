@@ -43,7 +43,7 @@ describe("the top of the screen", () => {
       /@variant tablet \{[^}]*padding-top: env\(safe-area-inset-top\)/,
     );
     expect(rule(".reader__aside")).toContain(
-      "top: calc(var(--size-header) + env(safe-area-inset-top))",
+      "top: calc(var(--size-header) + var(--border-thin) + env(safe-area-inset-top))",
     );
     expect(css).toContain(
       "max-height: calc(100dvh - var(--space-12) - env(safe-area-inset-top));",
@@ -54,6 +54,41 @@ describe("the top of the screen", () => {
     expect(rule(".safe-top")).toContain(
       "padding-top: env(safe-area-inset-top)",
     );
+  });
+});
+
+describe("the iPad status bar", () => {
+  // Installed on iPad, WebKit fills the status bar with the colour of a fixed
+  // box covering the top edge (≥ 90% wide, > 10px tall, sampled 4px below
+  // its midpoint), and blurs the page there when there's none.
+  const html = readFileSync("index.html", "utf8");
+  const tokens = readFileSync("src/styles/tokens.css", "utf8");
+
+  it("has a band in the page from the first frame, after the app so it paints above it", () => {
+    const band = html.indexOf('<div class="status-band" aria-hidden="true">');
+    expect(band).toBeGreaterThan(html.indexOf('<div id="root">'));
+    expect(band).toBeLessThan(html.indexOf("<script"));
+  });
+
+  it("covers the top edge, installed on iOS at tablet width, in the ground's colour, painting nothing and taking no taps", () => {
+    expect(css).toMatch(/\.status-band \{\s*display: none;\s*\}/);
+    const at = css.indexOf("@media (display-mode: standalone)");
+    expect(at).toBeGreaterThan(-1);
+    const rule = css.slice(at, css.indexOf("\n}\n", at));
+    expect(rule).toContain("@supports (-webkit-touch-callout: none)");
+    expect(rule).toMatch(/\.status-band \{\s*@variant tablet \{/);
+    for (const declaration of [
+      "display: block;",
+      "position: fixed;",
+      "inset: 0 0 auto;",
+      "height: var(--space-3);",
+      "background-color: var(--color-ground);",
+      "background-clip: text;",
+      "pointer-events: none;",
+    ])
+      expect(rule).toContain(declaration);
+    const height = Number(tokens.match(/--space-3:\s*(\d+)px;/)?.[1]);
+    expect(height).toBeGreaterThan(10);
   });
 });
 

@@ -219,8 +219,18 @@ export async function recordExam(
     same.level === input.level &&
     same.attempt === input.attempt &&
     same.pdfPath === input.pdfPath
-  )
+  ) {
+    const deleted = await db
+      .prepare("SELECT deleted_at AS deletedAt FROM learn_exam WHERE id = ?")
+      .bind(same.examId)
+      .first<{ deletedAt: string | null }>();
+    if (deleted?.deletedAt)
+      throw new ToolError(
+        "conflict",
+        `Exam #${same.attempt} for ${same.topicId} was deleted in the app.`,
+      );
     return { examId: same.examId, attempt: same.attempt };
+  }
 
   await ensureFiles(env, db, [input.mdPath, input.pdfPath]);
   const examId = crypto.randomUUID();
@@ -287,14 +297,20 @@ export async function recordGrade(
   const topic = await liveTopicId(db, input.topicId);
   const exam = await db
     .prepare(
-      "SELECT id FROM learn_exam WHERE topic_id = ? AND level = ? AND attempt = ?",
+      "SELECT id, deleted_at AS deletedAt FROM learn_exam WHERE topic_id = ? AND level = ? AND attempt = ?",
     )
     .bind(topic.id, input.level, input.attempt)
-    .first<{ id: string }>();
+    .first<{ id: string; deletedAt: string | null }>();
   if (!exam)
     throw new ToolError(
       "not_found",
       `No exam #${input.attempt} for ${input.topicId} at that level. Record it with study_record_exam first.`,
+    );
+  // S-24: a deleted exam isn't graded.
+  if (exam.deletedAt)
+    throw new ToolError(
+      "conflict",
+      `Exam #${input.attempt} for ${input.topicId} was deleted in the app, so it isn't graded.`,
     );
   const at = now.toISOString();
   const progress = afterGradeRecorded({
@@ -325,7 +341,8 @@ export async function listExams(
 ): Promise<{ exams: Exam[] }> {
   const { results } = await db
     .prepare(
-      `${EXAM_SELECT} WHERE t.deleted_at IS NULL AND (?1 IS NULL OR t.code = ?1)
+      `${EXAM_SELECT} WHERE t.deleted_at IS NULL AND e.deleted_at IS NULL
+         AND (?1 IS NULL OR t.code = ?1)
        ORDER BY COALESCE(e.graded_at, e.created_at) DESC, e.attempt DESC`,
     )
     .bind(topicId ?? null)
@@ -427,7 +444,7 @@ export async function examToRead(
        FROM learn_exam e
        JOIN learn_topic t ON t.id = e.topic_id
        JOIN skill s ON s.id = t.skill_id
-       WHERE e.id = ?`,
+       WHERE e.id = ? AND e.deleted_at IS NULL`,
     )
     .bind(examId)
     .first<Exam & { skill: string }>();

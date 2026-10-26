@@ -137,7 +137,13 @@ describe("GitHub errors", () => {
   });
 
   it("names a missing token, with the fix", () => {
-    expect(() => githubDeps({ ...env, GITHUB_TOKEN: undefined }, db())).toThrow(
+    expect(() =>
+      githubDeps(
+        // An unset secret reads undefined at runtime, whatever the type says.
+        { ...env, GITHUB_TOKEN: undefined as unknown as string },
+        db(),
+      ),
+    ).toThrow(
       /GITHUB_TOKEN is unset or expired.*wrangler secret put GITHUB_TOKEN/,
     );
   });

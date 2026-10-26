@@ -127,8 +127,9 @@ const REMOVED_AFTER = [
 /**
  * The SQL that loads a backup into a database with the same migrations and
  * nothing of the owner's yet (the seeded Study areas are updated in place).
- * The triggers stay on: exams go in ungraded, in attempt order, then get their
- * grades (S-14, S-16); rows removed later go in live and are marked removed
+ * The triggers stay on: exams go in ungraded and live, in attempt order, then
+ * get their grades and, if deleted, their deletion (S-14, S-16, S-23 to
+ * S-25); rows removed later go in live and are marked removed
  * last (K-15). Only inserts and updates.
  */
 export function restoreStatements(backup: BackupData): string[] {
@@ -155,10 +156,29 @@ export function restoreStatements(backup: BackupData): string[] {
           Number(a.attempt) - Number(b.attempt),
       );
       for (const row of ordered) {
-        s.push(insert(table, { ...row, grade: null, graded_at: null }));
+        const id = q(row.id ?? null);
+        s.push(
+          insert(table, {
+            ...row,
+            grade: null,
+            graded_at: null,
+            deleted_at: null,
+            files_removed_at: null,
+          }),
+        );
         if (row.grade !== null && row.grade !== undefined)
           s.push(
-            `UPDATE learn_exam SET grade = ${q(row.grade)}, graded_at = ${q(row.graded_at ?? null)} WHERE id = ${q(row.id ?? null)}`,
+            `UPDATE learn_exam SET grade = ${q(row.grade)}, graded_at = ${q(row.graded_at ?? null)} WHERE id = ${id}`,
+          );
+        // A deleted exam (ST-14): graded first, then deleted, then its files
+        // marked removed (S-23 to S-25).
+        if (row.deleted_at)
+          s.push(
+            `UPDATE learn_exam SET deleted_at = ${q(row.deleted_at)} WHERE id = ${id}`,
+          );
+        if (row.deleted_at && row.files_removed_at)
+          s.push(
+            `UPDATE learn_exam SET files_removed_at = ${q(row.files_removed_at)} WHERE id = ${id}`,
           );
       }
       continue;

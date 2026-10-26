@@ -1,6 +1,6 @@
 import { PASSPHRASE_MIN_LENGTH } from "@projects-lab/shared";
 import { type FormEvent, useRef, useState } from "react";
-import { Banner, Button, Input, useToast } from "../components/ui";
+import { Banner, Button, Icon, Input, Slide, useToast } from "../components/ui";
 import {
   type ChangePassphraseResult,
   changePassphrase,
@@ -13,7 +13,9 @@ type Failure = Exclude<
 
 const minutes = (seconds: number) => Math.max(1, Math.ceil(seconds / 60));
 
-/** The bundle's "Change passphrase" card on Settings (F-11). */
+/** The bundle's "Change passphrase" card on Settings (F-11). Its fields stay
+ *  closed until the title is tapped; closing (or a change that went through)
+ *  clears them, so no passphrase lingers on screen. */
 export function ChangePassphraseCard() {
   const { show } = useToast();
   const [current, setCurrent] = useState("");
@@ -24,12 +26,25 @@ export function ChangePassphraseCard() {
   const [failure, setFailure] = useState<Failure | null>(null);
   const [retryAfter, setRetryAfter] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
   // One key per change: kept across a retry that got no answer, so a change
   // that went through is replayed; dropped on any answer or edit.
   const idempotencyKey = useRef<string | null>(null);
 
   const tooShort = next.length < PASSPHRASE_MIN_LENGTH;
   const mismatch = confirm !== next;
+
+  /** Empties the form and closes it. */
+  const close = () => {
+    setOpen(false);
+    setCurrent("");
+    setNext("");
+    setConfirm("");
+    setChecked(false);
+    setWrong(false);
+    setFailure(null);
+    idempotencyKey.current = null;
+  };
 
   const edit = (set: (value: string) => void) => (value: string) => {
     set(value);
@@ -55,10 +70,7 @@ export function ChangePassphraseCard() {
     idempotencyKey.current = null;
 
     if (result.ok) {
-      setCurrent("");
-      setNext("");
-      setConfirm("");
-      setChecked(false);
+      close();
       show({
         tone: "success",
         message: "Passphrase changed. Use it next time you sign in.",
@@ -81,70 +93,94 @@ export function ChangePassphraseCard() {
       onSubmit={submit}
       noValidate
     >
-      <h2 id="settings-passphrase">Change passphrase</h2>
-      {failure === "too_many_attempts" && (
-        <Banner tone="danger">
-          Too many attempts, try again in{" "}
-          <span className="mono">{minutes(retryAfter)}</span>{" "}
-          {minutes(retryAfter) === 1 ? "minute" : "minutes"}.
-        </Banner>
-      )}
-      {failure === "offline" && (
-        <Banner tone="offline" title="You're offline.">
-          Changing the passphrase needs a connection. Save again when you're
-          back.
-        </Banner>
-      )}
-      {failure === "error" && (
-        <Banner tone="danger" title="Couldn't change the passphrase.">
-          Nothing changed. Try again in a moment.
-        </Banner>
-      )}
-      <Input
-        label="Current passphrase"
-        type="password"
-        autoComplete="current-password"
-        value={current}
-        onChange={(e) => edit(setCurrent)(e.target.value)}
-        error={
-          wrong
-            ? "Wrong passphrase"
-            : checked && !current
-              ? "Enter your current passphrase."
+      <h2 id="settings-passphrase">
+        <button
+          type="button"
+          className="disclosure"
+          aria-expanded={open}
+          aria-controls="settings-passphrase-fields"
+          disabled={saving}
+          onClick={() => (open ? close() : setOpen(true))}
+        >
+          Change passphrase
+          <Icon name="chevron-down" />
+        </button>
+      </h2>
+      <Slide id="settings-passphrase-fields" open={open}>
+        {failure === "too_many_attempts" && (
+          <Banner tone="danger">
+            Too many attempts, try again in{" "}
+            <span className="mono">{minutes(retryAfter)}</span>{" "}
+            {minutes(retryAfter) === 1 ? "minute" : "minutes"}.
+          </Banner>
+        )}
+        {failure === "offline" && (
+          <Banner tone="offline" title="You're offline.">
+            Changing the passphrase needs a connection. Save again when you're
+            back.
+          </Banner>
+        )}
+        {failure === "error" && (
+          <Banner tone="danger" title="Couldn't change the passphrase.">
+            Nothing changed. Try again in a moment.
+          </Banner>
+        )}
+        <Input
+          label="Current passphrase"
+          type="password"
+          autoComplete="current-password"
+          value={current}
+          onChange={(e) => edit(setCurrent)(e.target.value)}
+          error={
+            wrong
+              ? "Wrong passphrase"
+              : checked && !current
+                ? "Enter your current passphrase."
+                : undefined
+          }
+          disabled={saving}
+        />
+        <Input
+          label="New passphrase"
+          type="password"
+          autoComplete="new-password"
+          value={next}
+          onChange={(e) => edit(setNext)(e.target.value)}
+          hint="A few unrelated words is easier to type and harder to guess."
+          error={
+            checked && tooShort
+              ? `Use at least ${PASSPHRASE_MIN_LENGTH} characters.`
               : undefined
-        }
-        disabled={saving}
-      />
-      <Input
-        label="New passphrase"
-        type="password"
-        autoComplete="new-password"
-        value={next}
-        onChange={(e) => edit(setNext)(e.target.value)}
-        hint="A few unrelated words is easier to type and harder to guess."
-        error={
-          checked && tooShort
-            ? `Use at least ${PASSPHRASE_MIN_LENGTH} characters.`
-            : undefined
-        }
-        disabled={saving}
-      />
-      <Input
-        label="Confirm new passphrase"
-        type="password"
-        autoComplete="new-password"
-        value={confirm}
-        onChange={(e) => edit(setConfirm)(e.target.value)}
-        error={
-          checked && !tooShort && mismatch
-            ? "The passphrases don't match."
-            : undefined
-        }
-        disabled={saving}
-      />
-      <Button type="submit" loading={saving} className="self-start">
-        {saving ? "Saving" : "Save passphrase"}
-      </Button>
+          }
+          disabled={saving}
+        />
+        <Input
+          label="Confirm new passphrase"
+          type="password"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => edit(setConfirm)(e.target.value)}
+          error={
+            checked && !tooShort && mismatch
+              ? "The passphrases don't match."
+              : undefined
+          }
+          disabled={saving}
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" loading={saving}>
+            {saving ? "Saving" : "Save passphrase"}
+          </Button>
+          <Button
+            variant="ghost"
+            tone="neutral"
+            disabled={saving}
+            onClick={close}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Slide>
     </form>
   );
 }

@@ -2,8 +2,8 @@
 # Guards the CI/CD rules (playbook §9, CLAUDE.md):
 #   - ci.yml uses no secret, no Cloudflare credential and no --remote;
 #   - deploy.yml sets the Cloudflare secrets on steps only, never job-wide;
-#   - every wrangler d1/deploy call in a workflow names --env="" (wrangler.jsonc
-#     defines a preview env, and the default target must never be relied on);
+#   - every wrangler d1/deploy call in a workflow names --env="" (the top-level
+#     Worker: an env added to wrangler.jsonc later must not change the target);
 #   - deploy.yml's health check hits wrangler.jsonc's PUBLIC_ORIGIN.
 #
 #   check-workflows.sh              check .github/workflows

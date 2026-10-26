@@ -63,7 +63,7 @@ Courses Claude recorded, grouped by area, in progress first. Tap one to read it.
 
 - **Quick check** (end of each lesson): answer and it checks itself against the lesson's answer key. Multiple choice (code questions too): tap an option and the right one turns green, yours red if it's wrong, with the key's explanation. True or false: mark each statement **True** or **False**; each turns green or red at once, and when all are marked you get the score and the explanation. Open questions: jot an answer in **Your answer** (not saved), tap **Show model answer**, then **Got it** or **Missed it** marks it green or red. **Try again** clears a question. Nothing is recorded: it's practice.
 
-- **Outline** ("In this lesson", the lessons, the course): on phone, the list button opens it as a sheet. On tablet and desktop it's a column on the left; the **sidebar button** at the top left (as in Preview) hides it so the text uses the whole width, and shows it again. The reader remembers your choice on that device. Its **Exams** section lists this course's attempts: the grade, "Awaiting grade" (a Claude Code exam not graded yet) or "To answer" (an exam made in the app).
+- **Outline** ("In this lesson", the lessons, the course): on phone, the list button opens it as a sheet. On tablet and desktop it's a column on the left that stays beside the text as you scroll (a long outline scrolls on its own); the **sidebar button** at the top left (as in Preview) slides it away so the text uses the whole width, and slides it back (no slide when the device asks for reduced motion). The reader remembers your choice on that device. Its **Exams** section lists this course's attempts: the grade, "Awaiting grade" (a Claude Code exam not graded yet) or "To answer" (an exam made in the app).
 - **Take the test** (the header's button on tablet, the medal icon on phone, and at the end of the last page): the app writes a final exam for this course. Choose the number of questions (1–20, 10 by default) and, optionally, how many of each type (the counts must add up), which lessons to cover, and a focus. **Generate** takes up to a minute, and the whole screen waits with it ("Writing your exam…"; nothing can be tapped meanwhile, so the form can't be changed or sent twice); the exam is saved beside the course in `study-materials` and opens. If it fails, the form comes back with the reason and your choices. Each exam is written by the AI and billed to your Anthropic API account.
 
 #### Grades — `/study/grades`
@@ -72,6 +72,7 @@ Graded exams, newest first, with the average grade of Done topics. Tap an exam t
 
 - **A Claude Code exam** shows its questions, the results once graded, and **Open the PDF**.
 - **An exam made in the app** opens as a form: choices for multiple choice, True or False for each statement, a text box for open questions (it grows as you write, and you can drag its corner to make it taller), a field for each blank in code. Your answers save themselves a moment after each change ("Saved") and come back when you reopen the exam; offline they save once you're back. **Submit answers** asks to confirm (and how many are unanswered, which score 0), then grades while the screen waits ("Grading your answers…"): multiple choice and true or false against the key, open and code answers by the AI. You see the grade, each question with your answer, the correct one, the points and feedback, and below 7.0 the review suggestions (also added to the topic's note). The exam file in `study-materials` gets the same Results. Submitting needs a connection; if grading fails, your answers stay saved.
+- **Delete exam** (the trash at the top right; "Delete" on a tablet), for any exam, graded or not, except while it's being graded. It asks first. Then you're back where you came from and the exam is gone from Grades and its course: the topic's grade becomes its latest graded exam left, or "—" if none is (the topic stays Done; with no grade it isn't verified in Career). **Undo** in the toast brings it back with its grade. At the nightly run (03:00 UTC), the files of exams deleted at least an hour before leave `study-materials` (the Markdown, and a Claude Code exam's PDF), and from then on the deletion is final. Exam numbers keep counting deleted ones, so the next exam after deleting #4 is #5. Claude can't delete exams, and can't grade a deleted one.
 
 ### Career Lab
 
@@ -119,7 +120,7 @@ This guide, in the app. Its four parts are the tabs at the top (The app, Claude,
 
 #### Settings — `/settings`
 
-- **Change passphrase:** current, new, confirm. Every other device is signed out; this one stays signed in.
+- **Change passphrase:** closed until you tap its title, then the fields slide down: current, new, confirm. Every other device is signed out; this one stays signed in. **Cancel** (or the title again) closes it and clears what you typed; so does a change that went through.
 - **Backup:** **Download backup** and when the last one was. See [Backup and restore](#backup-and-restore).
 - **Session:** **Log out** signs out this device only.
 
@@ -177,7 +178,7 @@ Paste the posting and ask Claude to map it. Claude extracts the requirements (re
 
 #### Write a resume or cover letter (any surface)
 
-Ask "Write my resume for *job*" (or copy the prompt from Documents). Claude calls `career_document_brief`, asks you to confirm any unverified fact first, writes the document in the posting's language and gives you the file, then saves what it used with `career_save_selection`. The self-introduction, salary range and form answers are saved with `career_save_job_kit` after you agree on them.
+Ask "Write my resume for *job*" (or copy the prompt from Documents). Claude calls `career_document_brief`, asks you to confirm any unverified fact first, writes the document in the posting's language and gives you the file, then saves what it used with `career_save_selection`. **A resume must pass the ATS check: 80% or more** of the job's keywords (its required skills count double), scored the same way on every surface. If your evidence can't reach 80% (the job needs skills your profile doesn't show), Claude says so before writing, lists what's missing, offers to add it to your Study backlog, and writes only if you tell it to; it never pads. It then tells you the score and the missing keywords, and saves them on the job's kit. The self-introduction, salary range and form answers are saved with `career_save_job_kit` after you agree on them.
 
 #### Weekly job search (routine)
 
@@ -216,14 +217,14 @@ Read tools change nothing. Write tools take an optional `idempotencyKey` and are
 | `study_list_courses` | read | Recorded courses, optionally for one topic |
 | `study_record_exam` | write | Records an exam's Markdown and PDF |
 | `study_record_grade` | write | Records or corrects a grade; the topic becomes Done |
-| `study_list_exams` | read | Exams and grades, optionally for one topic |
+| `study_list_exams` | read | Exams and grades, optionally for one topic (exams you deleted aren't listed) |
 
 **Career Lab**
 
 | Tool | Kind | What it does |
 |---|---|---|
 | `career_get_profile` | read | The whole profile, compact |
-| `career_update_person` | write | Name, headline, contact, summary, languages |
+| `career_update_person` | write | Name, headline, contact, address (city, state or province, country), summary, languages |
 | `career_set_links` | write | Replaces the profile links |
 | `career_save_experience` | write | Adds or edits an experience |
 | `career_save_education` | write | Adds or edits an education entry |
@@ -238,8 +239,8 @@ Read tools change nothing. Write tools take an optional `idempotencyKey` and are
 | `career_update_requirement` | write | A requirement's type or skill |
 | `career_send_gaps` | write | Sends gaps to the Study backlog |
 | `career_remove_job` | write | Stops tracking a job; its Study topics stay |
-| `career_document_brief` | read | Everything a document for a job is written from |
-| `career_save_selection` | write | Which items a document used |
+| `career_document_brief` | read | Everything a document for a job is written from; for a resume, the ATS keywords, formula and ceiling |
+| `career_save_selection` | write | Which items a document used, and a resume's ATS score |
 | `career_save_job_kit` | write | Self-introduction, salary range and form answers |
 | `career_save_standard_answers` | write | Your standard form answers |
 | `career_get_search_criteria` | read | The job search criteria (edited only in the app) |

@@ -11,6 +11,18 @@ export type ReadState<T> =
   | { status: "empty" }
   | { status: FailureKind; error: unknown };
 
+/** The event announceDataChanged() sends. */
+const DATA_CHANGED = "projects-lab:data-changed";
+
+/**
+ * Tells every read on screen that a write changed what it shows (an Undo from
+ * a toast, say, after the screen that made the write is gone): each reads
+ * again in the background, like coming back to the foreground.
+ */
+export function announceDataChanged() {
+  window.dispatchEvent(new Event(DATA_CHANGED));
+}
+
 /** What started a read: the mount or Retry (shows loading), or the app coming
  *  back (foreground, connection) while something is already on screen. */
 interface Run {
@@ -70,9 +82,11 @@ export function useRead<T>(
     };
     document.addEventListener("visibilitychange", readAgain);
     window.addEventListener("online", readAgain);
+    window.addEventListener(DATA_CHANGED, readAgain);
     return () => {
       document.removeEventListener("visibilitychange", readAgain);
       window.removeEventListener("online", readAgain);
+      window.removeEventListener(DATA_CHANGED, readAgain);
     };
   }, []);
 

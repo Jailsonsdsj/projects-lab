@@ -93,7 +93,7 @@ async function gradedExams(
     .prepare(
       `SELECT topic_id AS topicId, level, attempt, grade, graded_at AS gradedAt
        FROM learn_exam
-       WHERE grade IS NOT NULL
+       WHERE grade IS NOT NULL AND deleted_at IS NULL
          AND topic_id IN (SELECT value FROM json_each(?))`,
     )
     .bind(JSON.stringify(topicIds))

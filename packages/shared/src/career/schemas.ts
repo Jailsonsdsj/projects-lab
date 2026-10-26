@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { cursorSchema, listLimitSchema } from "../core/lists";
 import { APPLICATION_STATUSES, JOB_NOTE_MAX_LENGTH } from "./applications";
+import { ATS_KEYWORD_MAX_LENGTH, ATS_MISSING_MAX } from "./ats";
 import { DOCUMENT_KINDS, SELECTION_ITEM_KINDS } from "./brief";
 import { driveFileId } from "./drive";
 import { FIT_DIMENSIONS, FIT_MAX, FIT_NOTES_MAX_LENGTH } from "./fit";
@@ -347,6 +348,15 @@ export const saveSelectionInputSchema = z.object({
       (items) => unique(items, (item) => `${item.kind}:${item.id}`),
       "An item twice",
     ),
+  /** A resume's ATS check (CA-17): its score and the keywords it misses. Kept on the job's kit. */
+  ats: z
+    .object({
+      score: z.number().int().min(0).max(100),
+      missing: z
+        .array(z.string().trim().min(1).max(ATS_KEYWORD_MAX_LENGTH))
+        .max(ATS_MISSING_MAX),
+    })
+    .optional(),
 });
 
 /** Whole currency units with a period (K-16). */

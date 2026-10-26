@@ -153,6 +153,12 @@ export const learnExam = sqliteTable(
     // Integer tenths 0..100 and its time, set together (S-16, a trigger: nullable).
     grade: integer("grade"),
     gradedAt: text("graded_at"),
+    // Deleted by the owner (ST-14): hidden from every read, the grade derived
+    // without it; undone by clearing it until its files are removed (S-23..S-26,
+    // triggers: nullable).
+    deletedAt: text("deleted_at"),
+    // When the nightly job removed its files from study-materials.
+    filesRemovedAt: text("files_removed_at"),
   },
   (t) => [
     // S-13
